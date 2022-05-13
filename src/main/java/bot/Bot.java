@@ -1,5 +1,6 @@
 package bot;
 
+import action.Kicked;
 import action.Welcome;
 import discord4j.common.util.Snowflake;
 import discord4j.core.DiscordClient;
@@ -86,7 +87,7 @@ public class Bot {
                             .and(report(gateway))
                             .and(warn(gateway, client))
                             .and(hit(gateway, client))
-                            .and(kicked(gateway, client))
+                            .and(new Kicked().action(gateway, client))
                             .and(giveaway(gateway))
                             .and(giveawayMembers(gateway, client))
                             .and(giveawayTotal(gateway))
@@ -524,61 +525,6 @@ public class Bot {
             return Mono.empty();
         }).then();
 
-    }
-
-    private static Mono<Void> kicked(GatewayDiscordClient gateway, DiscordClient client) {
-
-        //watch for kicked users
-        return gateway.on(MessageCreateEvent.class, event -> {
-            Message message = event.getMessage();
-            String param = "!f kick";
-            String param2 = "! f kick";
-
-
-            if (message.getContent().toLowerCase().startsWith(param) || message.getContent().toLowerCase().startsWith(param2)) {
-                System.out.println(message.getContent());
-                System.out.println(message.getContent().replaceAll(param + " ", ""));
-
-                String temp = message.getContent().replaceAll(param + " ", "");
-                temp = temp.replaceAll(param2 + " ", "");
-                String action = temp.split(" ")[0];
-                System.out.println("action " + action);
-
-
-                return message.getChannel().flatMap(channel -> {
-
-                    try {
-                        Clean.kickMember(action);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    System.out.println("Member kicked " + action);
-                    client.getGuildById(Snowflake.of(guildId)).removeMemberRole(
-                            Snowflake.of(action),
-                            Snowflake.of(chefRole),
-                            "user kicked").block();
-
-
-//                                client.getGuildById(Snowflake.of(guildId)).getRoles().all(role ->{
-//                                    System.out.println("has role " + role.name());
-//                                    try {
-//                                        client.getGuildById(Snowflake.of(guildId)).removeMemberRole(
-//                                                Snowflake.of(action),
-//                                                Snowflake.of(role.id()),
-//                                                "user kicked").block();
-//                                    } catch (Exception e) {
-//                                        System.out.println("unable to remove role " + role.name());
-//                                    }
-//                                    return true;
-//                                }).block();
-
-
-                    return null;
-                });
-            }
-
-            return Mono.empty();
-        }).then();
     }
 
     private static Mono<Void> giveaway(GatewayDiscordClient gateway) {

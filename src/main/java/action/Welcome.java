@@ -17,7 +17,6 @@ public class Welcome extends Action {
 
     public Welcome() {
         param = "accept";
-        Config config = Config.getInstance();
         guildId = config.get("guildId");
         chefRole = Long.parseLong(config.get("chefRole"));
 
