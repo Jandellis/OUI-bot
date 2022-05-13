@@ -1,3 +1,6 @@
+package bot;
+
+import action.Welcome;
 import discord4j.common.util.Snowflake;
 import discord4j.core.DiscordClient;
 import discord4j.core.GatewayDiscordClient;
@@ -36,7 +39,7 @@ public class Bot {
 
     public static void main(String[] args) {
         DiscordClient client;
-        Config config = new Config();
+        Config config = Config.getInstance();
 
         //OUI-Bot-test
         client = DiscordClient.create(config.get("client"));
@@ -76,7 +79,6 @@ public class Bot {
                         return Mono.empty();
                     }).then();
 
-
                     // combine them!
                     return printOnLogin.and(handlePingCommand)
                             .and(input(gateway))
@@ -88,7 +90,8 @@ public class Bot {
                             .and(giveaway(gateway))
                             .and(giveawayMembers(gateway, client))
                             .and(giveawayTotal(gateway))
-                            .and(welcome(gateway, client));
+                            .and(new Welcome().action(gateway, client));
+
                 });
 
                 login.block();
@@ -733,56 +736,5 @@ public class Bot {
         }).then();
     }
 
-    private static Mono<Void> welcome(GatewayDiscordClient gateway, DiscordClient client) {
-
-        //watch for new users
-        return gateway.on(MessageCreateEvent.class, event -> {
-            Message message = event.getMessage();
-            String param = "accept";
-
-
-            if (message.getContent().toLowerCase().startsWith(param)) {
-                System.out.println(message.getContent());
-                System.out.println(message.getContent().replaceAll(param + " ", ""));
-
-                String temp = message.getContent().replaceAll(param + " ", "");
-                String action = temp.split(" ")[0];
-                System.out.println("action " + action);
-
-                if (!message.getAuthor().isPresent()){
-
-                    System.out.println("no author!!! " + action);
-                } else {
-                    User author = message.getAuthor().get();
-
-
-                    client.getGuildById(Snowflake.of(guildId)).addMemberRole(
-                            author.getId(),
-                            Snowflake.of(chefRole),
-                            "welcome").block();
-
-                    System.out.println("Member joined " + author.getId().asString());
-                    StringBuilder sb = new StringBuilder();
-                    sb.append("Welcome to OUI you now have access to the command `!ot` and an extra daily task in `!g`. You also should have some free menu slots.\r\n");
-                    sb.append("Please follow our rules <#840895366287065099> and look at <#887022305581092904> to see what each channel is for.\r\n");
-                    sb.append("If you have any questions reach out to a recruiter and they can help you out.");
-
-
-//                                author.getPrivateChannel().flatMap(c -> c.createMessage(spec -> spec.setContent(sb.toString()))).block();
-
-
-                    author.getPrivateChannel().flatMap(channel -> {
-                        System.out.println("got DM channel");
-                        channel.createMessage(sb.toString()).block();
-                        System.out.println("sent DM");
-                        return Mono.empty();
-                    }).block();
-                }
-
-            }
-
-            return Mono.empty();
-        }).then();
-    }
 
 }
