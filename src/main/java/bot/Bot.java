@@ -1,5 +1,7 @@
 package bot;
 
+import action.GiveawayMembers;
+import action.GiveawayTotal;
 import action.Kicked;
 import action.Welcome;
 import discord4j.common.util.Snowflake;
@@ -83,14 +85,14 @@ public class Bot {
                     // combine them!
                     return printOnLogin.and(handlePingCommand)
                             .and(input(gateway))
-                            .and(gift(gateway))
+//                            .and(gift(gateway))
                             .and(report(gateway))
                             .and(warn(gateway, client))
                             .and(hit(gateway, client))
                             .and(new Kicked().action(gateway, client))
                             .and(giveaway(gateway))
-                            .and(giveawayMembers(gateway, client))
-                            .and(giveawayTotal(gateway))
+                            .and(new GiveawayMembers().action(gateway, client))
+                            .and(new GiveawayTotal().action(gateway, client))
                             .and(new Welcome().action(gateway, client));
 
                 });
@@ -139,7 +141,7 @@ public class Bot {
             return Mono.empty();
         }).then();
     }
-
+/*
     private static Mono<Void> gift(GatewayDiscordClient gateway) {
 
         //work out who is in the giveaway list
@@ -198,7 +200,7 @@ public class Bot {
             return Mono.empty();
         }).then();
     }
-
+*/
     private static Mono<Void> report(GatewayDiscordClient gateway) {
 
         //create various report
@@ -444,7 +446,7 @@ public class Bot {
                     List<KickMember> exMembers = new ArrayList<>();
                     try {
                         kickMemberList = Clean.mainNoImport("historic.csv");
-                        exMembers = Clean.kickedMembers();
+                        //exMembers = Clean.kickedMembers();
                         System.out.println("processed data");
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -512,7 +514,7 @@ public class Bot {
                     }
                     for (KickMember kickMember : serverMembers) {
                         if (count < 10) {
-                            client.getChannelById(Snowflake.of(hitThread)).createMessage(kickMember.id.toString()).block();
+                            client.getChannelById(Snowflake.of(hitThread)).createMessage("<@"+kickMember.id.toString()+">").block();
                             count++;
                         }
                     }
@@ -565,7 +567,7 @@ public class Bot {
             return Mono.empty();
         }).then();
     }
-
+/*
     private static Mono<Void> giveawayMembers(GatewayDiscordClient gateway, DiscordClient client) {
 
         //work out who is in the giveaway list
@@ -593,7 +595,7 @@ public class Bot {
                             int worklimit = 50;
                             int votelimit = 7;
                             int otlimit = 30;
-                            gifts = GiftAway.main(null, null, null, worklimit, otlimit, votelimit);
+                            gifts = GiftAway.main(null, null, null, worklimit, otlimit, votelimit, guildId, giveawayRole, client);
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
@@ -655,6 +657,7 @@ public class Bot {
             return Mono.empty();
         }).then();
     }
+  */
     private static Mono<Void> giveawayTotal(GatewayDiscordClient gateway) {
         //work out how much people got in
         return gateway.on(MessageCreateEvent.class, event -> {

@@ -1,5 +1,8 @@
 package bot;
 
+import discord4j.common.util.Snowflake;
+import discord4j.core.DiscordClient;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileReader;
@@ -16,7 +19,7 @@ public class GiftAway {
     static int workTotal = 50;
     static int otTotal = 30;
 
-    public static List<String> main(String work, String ot, String vote, int shifts, int overtimes, int votes) throws Exception {
+    public static List<String> main(String work, String ot, String vote, int shifts, int overtimes, int votes, String guildId, String giveawayRole, DiscordClient client) throws Exception {
         List<String> result = new ArrayList<>();
 
         StringBuilder output = new StringBuilder(""); 
@@ -53,8 +56,18 @@ public class GiftAway {
 
         franchiseMembers.forEach((s, person) -> {
 
-            if (person.getMatchCount() == 3)
-                result.add("\r\n"+person.getName() + ", " + person.getWork()+ ", " + person.getOt()+ ", " + person.getVote());
+            if (person.getMatchCount() == 3) {
+                result.add("\r\n" + person.getName() + ", " + person.getWork() + ", " + person.getOt() + ", " + person.getVote());
+                try {
+                    client.getGuildById(Snowflake.of(guildId)).addMemberRole(
+                            Snowflake.of(person.getNameAsId()),
+                            Snowflake.of(giveawayRole),
+                            "givaway role").block();
+                    System.out.println("Given role to " + person.getName());
+                } catch (Exception e) {
+
+                }
+            }
         });
         StringBuilder match2 = new StringBuilder();
 
@@ -67,8 +80,18 @@ public class GiftAway {
 
         franchiseMembers.forEach((s, person) -> {
 
-            if (person.getMatchCount() == 2)
-                result.add("\r\n"+person.getName() + ", " + person.getWork()+ ", " + person.getOt()+ ", " + person.getVote());
+            if (person.getMatchCount() == 2) {
+                result.add("\r\n" + person.getName() + ", " + person.getWork() + ", " + person.getOt() + ", " + person.getVote());
+                try {
+                    client.getGuildById(Snowflake.of(guildId)).addMemberRole(
+                            Snowflake.of(person.getNameAsId()),
+                            Snowflake.of(giveawayRole),
+                            "givaway role").block();
+                    System.out.println("Given role to " + person.getName());
+                } catch (Exception e) {
+
+                }
+            }
         });
 
         StringBuilder match1 = new StringBuilder();
@@ -81,8 +104,18 @@ public class GiftAway {
 
         franchiseMembers.forEach((s, person) -> {
 
-            if (person.getMatchCount() == 1)
-                result.add("\r\n"+person.getName() + ", " + person.getWork()+ ", " + person.getOt()+ ", " + person.getVote());
+            if (person.getMatchCount() == 1) {
+                result.add("\r\n" + person.getName() + ", " + person.getWork() + ", " + person.getOt() + ", " + person.getVote());
+                try {
+                    client.getGuildById(Snowflake.of(guildId)).removeMemberRole(
+                            Snowflake.of(person.getNameAsId()),
+                            Snowflake.of(giveawayRole),
+                            "givaway role").block();
+                    System.out.println("Removed role from " + person.getName());
+                } catch (Exception e) {
+
+                }
+            }
         });
 
 
@@ -96,8 +129,18 @@ public class GiftAway {
 
         franchiseMembers.forEach((s, person) -> {
 
-            if (person.getMatchCount() == 0)
-                result.add("\r\n"+person.getName() + ", " + person.getWork()+ ", " + person.getOt()+ ", " + person.getVote());
+            if (person.getMatchCount() == 0) {
+                result.add("\r\n" + person.getName() + ", " + person.getWork() + ", " + person.getOt() + ", " + person.getVote());
+                try {
+                    client.getGuildById(Snowflake.of(guildId)).removeMemberRole(
+                            Snowflake.of(person.getNameAsId()),
+                            Snowflake.of(giveawayRole),
+                            "givaway role").block();
+                    System.out.println("Removed role from " + person.getName());
+                } catch (Exception e) {
+
+                }
+            }
         });
 
         return result;
@@ -294,6 +337,10 @@ class Person {
 
     public String getName() {
         return name;
+    }
+
+    public String getNameAsId() {
+        return name.replace("<@", "").replace(">", "");
     }
 
     public void setName(String name) {

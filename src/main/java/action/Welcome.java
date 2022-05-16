@@ -23,11 +23,9 @@ public class Welcome extends Action {
     }
 
     @Override
-    public Mono<Void> action(GatewayDiscordClient gateway, DiscordClient client) {
+    protected Mono<Object> doAction(Message message) {
 
         //watch for new users
-        return gateway.on(MessageCreateEvent.class, event -> {
-            Message message = event.getMessage();
             String action = getAction(message);
             if (action != null) {
                 if (!message.getAuthor().isPresent()) {
@@ -54,6 +52,5 @@ public class Welcome extends Action {
             }
 
             return Mono.empty();
-        }).then();
     }
 }
