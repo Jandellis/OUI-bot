@@ -1,8 +1,11 @@
 package bot;
 
+import action.GiveawayAdd;
 import action.GiveawayMembers;
 import action.GiveawayTotal;
+import action.Hit;
 import action.Kicked;
+import action.Warn;
 import action.Welcome;
 import discord4j.common.util.Snowflake;
 import discord4j.core.DiscordClient;
@@ -87,10 +90,10 @@ public class Bot {
                             .and(input(gateway))
 //                            .and(gift(gateway))
                             .and(report(gateway))
-                            .and(warn(gateway, client))
-                            .and(hit(gateway, client))
+                            .and(new Warn().action(gateway, client))
+                            .and(new Hit().action(gateway, client))
                             .and(new Kicked().action(gateway, client))
-                            .and(giveaway(gateway))
+                            .and(new GiveawayAdd().action(gateway, client))
                             .and(new GiveawayMembers().action(gateway, client))
                             .and(new GiveawayTotal().action(gateway, client))
                             .and(new Welcome().action(gateway, client));
@@ -309,7 +312,7 @@ public class Bot {
             return Mono.empty();
         }).then();
     }
-
+/*
     private static Mono<Void> warn(GatewayDiscordClient gateway, DiscordClient client) {
 
         //warn users in court and up the warning level
@@ -424,266 +427,16 @@ public class Bot {
             return Mono.empty();
         }).then();
     }
+*/
+//    private static Mono<Void> hit(GatewayDiscordClient gateway, DiscordClient client) {
+//
+//        //create hit list
+//        return gateway.on(MessageCreateEvent.class, event -> {
+//            Message message = event.getMessage();
+//        }).then();
+//
+//    }
 
-    private static Mono<Void> hit(GatewayDiscordClient gateway, DiscordClient client) {
-
-        //create hit list
-        return gateway.on(MessageCreateEvent.class, event -> {
-            Message message = event.getMessage();
-            String param = "ouihit";
-
-
-            if (message.getContent().startsWith(param)) {
-                System.out.println(message.getContent());
-                System.out.println(message.getContent().replaceAll(param + " ", ""));
-
-                String action = message.getContent().replaceAll(param + " ", "");
-                System.out.println("action " + action);
-
-                return message.getChannel().flatMap(channel -> {
-
-                    List<KickMember> kickMemberList = new ArrayList<>();
-                    List<KickMember> exMembers = new ArrayList<>();
-                    try {
-                        kickMemberList = Clean.mainNoImport("historic.csv");
-                        //exMembers = Clean.kickedMembers();
-                        System.out.println("processed data");
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-
-                                /*
-                                find members who left
-                                find members who are on final warning and have most days unclean
-                                 */
-                    List<KickMember> serverMembers = new ArrayList<>();
-                    List<KickMember> nonServerMembers = new ArrayList<>();
-                    for (KickMember kickMember : kickMemberList) {
-                        boolean kicked = false;
-                        for (KickMember ex : exMembers) {
-                            if (ex.id == kickMember.id) {
-                                kicked = true;
-                                break;
-                            }
-                        }
-                        if (kicked) {
-                            continue;
-                        }
-
-                        MemberData memberData = null;
-                        try {
-
-                            System.out.println("checking member " + kickMember.id);
-                            memberData = client.getMemberById(Snowflake.of(guildId), Snowflake.of(kickMember.id)).getData().block();
-
-                            memberData.roles().forEach(id -> {
-                                if (id.asLong() == finalWarning)
-                                    serverMembers.add(kickMember);
-                            });
-
-                        } catch (ClientException e) {
-                            //user left the server
-                            System.out.println("user left the server " + kickMember.id);
-                            nonServerMembers.add(kickMember);
-                        }
-                    }
-                    serverMembers.sort((o1, o2) -> {
-                        if (o1.daysUnhappy == o2.daysUnhappy)
-                            return 0;
-                        if (o1.daysUnhappy < o2.daysUnhappy)
-                            return 1;
-                        else
-                            return -1;
-                    });
-                    //post to thread
-                    StringBuilder hitlist = new StringBuilder();
-                    hitlist.append("**Please check happiness and delete after kick** \r\n");
-                    hitlist.append("**Kick from top down** \r\n");
-                    client.getChannelById(Snowflake.of(hitThread)).createMessage(hitlist.toString()).block();
-
-                    int count = 0;
-
-                    for (KickMember kickMember : nonServerMembers) {
-                        if (count < 10) {
-                            if (kickMember.daysNoWork > 4 || kickMember.daysUnhappy > 4) {
-//                                            channel.createMessage(kickMember.id.toString()).block();
-                                client.getChannelById(Snowflake.of(hitThread)).createMessage(kickMember.id.toString()).block();
-                                count++;
-                            }
-                        }
-                    }
-                    for (KickMember kickMember : serverMembers) {
-                        if (count < 10) {
-                            client.getChannelById(Snowflake.of(hitThread)).createMessage("<@"+kickMember.id.toString()+">").block();
-                            count++;
-                        }
-                    }
-
-
-                    return channel.createMessage("Done");
-                });
-            }
-
-            return Mono.empty();
-        }).then();
-
-    }
-
-    private static Mono<Void> giveaway(GatewayDiscordClient gateway) {
-
-        //work out how much people got in
-        return gateway.on(MessageCreateEvent.class, event -> {
-            Message message = event.getMessage();
-
-            if (message.getChannelId().asString().equals(giveawayChannel)) {
-                if (message.getAuthor().get().getId().asString().equals(tacoBot)) {
-
-                    for (Embed embed : message.getEmbeds()) {
-
-                        String line = embed.getDescription().get();
-
-                        if (line.contains(" You have sent a gift of `$")) {
-
-                            String amount = line.replace(" You have sent a gift of `", "");
-                            int index = amount.indexOf("$");
-                            amount = amount.substring(index + 1);
-                            amount = amount.replace(",", "");
-                            String[] split = amount.split("` to ");
-                            amount = split[0];
-                            try {
-                                Clean.addGift(Integer.parseInt(amount));
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                        }
-
-
-                        System.out.println(embed.getData());
-                    }
-
-                }
-            }
-
-            return Mono.empty();
-        }).then();
-    }
-/*
-    private static Mono<Void> giveawayMembers(GatewayDiscordClient gateway, DiscordClient client) {
-
-        //work out who is in the giveaway list
-        return gateway.on(MessageCreateEvent.class, event -> {
-            Message message = event.getMessage();
-            String param = "gifts";
-
-            if (message.getContent().toLowerCase().startsWith(param)) {
-                System.out.println(message.getContent());
-                System.out.println(message.getContent().replaceAll(param + " ", ""));
-                String action = message.getContent().replaceAll(param + " ", "");
-
-                if (action.equals("reset")) {
-                    try {
-                        GiftAway.reset();
-                        return message.getChannel().flatMap(channel -> channel.createMessage("reset"));
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-
-                } else if (action.equals("export")) {
-                    return message.getChannel().flatMap(channel -> {
-                        List<String> gifts = new ArrayList<>();
-                        try {
-                            int worklimit = 50;
-                            int votelimit = 7;
-                            int otlimit = 30;
-                            gifts = GiftAway.main(null, null, null, worklimit, otlimit, votelimit, guildId, giveawayRole, client);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                        StringBuilder sb = new StringBuilder();
-                        int count = 0;
-                        RestChannel giveawayThread = client.getChannelById(Snowflake.of("891902065566183484"));
-
-                        for (String giftString : gifts) {
-                            sb.append(giftString);
-                            count++;
-                            if (count == 30) {
-
-                                String output = sb.toString();
-                                System.out.println(output);
-                                giveawayThread.createMessage(output).block();
-                                System.out.println("+++++++");
-                                sb = new StringBuilder();
-                                count = 0;
-                            }
-                        }
-
-                        String output = sb.toString();
-                        System.out.println(output);
-                        giveawayThread.createMessage(output).block();
-
-                        return Mono.empty();
-                    });
-
-                } else {
-
-                    Snowflake messageId = Snowflake.of(message.getContent().replaceAll(param + " ", ""));
-                    System.out.println("message id " + messageId);
-                    return message.getChannel().flatMap(channel -> {
-                        Message data = channel.getMessageById(messageId).block();
-                        for (Embed embed : data.getEmbeds()) {
-                            String title = embed.getAuthor().get().getData().name().get();
-                            String desc = embed.getDescription().get();
-
-                            try {
-                                if (title.contains("Shifts")) {
-                                    GiftAway.addData(desc, "work.csv");
-                                }
-                                if (title.contains("Votes")) {
-                                    GiftAway.addData(desc, "vote.csv");
-                                }
-                                if (title.contains("Overtimes")) {
-                                    GiftAway.addData(desc, "ot.csv");
-                                }
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                            System.out.println(desc);
-                        }
-
-                        return channel.createMessage("Imported Data");
-                    });
-                }
-            }
-            return Mono.empty();
-        }).then();
-    }
-  */
-    private static Mono<Void> giveawayTotal(GatewayDiscordClient gateway) {
-        //work out how much people got in
-        return gateway.on(MessageCreateEvent.class, event -> {
-            Message message = event.getMessage();
-
-            if (message.getChannelId().asString().equals("876714404819918918")) {
-                if (message.getAuthor().get().getId().asString().equals("530082442967646230")) {
-                    if (message.getContent().startsWith("^<@&875881574409859163>")){
-                        int total = 0;
-                        try {
-                            total = Clean.getGift();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                        int finalTotal = total;
-                        String responseMessage = "The total of the last giveaway was $" + String.format("%,d", finalTotal) +
-                                "\r\nIf you would like to help increase this ask a recruiter to become a gifter today!";
-
-                        return message.getChannel().flatMap(channel -> channel.createMessage(responseMessage));
-                    }
-                }
-            }
-
-            return Mono.empty();
-        }).then();
-    }
 
 
 }
