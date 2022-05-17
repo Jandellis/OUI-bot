@@ -18,7 +18,6 @@ public class Warn extends Action {
 
     String guildId;
     Long finalWarning;
-    String hitThread;
     String warnChannel;
 
     Long immunityId;
@@ -29,7 +28,7 @@ public class Warn extends Action {
         param = "ouiwarn";
         guildId = config.get("guildId");
 
-        hitThread = config.get("hitThread");
+        warnChannel = config.get("warnChannel");
         immunityId = Long.parseLong(config.get("immunityId"));
         firstWarning = Long.parseLong(config.get("firstWarning"));
         secondWarning = Long.parseLong(config.get("secondWarning"));
