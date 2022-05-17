@@ -1,5 +1,7 @@
 package bot;
 
+import action.CheapSaucePing;
+import action.CheapSaucePingOld;
 import action.GiveawayAdd;
 import action.GiveawayMembers;
 import action.GiveawayTotal;
@@ -12,22 +14,14 @@ import discord4j.core.DiscordClient;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.event.domain.lifecycle.ReadyEvent;
 import discord4j.core.event.domain.message.MessageCreateEvent;
-import discord4j.core.object.Embed;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.User;
-import discord4j.discordjson.json.AttachmentData;
-import discord4j.discordjson.json.MemberData;
-import discord4j.rest.entity.RestChannel;
-import discord4j.rest.http.client.ClientException;
 import reactor.core.publisher.Mono;
 
-import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class Bot {
 
@@ -96,7 +90,8 @@ public class Bot {
                             .and(new GiveawayAdd().action(gateway, client))
                             .and(new GiveawayMembers().action(gateway, client))
                             .and(new GiveawayTotal().action(gateway, client))
-                            .and(new Welcome().action(gateway, client));
+                            .and(new Welcome().action(gateway, client))
+                            .and(new CheapSaucePing().action(gateway, client));
 
                 });
 
