@@ -24,7 +24,7 @@ public abstract class Action {
     protected abstract Mono<Object> doAction(Message message);
 
     String getAction(Message message) {
-        return getAction(message, param);
+        return getAction(message, param.toLowerCase());
     }
 
     String getAction(Message message, String paramInput) {

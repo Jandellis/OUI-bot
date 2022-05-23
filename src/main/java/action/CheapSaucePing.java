@@ -67,11 +67,11 @@ public class CheapSaucePing extends Action {
                 int difference = sauce.getOldPrice() - sauce.getPrice();
                 String move = " No change";
                 if (difference > 0) {
-                    move = " :chart_with_upwards_trend: up " + difference;
+                    move = " :chart_with_downwards_trend: down " + difference;
                 }
                 if (difference < 0) {
                     difference = difference * -1;
-                    move = " :chart_with_downwards_trend: down " + difference;
+                    move = " :chart_with_upwards_trend: up " + difference;
                 }
 
                 sb.append(" - " + sauce.getSauce().getName() + " $" + price + move + "\r\n");

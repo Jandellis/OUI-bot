@@ -7,6 +7,7 @@ import action.GiveawayMembers;
 import action.GiveawayTotal;
 import action.Hit;
 import action.Kicked;
+import action.SpeedJar;
 import action.Warn;
 import action.Welcome;
 import discord4j.common.util.Snowflake;
@@ -18,6 +19,7 @@ import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.User;
 import reactor.core.publisher.Mono;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -65,6 +67,14 @@ public class Bot {
                                     }))
                             .then();
 
+                    SpeedJar speedJar = new SpeedJar();
+                    speedJar.action(gateway, client);
+                    try {
+                        speedJar.startUp();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
                     Mono<Void> handlePingCommand = gateway.on(MessageCreateEvent.class, event -> {
                         Message message = event.getMessage();
 
@@ -91,7 +101,8 @@ public class Bot {
                             .and(new GiveawayMembers().action(gateway, client))
                             .and(new GiveawayTotal().action(gateway, client))
                             .and(new Welcome().action(gateway, client))
-                            .and(new CheapSaucePing().action(gateway, client));
+                            .and(new CheapSaucePing().action(gateway, client))
+                            .and(new SpeedJar().action(gateway, client));
 
                 });
 
