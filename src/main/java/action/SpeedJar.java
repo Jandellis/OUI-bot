@@ -66,7 +66,7 @@ public class SpeedJar extends Action {
 
                     return message.getChannel().flatMap(channel -> {
 
-                        runLock(13);
+                        runLock(12);
                         runUnlock(690);
                         return channel.createMessage("<@&" + speedJarPing + "> starting now!");
                     });
