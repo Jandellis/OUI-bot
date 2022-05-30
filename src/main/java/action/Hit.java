@@ -8,9 +8,17 @@ import discord4j.discordjson.json.MemberData;
 import discord4j.rest.http.client.ClientException;
 import reactor.core.publisher.Mono;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Hit extends Action {
 
@@ -33,6 +41,12 @@ public class Hit extends Action {
         String action = getAction(message);
         if (action != null) {
             return message.getChannel().flatMap(channel -> {
+                channel.createMessage("creating hitlist...").block();
+                try {
+                    deleteOldMessages();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
 
                 List<KickMember> kickMemberList = new ArrayList<>();
                 List<KickMember> exMembers = new ArrayList<>();
@@ -91,24 +105,32 @@ public class Hit extends Action {
                 StringBuilder hitlist = new StringBuilder();
                 hitlist.append("**Please check happiness and delete after kick** \r\n");
                 hitlist.append("**Kick from top down** \r\n");
-                client.getChannelById(Snowflake.of(hitThread)).createMessage(hitlist.toString()).block();
+                String hitHeader = client.getChannelById(Snowflake.of(hitThread)).createMessage(hitlist.toString()).block().id().asString();
 
                 int count = 0;
+                HashMap<Long, String> hitMessages = new HashMap<>();
 
                 for (KickMember kickMember : nonServerMembers) {
                     if (count < 10) {
                         if (kickMember.getDaysNoWork() > 4 || kickMember.getDaysNoWork() > 4) {
 //                                            channel.createMessage(kickMember.id.toString()).block();
-                            client.getChannelById(Snowflake.of(hitThread)).createMessage(kickMember.getId().toString()).block();
+                            String messageId = client.getChannelById(Snowflake.of(hitThread)).createMessage(kickMember.getId().toString()).block().id().asString();
+                            hitMessages.put(kickMember.getId(), messageId);
                             count++;
                         }
                     }
                 }
                 for (KickMember kickMember : serverMembers) {
                     if (count < 10) {
-                        client.getChannelById(Snowflake.of(hitThread)).createMessage("<@"+kickMember.getId().toString()+">").block();
+                        String messageId = client.getChannelById(Snowflake.of(hitThread)).createMessage("<@"+kickMember.getId().toString()+">").block().id().asString();
+                        hitMessages.put(kickMember.getId(), messageId);
                         count++;
                     }
+                }
+                try {
+                    saveIds(hitHeader, hitMessages);
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
 
 
@@ -117,5 +139,31 @@ public class Hit extends Action {
         }
 
         return Mono.empty();
+    }
+
+    private void saveIds(String header, HashMap<Long, String> ids) throws IOException {
+        BufferedWriter bwKick = new BufferedWriter(new FileWriter("hitlist.txt"));
+        bwKick.write(","+header);
+        for (Map.Entry<Long, String> entry : ids.entrySet()) {
+            Long memberId = entry.getKey();
+            String messageId = entry.getValue();
+            bwKick.newLine();
+            bwKick.write(memberId + "," + messageId);
+        }
+        bwKick.close();
+    }
+
+    private void deleteOldMessages() throws IOException {
+        BufferedReader br = new BufferedReader(new FileReader(new File("hitlist.txt")));
+        String line;
+        while ((line = br.readLine()) != null) {
+            try {
+                client.getChannelById(Snowflake.of(hitThread)).message(Snowflake.of(line.split(",")[1])).delete("old Message").block();
+            } catch (Exception e) {
+                System.out.println("message already deleted");
+
+            }
+        }
+        br.close();
     }
 }
