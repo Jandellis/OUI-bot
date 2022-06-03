@@ -1,6 +1,7 @@
 package action;
 
 import bot.Clean;
+import bot.KickList;
 import discord4j.common.util.Snowflake;
 import discord4j.core.object.entity.Message;
 import discord4j.discordjson.json.MemberData;
@@ -12,7 +13,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 
-public class Kicked extends Action {
+public class Test extends Action {
 
 
     String guildId;
@@ -20,9 +21,8 @@ public class Kicked extends Action {
     String hitThread;
     Long recruiter;
 
-    public Kicked() {
-        param = "!f kick";
-        param2 = "! f kick";
+    public Test() {
+        param = "testing";
         guildId = config.get("guildId");
         hitThread = config.get("hitThread");
         recruiter = Long.parseLong(config.get("recruiter"));
@@ -39,33 +39,12 @@ public class Kicked extends Action {
 
 
         if (action != null) {
-            String finalAction = action;
+            Snowflake messageId = Snowflake.of(action);
+
             return message.getChannel().flatMap(channel -> {
+                Message data = channel.getMessageById(messageId).block();
 
-                try {
-                    Clean.kickMember(finalAction);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                System.out.println("Member kicked " + finalAction);
-
-                MemberData memberData;
-                try {
-                    deleteOldMessages(finalAction);
-
-                    memberData = client.getMemberById(Snowflake.of(guildId), Snowflake.of(finalAction)).getData().block();
-
-                    memberData.roles().forEach(id -> {
-                        System.out.println("Removed role " + id);
-                        client.getGuildById(Snowflake.of(guildId)).removeMemberRole(
-                                Snowflake.of(finalAction),
-                                Snowflake.of(id),
-                                "user kicked").block();
-                    });
-                } catch (ClientException | IOException e) {
-                    System.out.println("user left the server " + finalAction);
-                }
-                return Mono.empty();
+                return channel.createMessage("testing Data");
             });
         }
 

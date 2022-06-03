@@ -23,6 +23,7 @@ public class Warn extends Action {
     Long immunityId;
     Long firstWarning;
     Long secondWarning;
+    Long recruiter;
 
     public Warn() {
         param = "ouiwarn";
@@ -33,6 +34,7 @@ public class Warn extends Action {
         firstWarning = Long.parseLong(config.get("firstWarning"));
         secondWarning = Long.parseLong(config.get("secondWarning"));
         finalWarning = Long.parseLong(config.get("finalWarning"));
+        recruiter = Long.parseLong(config.get("recruiter"));
     }
 
     @Override
@@ -40,9 +42,10 @@ public class Warn extends Action {
 
         //warn users in court and up the warning level
         String action = getAction(message);
-        if (action != null) {
+        if (action != null && hasPermission(message, recruiter)) {
 
             return message.getChannel().flatMap(channel -> {
+                channel.createMessage("doing warnings...").block();
 
                 List<KickMember> kickMemberList = new ArrayList<>();
                 try {

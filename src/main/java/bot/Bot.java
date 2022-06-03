@@ -6,10 +6,15 @@ import action.GiveawayAdd;
 import action.GiveawayMembers;
 import action.GiveawayTotal;
 import action.Hit;
+import action.Import;
 import action.Kicked;
 import action.SpeedJar;
+import action.Test;
 import action.Warn;
 import action.Welcome;
+import action.sm.AddAlert;
+import action.sm.DoAlerts;
+import action.sm.UpdateAlerts;
 import discord4j.common.util.Snowflake;
 import discord4j.core.DiscordClient;
 import discord4j.core.GatewayDiscordClient;
@@ -20,6 +25,11 @@ import discord4j.core.object.entity.User;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -54,6 +64,25 @@ public class Bot {
         secondWarning = Long.parseLong(config.get("secondWarning"));//Purple
         finalWarning = Long.parseLong(config.get("finalWarning"));//Green
         chefRole = Long.parseLong(config.get("chefRole"));//Orange
+
+
+        String url = config.get("url");
+        String user = config.get("user");
+        String password = config.get("password");
+
+        try (Connection con = DriverManager.getConnection(url, user, password);
+             Statement st = con.createStatement();
+             ResultSet rs = st.executeQuery("SELECT VERSION()")) {
+
+            if (rs.next()) {
+                System.out.println("Version -- " + rs.getString(1));
+            }
+
+        } catch (SQLException ex) {
+
+        }
+
+
 
         while (true) {
             try {
@@ -91,8 +120,9 @@ public class Bot {
 
                     // combine them!
                     return printOnLogin.and(handlePingCommand)
-                            .and(input(gateway))
+//                            .and(input(gateway))
 //                            .and(gift(gateway))
+                            .and(new Import().action(gateway,client))
                             .and(report(gateway))
                             .and(new Warn().action(gateway, client))
                             .and(new Hit().action(gateway, client))
@@ -102,7 +132,10 @@ public class Bot {
                             .and(new GiveawayTotal().action(gateway, client))
                             .and(new Welcome().action(gateway, client))
                             .and(new CheapSaucePing().action(gateway, client))
-                            .and(new SpeedJar().action(gateway, client));
+                            .and(new SpeedJar().action(gateway, client))
+                            .and(new AddAlert().action(gateway, client))
+                            .and(new DoAlerts().action(gateway, client))
+                            .and(new UpdateAlerts().action(gateway,client));
 
                 });
 
@@ -116,7 +149,7 @@ public class Bot {
         }
     }
 
-
+/*
     private static Mono<Void> input(GatewayDiscordClient gateway) {
         return gateway.on(MessageCreateEvent.class, event -> {
             Message message = event.getMessage();
@@ -150,7 +183,7 @@ public class Bot {
             return Mono.empty();
         }).then();
     }
-/*
+
     private static Mono<Void> gift(GatewayDiscordClient gateway) {
 
         //work out who is in the giveaway list
@@ -217,7 +250,7 @@ public class Bot {
             Message message = event.getMessage();
             String param = "ouireport";
 
-            if (message.getContent().startsWith(param)) {
+            if (message.getContent().startsWith(param) ) {
                 System.out.println(message.getContent());
                 System.out.println(message.getContent().replaceAll(param + " ", ""));
 

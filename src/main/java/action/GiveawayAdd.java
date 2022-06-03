@@ -41,8 +41,9 @@ public class GiveawayAdd extends Action {
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
+                        System.out.println("Added to gift");
+                        System.out.println(embed.getData());
                     }
-                    System.out.println(embed.getData());
                 }
 
             }

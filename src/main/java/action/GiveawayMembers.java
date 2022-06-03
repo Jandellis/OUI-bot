@@ -15,17 +15,19 @@ public class GiveawayMembers extends Action {
 
     String guildId;
     String giveawayRole;
+    Long recruiter;
     public GiveawayMembers() {
         guildId = config.get("guildId");
         giveawayRole = config.get("giveawayRole");
         param = "gifts";
+        recruiter = Long.parseLong(config.get("recruiter"));
     }
 
     @Override
     protected Mono<Object> doAction(Message message) {
 
         String action = getAction(message);
-        if (action == null) {
+        if (action == null || !hasPermission(message, recruiter)) {
             return Mono.empty();
         }
 

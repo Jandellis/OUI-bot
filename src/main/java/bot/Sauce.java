@@ -18,6 +18,9 @@ public enum Sauce {
     }
 
     public static Sauce getSauce(String name) {
+        if (name.equals("guac")) {
+            name = "guacamole";
+        }
         for (Sauce value : values()) {
             if (name.toLowerCase().contains(value.name))
                 return value;

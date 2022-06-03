@@ -1,33 +1,37 @@
 package action;
 
 import bot.Config;
+import discord4j.common.util.Snowflake;
 import discord4j.core.DiscordClient;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.object.entity.Message;
-import reactor.core.publisher.Flux;
+import discord4j.discordjson.Id;
+import discord4j.discordjson.json.MemberData;
 import reactor.core.publisher.Mono;
 
 public abstract class Action {
 
-    String param;
-    Config config = Config.getInstance();
-    GatewayDiscordClient gateway;
-    DiscordClient client;
+    protected String param;
+    protected Config config = Config.getInstance();
+    protected GatewayDiscordClient gateway;
+    protected DiscordClient client;
+    protected String guildId;
 
     public Mono<Void> action(GatewayDiscordClient gateway, DiscordClient client) {
         this.client = client;
         this.gateway = gateway;
+        guildId = config.get("guildId");
         return gateway.on(MessageCreateEvent.class, event -> doAction(event.getMessage())).then();
     }
 
     protected abstract Mono<Object> doAction(Message message);
 
-    String getAction(Message message) {
+    protected String getAction(Message message) {
         return getAction(message, param.toLowerCase());
     }
 
-    String getAction(Message message, String paramInput) {
+    protected String getAction(Message message, String paramInput) {
         if (message.getContent().toLowerCase().startsWith(paramInput)) {
             System.out.println(message.getContent());
 
@@ -37,5 +41,17 @@ public abstract class Action {
             return action;
         }
         return null;
+    }
+
+    protected boolean hasPermission(Message message, Long role) {
+        MemberData memberData = null;
+
+        memberData = client.getMemberById(Snowflake.of(guildId), message.getAuthor().get().getId()).getData().block();
+
+        for (Id id : memberData.roles()) {
+            if (id.asLong() == role)
+                return true;
+        }
+        return false;
     }
 }

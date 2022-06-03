@@ -26,6 +26,7 @@ public class Hit extends Action {
     String guildId;
     Long finalWarning;
     String hitThread;
+    Long recruiter;
 
     public Hit() {
         param = "ouihit";
@@ -33,13 +34,14 @@ public class Hit extends Action {
 
         finalWarning = Long.parseLong(config.get("finalWarning"));
         hitThread = config.get("hitThread");
+        recruiter = Long.parseLong(config.get("recruiter"));
     }
 
     @Override
     public Mono<Object> doAction(Message message) {
 
         String action = getAction(message);
-        if (action != null) {
+        if (action != null && hasPermission(message, recruiter)) {
             return message.getChannel().flatMap(channel -> {
                 channel.createMessage("creating hitlist...").block();
                 try {
