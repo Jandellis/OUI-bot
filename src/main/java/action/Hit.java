@@ -55,7 +55,7 @@ public class Hit extends Action {
                 try {
                     kickMemberList = Clean.mainNoImport("historic.csv");
                     //exMembers = Clean.kickedMembers();
-                    System.out.println("processed data");
+                    logger.info("processed data");
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -81,7 +81,7 @@ public class Hit extends Action {
                     MemberData memberData = null;
                     try {
 
-                        System.out.println("checking member " + kickMember.getId());
+                        logger.info("checking member " + kickMember.getId());
                         memberData = client.getMemberById(Snowflake.of(guildId), Snowflake.of(kickMember.getId())).getData().block();
 
                         memberData.roles().forEach(id -> {
@@ -91,7 +91,7 @@ public class Hit extends Action {
 
                     } catch (ClientException e) {
                         //user left the server
-                        System.out.println("user left the server " + kickMember.getId());
+                        logger.info("user left the server " + kickMember.getId());
                         nonServerMembers.add(kickMember);
                     }
                 }
@@ -162,7 +162,7 @@ public class Hit extends Action {
             try {
                 client.getChannelById(Snowflake.of(hitThread)).message(Snowflake.of(line.split(",")[1])).delete("old Message").block();
             } catch (Exception e) {
-                System.out.println("message already deleted");
+                logger.info("message already deleted");
 
             }
         }

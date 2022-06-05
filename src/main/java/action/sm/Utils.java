@@ -2,6 +2,8 @@ package action.sm;
 
 import bot.Config;
 import bot.Sauce;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -15,6 +17,7 @@ import java.util.List;
 
 public class Utils {
 
+    protected static final Logger logger = LogManager.getLogger("ouiBot");
 
     static Config config = Config.getInstance();
     static String url = config.get("url");
@@ -23,10 +26,15 @@ public class Utils {
 
 
     public static HashMap<Integer, Integer> loadLast3(Sauce sauce) {
+        String sauceName = sauce.getName();
+        if (sauce == Sauce.guacamole) {
+            sauceName = "guac";
+        }
+
 
         HashMap<Integer, Integer> prices = new HashMap<>();
         try (Connection con = DriverManager.getConnection(url, user, password);
-             PreparedStatement pst = con.prepareStatement("SELECT price, age FROM sm WHERE age < 3 and name = '" + sauce.getName() + "' ORDER BY age ");
+             PreparedStatement pst = con.prepareStatement("SELECT price, age FROM sm WHERE age < 3 and name = '" + sauceName + "' ORDER BY age ");
              ResultSet rs = pst.executeQuery()) {
 
             while (rs.next()) {
@@ -206,7 +214,7 @@ public class Utils {
                             )
                     )) {
                         if (trigger.getType() == AlertType.drop && dropAlerts.contains(watch.getSauce())) {
-                            System.out.println("All ready got this alert");
+                            logger.info("All ready got this alert");
                         } else {
                             if (!sauces.contains(watch.getSauce())) {
                                 sauces.add(watch.getSauce());

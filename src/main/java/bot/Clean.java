@@ -1,5 +1,8 @@
 package bot;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -19,6 +22,7 @@ import java.util.List;
 public class Clean {
 
 
+    protected static final Logger logger = LogManager.getLogger("ouiBot");
     public static KickList main(String url, String historyFile, int work, int unclean) throws Exception {
 
 
@@ -103,13 +107,13 @@ public class Clean {
 
                 try {
                     if (memberHistory != null && (memberHistory.happy <= .5 || memberHistory.shifts == member.shifts)) {
-                        System.out.println("member id " + id + " is unhappy or has 0 shifts");
+                        logger.info("member id " + id + " is unhappy or has 0 shifts");
 
                         LocalDateTime unhappy;
                         LocalDateTime work;
                         //both unhappy and no shifts
                         if (memberHistory.happy <= .5 && memberHistory.shifts == member.shifts) {
-                            System.out.println("member is unhappy and has 0 shifts");
+                            logger.info("member is unhappy and has 0 shifts");
                             unhappy = LocalDateTime.parse(memberHistory.timeUnhappy);
                             work = LocalDateTime.parse(memberHistory.timeNoWork);
                             bw.write(id + "," + member.shifts + "," + member.happy + "," + memberHistory.timeNoWork + "," + memberHistory.timeUnhappy);

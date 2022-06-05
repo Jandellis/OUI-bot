@@ -2,6 +2,8 @@ package bot;
 
 import discord4j.common.util.Snowflake;
 import discord4j.core.DiscordClient;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -14,6 +16,7 @@ import java.util.List;
 
 public class GiftAway {
 
+    protected static final Logger logger = LogManager.getLogger("ouiBot");
     static HashMap<String, Person> franchiseMembers = new HashMap<>();
     static int voteTotal = 7;
     static int workTotal = 50;
@@ -63,7 +66,7 @@ public class GiftAway {
                             Snowflake.of(person.getNameAsId()),
                             Snowflake.of(giveawayRole),
                             "givaway role").block();
-                    System.out.println("Given role to " + person.getName());
+                    logger.info("Given role to " + person.getName());
                 } catch (Exception e) {
 
                 }
@@ -87,7 +90,7 @@ public class GiftAway {
                             Snowflake.of(person.getNameAsId()),
                             Snowflake.of(giveawayRole),
                             "givaway role").block();
-                    System.out.println("Given role to " + person.getName());
+                    logger.info("Given role to " + person.getName());
                 } catch (Exception e) {
 
                 }
@@ -111,7 +114,7 @@ public class GiftAway {
                             Snowflake.of(person.getNameAsId()),
                             Snowflake.of(giveawayRole),
                             "givaway role").block();
-                    System.out.println("Removed role from " + person.getName());
+                    logger.info("Removed role from " + person.getName());
                 } catch (Exception e) {
 
                 }
@@ -136,7 +139,7 @@ public class GiftAway {
                             Snowflake.of(person.getNameAsId()),
                             Snowflake.of(giveawayRole),
                             "givaway role").block();
-                    System.out.println("Removed role from " + person.getName());
+                    logger.info("Removed role from " + person.getName());
                 } catch (Exception e) {
 
                 }

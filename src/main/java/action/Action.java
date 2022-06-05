@@ -8,7 +8,10 @@ import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.object.entity.Message;
 import discord4j.discordjson.Id;
 import discord4j.discordjson.json.MemberData;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import reactor.core.publisher.Mono;
+
 
 public abstract class Action {
 
@@ -17,6 +20,9 @@ public abstract class Action {
     protected GatewayDiscordClient gateway;
     protected DiscordClient client;
     protected String guildId;
+
+    protected static final Logger logger = LogManager.getLogger("ouiBot");
+
 
     public Mono<Void> action(GatewayDiscordClient gateway, DiscordClient client) {
         this.client = client;
@@ -33,11 +39,11 @@ public abstract class Action {
 
     protected String getAction(Message message, String paramInput) {
         if (message.getContent().toLowerCase().startsWith(paramInput)) {
-            System.out.println(message.getContent());
+            logger.info(message.getContent());
 
             String temp = message.getContent().toLowerCase().replaceAll(paramInput + " ", "");
             String action = temp.split(" ")[0];
-            System.out.println("action " + action);
+            logger.info("action " + action);
             return action;
         }
         return null;

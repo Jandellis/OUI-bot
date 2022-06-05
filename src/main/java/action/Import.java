@@ -53,7 +53,7 @@ public class Import extends Action {
                 KickList kickList = new KickList();
                 try {
                     kickList = Clean.main(url, "historic.csv", worklimit, uncleanlimit);
-                    System.out.println("processed data");
+                    logger.info("processed data");
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -84,7 +84,7 @@ public class Import extends Action {
             try {
                 client.getChannelById(Snowflake.of(hitThread)).message(Snowflake.of(line.split(",")[1])).delete("old Message").block();
             } catch (Exception e) {
-                System.out.println("message already deleted");
+                logger.info("message already deleted");
 
             }
         }

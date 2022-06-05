@@ -1,5 +1,8 @@
 package bot;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -8,6 +11,7 @@ import java.util.HashMap;
 public class Giveaway {
 
 
+    protected static final Logger logger = LogManager.getLogger("ouiBot");
 
 
     public static void main(String[] args) throws Exception {
@@ -19,10 +23,10 @@ public class Giveaway {
 
 
 
-        System.out.println("__________________________________________");
+        logger.info("__________________________________________");
 
-        total.forEach((key, value) -> System.out.println("Total gift to "+ key + " is $" + value));
-        System.out.println("__________________________________________");
+        total.forEach((key, value) -> logger.info("Total gift to "+ key + " is $" + value));
+        logger.info("__________________________________________");
 
 
     }

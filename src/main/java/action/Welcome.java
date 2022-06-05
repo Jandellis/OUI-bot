@@ -29,7 +29,7 @@ public class Welcome extends Action {
             String action = getAction(message);
             if (action != null) {
                 if (!message.getAuthor().isPresent()) {
-                    System.out.println("no author!!! " + action);
+                    logger.info("no author!!! " + action);
                 } else {
                     User author = message.getAuthor().get();
                     client.getGuildById(Snowflake.of(guildId)).addMemberRole(
@@ -37,7 +37,7 @@ public class Welcome extends Action {
                             Snowflake.of(chefRole),
                             "welcome").block();
 
-                    System.out.println("Member joined " + author.getId().asString());
+                    logger.info("Member joined " + author.getId().asString());
                     StringBuilder sb = new StringBuilder();
                     sb.append("Welcome to OUI you now have access to the command `!ot` and an extra daily task in `!g`. You also should have some free menu slots.\r\n");
                     sb.append("Please follow our rules <#840895366287065099> and look at <#887022305581092904> to see what each channel is for.\r\n");
@@ -45,7 +45,7 @@ public class Welcome extends Action {
 
                     author.getPrivateChannel().flatMap(channel -> {
                         channel.createMessage(sb.toString()).block();
-                        System.out.println("sent DM");
+                        logger.info("sent DM");
                         return Mono.empty();
                     }).block();
                 }

@@ -33,7 +33,7 @@ public class DoAlerts extends Action {
 
                     String title = embed.getData().author().get().name().get();
                     if (title.contains("Hourly Sauce Market Update")) {
-                        System.out.println("Got SM update - Do Alerts");
+                        logger.info("Got SM update - Do Alerts");
                         HashMap<Sauce, Integer> prices = new HashMap<>();
 
                         String[] sauces = embed.getData().description().get().split("\n\n");
@@ -51,7 +51,7 @@ public class DoAlerts extends Action {
                                 prices.get(Sauce.chipotle));
 
                         for (Alert alert :Utils.loadAlerts()) {
-                            System.out.println(alert);
+                            logger.info(alert);
                             if (alert.type == AlertType.drop) {
                                 HashMap<Integer, Integer> saucePrices = Utils.loadLast3(Sauce.getSauce(alert.getTrigger()));
                                 printDrop(saucePrices, Sauce.getSauce(alert.getTrigger()), alert.getName());
@@ -66,7 +66,7 @@ public class DoAlerts extends Action {
                             }
 
                         }
-                        System.out.println("Finished");
+                        logger.info("Finished");
                     }
                 }
             }
@@ -84,7 +84,7 @@ public class DoAlerts extends Action {
 
         prices.forEach((sauce, price) -> {
             if (priceTrigger > price && price != -1 && sauce.getName().equals(sauceName)) {
-                System.out.println("price is " + price);
+                logger.info("price is " + price);
 
                 sb.append(" - " + sauce.getName() + " $" + price + "\r\n");
                 cheap.set(true);
@@ -94,7 +94,7 @@ public class DoAlerts extends Action {
         if (cheap.get())
             client.getChannelById(Snowflake.of(smChannel)).createMessage(sb.toString()).block();
         else {
-            System.out.println("No low sauce");
+            logger.info("No low sauce");
         }
     }
 
@@ -107,7 +107,7 @@ public class DoAlerts extends Action {
 
         prices.forEach((sauce, price) -> {
             if (priceTrigger < price && price != -1 && sauce.getName().equals(sauceName)) {
-                System.out.println("price is " + price);
+                logger.info("price is " + price);
                 sb.append(" - " + sauce.getName() + " $" + price + "\r\n");
                 cheap.set(true);
             }
@@ -116,7 +116,7 @@ public class DoAlerts extends Action {
         if (cheap.get())
             client.getChannelById(Snowflake.of(smChannel)).createMessage(sb.toString()).block();
         else {
-            System.out.println("No high sauce");
+            logger.info("No high sauce");
         }
     }
 
@@ -130,7 +130,7 @@ public class DoAlerts extends Action {
         Integer hour1 = prices.get(1);
         Integer hour2 = prices.get(2);
 
-        System.out.println("now: " + now +", hour + 1: " + hour1 +", hour + 2:"+ hour2);
+        logger.info("now: " + now +", hour + 1: " + hour1 +", hour + 2:"+ hour2);
 
         if (hour1 == null) {
             hour1 = now;
@@ -157,7 +157,7 @@ public class DoAlerts extends Action {
         if (dropping.get())
             client.getChannelById(Snowflake.of(smChannel)).createMessage(sb.toString()).block();
         else {
-            System.out.println("No dropping sauce");
+            logger.info("No dropping sauce");
         }
     }
 

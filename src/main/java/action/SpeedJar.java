@@ -113,14 +113,14 @@ public class SpeedJar extends Action {
 
             @Override
             public void run() {
-                System.out.println("running lock");
+                logger.info("running lock");
                 lock();
             }
 
         };
 
         LocalDateTime lockTime = LocalDateTime.now().plusMinutes(delay);
-        System.out.println("lock at " + formatter.format(lockTime));
+        logger.info("lock at " + formatter.format(lockTime));
 
 
         try {
@@ -140,14 +140,14 @@ public class SpeedJar extends Action {
 
             @Override
             public void run() {
-                System.out.println("running unlock");
+                logger.info("running unlock");
                 unlock();
             }
 
         };
 
         LocalDateTime unlockTime = LocalDateTime.now().plusMinutes(delay);
-        System.out.println("unlock at " + formatter.format(unlockTime));
+        logger.info("unlock at " + formatter.format(unlockTime));
         try {
             BufferedWriter writer = new BufferedWriter(new FileWriter("unlock.txt"));
             writer.write(formatter.format(unlockTime));

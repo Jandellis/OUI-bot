@@ -50,7 +50,7 @@ public class Warn extends Action {
                 List<KickMember> kickMemberList = new ArrayList<>();
                 try {
                     kickMemberList = Clean.mainNoImport("historic.csv");
-                    System.out.println("processed data");
+                    logger.info("processed data");
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -85,7 +85,7 @@ public class Warn extends Action {
                         inServer = true;
                     } catch (ClientException e) {
                         //member left the server
-                        System.out.println("user left the server " + kickMember.getId());
+                        logger.info("user left the server " + kickMember.getId());
 
                     }
                     boolean warnMember = false;
@@ -131,10 +131,10 @@ public class Warn extends Action {
                 }
 
                 client.getChannelById(Snowflake.of(warnChannel)).createMessage(workList.toString()).block();
-                System.out.println(workList);
+                logger.info(workList);
 
                 client.getChannelById(Snowflake.of(warnChannel)).createMessage(uncleanList.toString()).block();
-                System.out.println(uncleanList);
+                logger.info(uncleanList);
 
 
                 return channel.createMessage("Done");

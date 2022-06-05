@@ -47,7 +47,7 @@ public class Kicked extends Action {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                System.out.println("Member kicked " + finalAction);
+                logger.info("Member kicked " + finalAction);
 
                 MemberData memberData;
                 try {
@@ -56,14 +56,14 @@ public class Kicked extends Action {
                     memberData = client.getMemberById(Snowflake.of(guildId), Snowflake.of(finalAction)).getData().block();
 
                     memberData.roles().forEach(id -> {
-                        System.out.println("Removed role " + id);
+                        logger.info("Removed role " + id);
                         client.getGuildById(Snowflake.of(guildId)).removeMemberRole(
                                 Snowflake.of(finalAction),
                                 Snowflake.of(id),
                                 "user kicked").block();
                     });
                 } catch (ClientException | IOException e) {
-                    System.out.println("user left the server " + finalAction);
+                    logger.info("user left the server " + finalAction);
                 }
                 return Mono.empty();
             });
@@ -81,7 +81,7 @@ public class Kicked extends Action {
                 try {
                     client.getChannelById(Snowflake.of(hitThread)).message(Snowflake.of(lines[1])).delete("old Message").block();
                 } catch ( Exception e) {
-                    System.out.println("message already deleted");
+                    logger.info("message already deleted");
                 }
             }
         }

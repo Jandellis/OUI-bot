@@ -42,11 +42,11 @@ public class GiveawayMembers extends Action {
         } else if (action.equals("export")) {
             return message.getChannel().flatMap(channel -> {
 
-//                System.out.println("Removed giveaway role for all members");
+//                logger.info("Removed giveaway role for all members");
 //                gateway.getGuildMembers(Snowflake.of(guildId)).flatMap(member -> {
 //                    try {
 //                        member.removeRole(Snowflake.of(giveawayRole));
-//                        System.out.println("Removed giveaway role for " + member.getUsername());
+//                        logger.info("Removed giveaway role for " + member.getUsername());
 //                    } catch (Exception e) {
 //
 //                    }
@@ -71,18 +71,18 @@ public class GiveawayMembers extends Action {
                     if (count == 30) {
 
                         String output = sb.toString();
-                        System.out.println(output);
+                        logger.info(output);
                         giveawayThread.createMessage(output).block();
-                        System.out.println("+++++++");
+                        logger.info("+++++++");
                         sb = new StringBuilder();
                         count = 0;
                     }
                 }
 
                 String output = sb.toString();
-                System.out.println(output);
+                logger.info(output);
                 giveawayThread.createMessage(output).block();
-                System.out.println("Finished");
+                logger.info("Finished");
 
                 return channel.createMessage("exported");
             });
@@ -90,7 +90,7 @@ public class GiveawayMembers extends Action {
         } else {
 
             Snowflake messageId = Snowflake.of(message.getContent().replaceAll(param + " ", ""));
-            System.out.println("message id " + messageId);
+            logger.info("message id " + messageId);
             return message.getChannel().flatMap(channel -> {
                 Message data = channel.getMessageById(messageId).block();
                 for (Embed embed : data.getEmbeds()) {
@@ -110,7 +110,7 @@ public class GiveawayMembers extends Action {
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
-                    System.out.println(desc);
+                    logger.info(desc);
                 }
 
                 return channel.createMessage("Imported Data");

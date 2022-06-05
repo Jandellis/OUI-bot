@@ -22,6 +22,8 @@ import discord4j.core.event.domain.lifecycle.ReadyEvent;
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.User;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
@@ -47,6 +49,7 @@ public class Bot {
     static Long secondWarning;
     static Long finalWarning;
     static long chefRole;
+    private static final Logger logger = LogManager.getLogger("ouiBot");
 
 
     public static void main(String[] args) {
@@ -70,12 +73,19 @@ public class Bot {
         String user = config.get("user");
         String password = config.get("password");
 
+//        logger.debug("Debug log message");
+//        logger.info("Info log message");
+//        logger.error("Error log message");
+//        logger.warn("Warn log message");
+//        logger.fatal("Fatal log message");
+//        logger.trace("Trace log message");
+
         try (Connection con = DriverManager.getConnection(url, user, password);
              Statement st = con.createStatement();
              ResultSet rs = st.executeQuery("SELECT VERSION()")) {
 
             if (rs.next()) {
-                System.out.println("Version -- " + rs.getString(1));
+                logger.info("Version -- " + rs.getString(1));
             }
 
         } catch (SQLException ex) {
@@ -92,7 +102,7 @@ public class Bot {
                     Mono<Void> printOnLogin = gateway.on(ReadyEvent.class, event ->
                                     Mono.fromRunnable(() -> {
                                         final User self = event.getSelf();
-                                        System.out.printf("Logged in as %s#%s%n", self.getUsername(), self.getDiscriminator());
+                                        logger.info("Logged in as " + self.getUsername() +" " + self.getDiscriminator());
                                     }))
                             .then();
 
@@ -110,7 +120,7 @@ public class Bot {
                         if (message.getContent().equalsIgnoreCase("!ping")) {
 
                             long time = Duration.between(event.getMessage().getTimestamp(), Instant.now()).toMillis();
-                            System.out.println("got ping " + time);
+                            logger.info("got ping " + time);
                             return message.getChannel()
                                     .flatMap(channel -> channel.createMessage("pong! Latency " + time + "ms"));
                         }
@@ -156,10 +166,10 @@ public class Bot {
             String param = "bbfimport";
 
             if (message.getContent().toLowerCase().startsWith(param)) {
-                System.out.println(message.getContent());
+                logger.info(message.getContent());
 
                 Snowflake messageId = Snowflake.of(message.getContent().toLowerCase().replaceAll(param + " ", ""));
-                System.out.println("message id " + messageId);
+                logger.info("message id " + messageId);
                 int worklimit = 5;
                 int uncleanlimit = 7;
 
@@ -171,7 +181,7 @@ public class Bot {
                     KickList kickList = new KickList();
                     try {
                         kickList = Clean.main(url, "historic.csv", worklimit, uncleanlimit);
-                        System.out.println("processed data");
+                        logger.info("processed data");
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -192,11 +202,11 @@ public class Bot {
             String param = "oldgifts";
 
             if (message.getContent().startsWith(param)) {
-                System.out.println(message.getContent());
-                System.out.println(message.getContent().replaceAll(param + " ", ""));
+                logger.info(message.getContent());
+                logger.info(message.getContent().replaceAll(param + " ", ""));
 
                 Snowflake messageId = Snowflake.of(message.getContent().replaceAll(param + " ", ""));
-                System.out.println("message id " + messageId);
+                logger.info("message id " + messageId);
                 int worklimit = 5;
                 int votelimit = 7;
                 int otlimit = 7;
@@ -231,7 +241,7 @@ public class Bot {
 
                     for (String giftString : gifts) {
 
-                        System.out.println(giftString);
+                        logger.info(giftString);
                         channel.createMessage(giftString).block();
                     }
 
@@ -251,11 +261,11 @@ public class Bot {
             String param = "ouireport";
 
             if (message.getContent().startsWith(param) ) {
-                System.out.println(message.getContent());
-                System.out.println(message.getContent().replaceAll(param + " ", ""));
+                logger.info(message.getContent());
+                logger.info(message.getContent().replaceAll(param + " ", ""));
 
                 String action = message.getContent().replaceAll(param + " ", "");
-                System.out.println("action  " + action);
+                logger.info("action  " + action);
                 int worklimit = 5;
                 int uncleanlimit = 7;
 
@@ -264,7 +274,7 @@ public class Bot {
                     List<KickMember> kickMemberList = new ArrayList<>();
                     try {
                         kickMemberList = Clean.mainNoImport("historic.csv");
-                        System.out.println("processed data");
+                        logger.info("processed data");
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -286,10 +296,10 @@ public class Bot {
                             }
                         }
                         channel.createMessage(workList.toString()).block();
-                        System.out.println(workList);
+                        logger.info(workList);
 
                         channel.createMessage(uncleanList.toString()).block();
-                        System.out.println(uncleanList);
+                        logger.info(uncleanList);
                     }
                     if (action.equals("clean")) {
                         StringBuilder list = new StringBuilder();
@@ -361,18 +371,18 @@ public class Bot {
 
 
             if (message.getContent().startsWith(param)) {
-                System.out.println(message.getContent());
-                System.out.println(message.getContent().replaceAll(param + " ", ""));
+                logger.info(message.getContent());
+                logger.info(message.getContent().replaceAll(param + " ", ""));
 
                 String action = message.getContent().replaceAll(param + " ", "");
-                System.out.println("action " + action);
+                logger.info("action " + action);
 
                 return message.getChannel().flatMap(channel -> {
 
                     List<KickMember> kickMemberList = new ArrayList<>();
                     try {
                         kickMemberList = Clean.mainNoImport("historic.csv");
-                        System.out.println("processed data");
+                        logger.info("processed data");
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -407,7 +417,7 @@ public class Bot {
                             inServer = true;
                         } catch (ClientException e) {
                             //most left the server
-                            System.out.println("user left the server " + kickMember.id);
+                            logger.info("user left the server " + kickMember.id);
 
                         }
                         boolean warnMember = false;
@@ -453,10 +463,10 @@ public class Bot {
                     }
 
                     client.getChannelById(Snowflake.of(warnChannel)).createMessage(workList.toString()).block();
-                    System.out.println(workList);
+                    logger.info(workList);
 
                     client.getChannelById(Snowflake.of(warnChannel)).createMessage(uncleanList.toString()).block();
-                    System.out.println(uncleanList);
+                    logger.info(uncleanList);
 
 
                     return channel.createMessage("Done");
