@@ -6,12 +6,14 @@ public class Alert {
     AlertType type;
     String trigger;
     int price;
+    Drop drop;
 
     public Alert(String name, AlertType type, String trigger, int price) {
         this.name = name;
         this.type = type;
         this.trigger = trigger;
         this.price = price;
+        this.drop = Drop.getDrop(price);
     }
 
     public int getPrice() {
@@ -44,5 +46,9 @@ public class Alert {
 
     public void setTrigger(String trigger) {
         this.trigger = trigger;
+    }
+
+    public Drop getDrop() {
+        return drop;
     }
 }

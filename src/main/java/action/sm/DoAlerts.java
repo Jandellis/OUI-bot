@@ -104,7 +104,7 @@ public class DoAlerts extends Action {
 
         StringBuilder sb = new StringBuilder();
         AtomicBoolean dropping = new AtomicBoolean(false);
-        sb.append("<@" + person + "> " + sauce + " is dropping\r\n");
+        sb.append("<@" + person + "> " + sauce + " is dropping");
 
         Integer now = prices.get(0);
         Integer hour1 = prices.get(1);
@@ -120,13 +120,17 @@ public class DoAlerts extends Action {
         Integer dif = now - hour1;
         Integer dif2 = hour1 - hour2;
 
-        if (dif < -9 || (dif < 0 && dif2 < 0)) {
+        if (dif < -9 ) {
             int drop = dif * -1;
-            //needs some work done
-            int drop2 = (now - hour2) * -1;
-            sb.append(" down $" + drop+ " last hour and $"+ drop2 +" last 2 hours\r\n");
+            sb.append("\r\ndown $" + drop+ " last hour ");
             dropping.set(true);
         }
+        if (dif < 0 && dif2 < 0) {
+            int drop2 = (now - hour2) * -1;
+            sb.append("\r\ndown $"+ drop2 +" last 2 hours");
+            dropping.set(true);
+        }
+
 
         if (dropping.get())
             client.getChannelById(Snowflake.of(smChannel)).createMessage(sb.toString()).block();

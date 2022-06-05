@@ -2,7 +2,8 @@ package action.sm;
 
 public enum AlertType {
     high("high"),
-    drop("drop");
+    drop("drop"),
+    low("low");
 
     private String name;
 

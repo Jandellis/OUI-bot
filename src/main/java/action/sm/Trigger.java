@@ -5,11 +5,13 @@ public class Trigger {
     String name;
     AlertType type;
     int price;
+    Drop drop;
 
     public Trigger(String name, AlertType type, int price) {
         this.name = name;
         this.type = type;
         this.price = price;
+        this.drop = Drop.getDrop(price);
     }
 
     public String getName() {
@@ -34,5 +36,9 @@ public class Trigger {
 
     public void setPrice(int price) {
         this.price = price;
+    }
+
+    public Drop getDrop() {
+        return drop;
     }
 }

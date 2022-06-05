@@ -21,3 +21,9 @@ CREATE TABLE IF NOT EXISTS sm_triggers (
     alert_type VARCHAR(25),
     price int
 );
+
+CREATE TABLE IF NOT EXISTS sm_watch (
+    id serial PRIMARY KEY,
+    name VARCHAR(25),
+    sauce VARCHAR(25)
+);

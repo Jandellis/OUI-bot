@@ -51,7 +51,7 @@ public class UpdateAlerts extends Action {
 
                         Utils.addAlerts(id, sauces);
                         if (sauces.isEmpty()) {
-                            message.getChannel().block().createMessage("Alerts deleted").block();
+                            message.getChannel().block().createMessage("Alerts cleared").block();
                         } else {
                             StringBuilder sb = new StringBuilder("Updated alerts");
                             for (Sauce sauce : sauces) {

@@ -2,14 +2,8 @@ package action.sm;
 
 import action.Action;
 import bot.Sauce;
-import bot.SauceObject;
-import discord4j.common.util.Snowflake;
-import discord4j.core.object.Embed;
 import discord4j.core.object.entity.Message;
 import reactor.core.publisher.Mono;
-
-import java.util.HashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class AddAlert extends Action {
     int startMin;
@@ -18,9 +12,17 @@ public class AddAlert extends Action {
     String bbBot = "801210683483619438";
     String smUpdate = "884718327753211964";
     String cheapPing = "975421913818095656";
-    String param2;
-    String param3;
-    String param4;
+    String paramDrop;
+    String paramDelete;
+    String paramHigh;
+    String paramLow;
+    String parmaAlert;
+    String paramTrigger;
+    String paramHelp;
+
+    String paramWatch;
+    String paramWatchDelete;
+    String paramWatchView;
     String smChannel = "841034380822577182";
 
     public AddAlert() {
@@ -28,40 +30,58 @@ public class AddAlert extends Action {
         cheapPrice = Integer.parseInt(config.get("cheapPrice"));
         smUpdate = config.get("smUpdate");
         cheapPing = config.get("cheapPing");
-        param = "ouiSmDrop";
-        param2 = "ouiSmDelete";
-        param3 = "ouiSmHigh";
-        param4 = "ouiSmAlert";
+        paramDrop = "ouiSmDrop";
+        paramDelete = "ouiSmDelete";
+        paramHigh = "ouiSmHigh";
+        parmaAlert = "ouiSmAlert";
+        paramTrigger = "ouiSmTrigger";
+        paramHelp = "ouiSm";
+
+        paramLow = "ouiSmLow";
+        paramWatch = "ouiSmWatch";
+        paramWatchDelete = "ouiSmWatchDelete";
+        paramWatchView = "ouiSmWatchView";
         smChannel = config.get("smChannel");
     }
 
-    /*
-    look at messagedata.embeds[0].author_value.iconUrl_value
-    https://cdn.discordapp.com/avatars/292839877563908097/17211f5921073e431a0f28f6f4f864be.webp
-
-    292839877563908097 is the id
-
-     */
 
     @Override
     public Mono<Object> doAction(Message message) {
 
-        String action = getAction(message);
+        String action = getAction(message, paramDrop.toLowerCase());
         if (action != null) {
             String userId = message.getAuthor().get().getId().asString();
-            Utils.addTrigger(userId, AlertType.drop, 0);
-            message.getChannel().block().createMessage("I will alert you when your sauces drop").block();
+
+            Drop drop = Drop.getDrop(action);
+            if (drop == null) {
+                drop = Drop.owned;
+            }
+            Utils.addTrigger(userId, AlertType.drop, drop.getPrice());
+            String alert = "";
+            switch (drop) {
+                case both:
+                    alert = "your sauces on your watchlist and that you own";
+                    break;
+                case owned:
+                    alert = "your sauces that you own";
+                    break;
+                case watchlist:
+                    alert = "your sauces on your watchlist";
+                    break;
+            }
+            message.getChannel().block().createMessage("I will alert you when "+alert+" drop").block();
         }
 
-        action = getAction(message, param2.toLowerCase());
+        action = getAction(message, paramDelete.toLowerCase());
         if (action != null) {
             String userId = message.getAuthor().get().getId().asString();
             Utils.deleteAlert(userId);
             Utils.deleteTrigger(userId);
-            message.getChannel().block().createMessage("Alerts deleted").block();
+            Utils.deleteWatch(userId);
+            message.getChannel().block().createMessage("All sm data deleted").block();
         }
 
-        action = getAction(message, param3.toLowerCase());
+        action = getAction(message, paramHigh.toLowerCase());
         if (action != null) {
             String userId = message.getAuthor().get().getId().asString();
             int price;
@@ -75,7 +95,7 @@ public class AddAlert extends Action {
             message.getChannel().block().createMessage("I will alert you when the sauces you own are above $" + price).block();
         }
 
-        action = getAction(message, param4.toLowerCase());
+        action = getAction(message, parmaAlert.toLowerCase());
         if (action != null) {
             String userId = message.getAuthor().get().getId().asString();
             StringBuilder sb = new StringBuilder("Your Alerts");
@@ -85,6 +105,97 @@ public class AddAlert extends Action {
                 if (alert.getPrice() > 0)
                     sb.append(" at $" + alert.getPrice());
             }
+            message.getChannel().block().createMessage(sb.toString()).block();
+        }
+
+        action = getAction(message, paramTrigger.toLowerCase());
+        if (action != null) {
+            String userId = message.getAuthor().get().getId().asString();
+            StringBuilder sb = new StringBuilder("Your Triggers");
+            for (Trigger trigger :Utils.loadTriggers(userId)) {
+                sb.append("\r\n - Trigger " + trigger.getType().getName());
+                if (trigger.getPrice() > 0)
+                    sb.append(" at $" + trigger.getPrice());
+                else {
+                    sb.append(" for " + trigger.getDrop().getName());
+                }
+            }
+            message.getChannel().block().createMessage(sb.toString()).block();
+        }
+
+
+        action = getAction(message, paramLow.toLowerCase());
+        if (action != null) {
+            String userId = message.getAuthor().get().getId().asString();
+            int price;
+            try {
+                price = Integer.parseInt(action);
+            } catch (Exception e) {
+                message.getChannel().block().createMessage("invalid price").block();
+                return Mono.empty();
+            }
+            Utils.addTrigger(userId, AlertType.low, price);
+            message.getChannel().block().createMessage("I will alert you when the sauces on your watchlist are below $" + price).block();
+        }
+
+        action = getAction(message, paramWatchView.toLowerCase());
+        if (action != null) {
+            String userId = message.getAuthor().get().getId().asString();
+            StringBuilder sb = new StringBuilder("Your Watches");
+            for (Watch watch :Utils.loadWatch(userId)) {
+                sb.append("\r\n - " + watch.getSauce().getName());
+            }
+            message.getChannel().block().createMessage(sb.toString()).block();
+        }
+
+        action = getAction(message, paramWatchDelete.toLowerCase());
+        if (action != null) {
+            String userId = message.getAuthor().get().getId().asString();
+            Utils.deleteWatch(userId);
+            message.getChannel().block().createMessage("Watches deleted").block();
+        }
+
+        action = getAction(message, paramWatch.toLowerCase());
+        if (action != null) {
+            String userId = message.getAuthor().get().getId().asString();
+            if (action.equalsIgnoreCase(paramWatch)) {
+                StringBuilder sb = new StringBuilder("Your Watches");
+                for (Watch watch :Utils.loadWatch(userId)) {
+                    sb.append("\r\n - " + watch.getSauce().getName());
+                }
+                message.getChannel().block().createMessage(sb.toString()).block();
+            } else {
+                Sauce sauce = Sauce.getSauce(action);
+                if (sauce == null) {
+                    message.getChannel().block().createMessage("invalid sauce").block();
+                    return Mono.empty();
+                }
+                Utils.addWatch(userId, sauce);
+                message.getChannel().block().createMessage("Added " + sauce + " to watchlist").block();
+            }
+        }
+
+        if (message.getContent().equalsIgnoreCase(paramHelp)) {
+            StringBuilder sb = new StringBuilder("I can help you monitor the price of your sauces. ");
+            sb.append("To set me up, first create some triggers.\r\n");
+            sb.append(" :small_blue_diamond: **"+paramDrop+" <"+Drop.both.getName()+"|"+Drop.owned.getName()+"|"+Drop.watchlist.getName()+"> **- add trigger for price dropping more than $10 in one hour or 2 hours in a row. Example `"+paramDrop+" "+Drop.owned.getName()+"`\r\n");
+            sb.append(" :small_blue_diamond: **"+ paramHigh +" <price>** - add trigger when price hits that. Example `"+ paramHigh +" 150`\r\n");
+            sb.append(" :small_blue_diamond: **"+ paramLow +" <price>** - add trigger when price is lower. Example `"+ paramLow +" 55`\r\n");
+
+            sb.append("\r\nYou can set up some sauces to watch. (only works for "+paramDrop +" and " + paramLow+")\r\n");
+            sb.append(" :small_blue_diamond: **"+ paramWatch +" <sauce>** - add sauce to watch. Example `"+ paramWatch +" pico`\r\n");
+            sb.append("\r\nNow that you have set up your triggers and watchlist everytime you type `!sm list` in <#"+smChannel+"> I will automatically create or delete alerts for the sauces you own and on your watchlist\r\n");
+            sb.append("\r\nExamples:\r\n");
+            sb.append(" :small_orange_diamond: you have 10K of pico and you have a high alert of $150. If the price is $155 I will ping you.\r\n");
+            sb.append(" :small_orange_diamond: you have 10K of pico and you have a dropping alert for owned. If the price drops from $155 to $145 I will ping you again saying the price is dropping.\r\n");
+            sb.append(" :small_orange_diamond: you have 10K of pico and you have a dropping alert for owned. If the price drops from $155 to $149 then $149 to $146 the next hour I will ping you again saying the price is dropping.\r\n");
+            sb.append(" :small_orange_diamond: you have salsa on your watch list you have a dropping alert for watchlist. If the price drops from $90 to $78 I will ping you again saying the price is dropping.\r\n");
+            sb.append(" :small_orange_diamond: you have salsa on your watch list you have a low alert of $61. If the price of salsa is $58 I will ping you.\r\n");
+            sb.append("\r\nOther commands:\r\n");
+            sb.append(" :small_blue_diamond: **"+ paramDelete +"** - delete all triggers, alerts and watchlist\r\n");
+            sb.append(" :small_blue_diamond: **"+ parmaAlert +"** - view your alerts\r\n");
+            sb.append(" :small_blue_diamond: **"+ paramTrigger +"** - view your triggers\r\n");
+            sb.append(" :small_blue_diamond: **"+ paramWatch +"** - view your watchlist\r\n");
             message.getChannel().block().createMessage(sb.toString()).block();
         }
 

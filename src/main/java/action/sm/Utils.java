@@ -159,7 +159,7 @@ public class Utils {
     }
 
 
-    public static void addAlerts(String name, List<Sauce> sauces) {
+    public static List<Sauce> addAlerts(String name, List<Sauce> sauces) {
         deleteAlert(name);
         //delete all old alerts before adding new ones
         try {
@@ -167,6 +167,76 @@ public class Utils {
 
             Statement st = con.createStatement();
             con.setAutoCommit(false);
+
+            List<Watch> watches = Utils.loadWatch(name);
+
+            PreparedStatement pst = con.prepareStatement("SELECT name, alert_type, price FROM sm_triggers  WHERE name = '" + name + "'");
+            ResultSet rs = pst.executeQuery();
+
+            List<Trigger> triggers = new ArrayList<>();
+
+            while (rs.next()) {
+                Trigger trigger = new Trigger(rs.getString(1), AlertType.getAlertType(rs.getString(2)), rs.getInt(3));
+                triggers.add(trigger);
+            }
+            List<Sauce> dropAlerts = new ArrayList<>();
+
+
+            for (Sauce sauce : sauces) {
+                for (Trigger trigger : triggers) {
+                    if (trigger.getType() == AlertType.high || (
+                            trigger.getType() == AlertType.drop && (
+                                    trigger.getDrop() == Drop.both || trigger.getDrop() == Drop.owned
+                            )
+                    )) {
+
+                        if (trigger.getType() == AlertType.drop) {
+                            dropAlerts.add(sauce);
+                        }
+                        st.addBatch("insert into sm_alerts (name, alert_type, trigger, price) " +
+                                "VALUES ('" + name + "', '" + trigger.getType() + "', '" + sauce + "', " + trigger.getPrice() + ")");
+                    }
+                }
+            }
+            for (Watch watch : watches) {
+                for (Trigger trigger : triggers) {
+                    if (trigger.getType() == AlertType.low || (
+                            trigger.getType() == AlertType.drop && (
+                                    trigger.getDrop() == Drop.both || trigger.getDrop() == Drop.watchlist
+                            )
+                    )) {
+                        if (trigger.getType() == AlertType.drop && dropAlerts.contains(watch.getSauce())) {
+                            System.out.println("All ready got this alert");
+                        } else {
+                            if (!sauces.contains(watch.getSauce())) {
+                                sauces.add(watch.getSauce());
+                            }
+
+                            st.addBatch("insert into sm_alerts (name, alert_type, trigger, price) " +
+                                    "VALUES ('" + name + "', '" + trigger.getType() + "', '" + watch.getSauce().getName() + "', " + trigger.getPrice() + ")");
+                        }
+                    }
+                }
+            }
+
+            st.executeBatch();
+            con.commit();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        return sauces;
+
+    }
+
+    public static void addWatchAlerts(String name) {
+
+        //delete all old alerts before adding new ones
+        try {
+            Connection con = DriverManager.getConnection(url, user, password);
+
+            Statement st = con.createStatement();
+            con.setAutoCommit(false);
+            List<Watch> watches = Utils.loadWatch(name);
 
             PreparedStatement pst = con.prepareStatement("SELECT name, alert_type, price FROM sm_triggers  WHERE name = '" + name + "'");
             ResultSet rs = pst.executeQuery();
@@ -178,11 +248,17 @@ public class Utils {
                 triggers.add(trigger);
             }
 
-            for (Sauce sauce : sauces) {
+            for (Watch watch : watches) {
                 for (Trigger trigger : triggers) {
+                    if (trigger.getType() == AlertType.low || (
+                            trigger.getType() == AlertType.drop && (
+                                    trigger.getDrop() == Drop.both || trigger.getDrop() == Drop.watchlist
+                            )
+                    )) {
 
-                    st.addBatch("insert into sm_alerts (name, alert_type, trigger, price) " +
-                            "VALUES ('" + name + "', '" + trigger.getType() + "', '" + sauce + "', " + trigger.getPrice() + ")");
+                        st.addBatch("insert into sm_alerts (name, alert_type, trigger, price) " +
+                                "VALUES ('" + name + "', '" + trigger.getType() + "', '" + watch.getSauce().getName() + "', " + trigger.getPrice() + ")");
+                    }
                 }
             }
 
@@ -191,7 +267,6 @@ public class Utils {
         } catch (SQLException ex) {
             ex.printStackTrace();
         }
-
     }
 
 
@@ -235,4 +310,82 @@ public class Utils {
     }
 
 
+    public static List<Trigger> loadTriggers(String id) {
+        List<Trigger> alerts = new ArrayList<>();
+        try (Connection con = DriverManager.getConnection(url, user, password);
+             PreparedStatement pst = con.prepareStatement("SELECT name, alert_type, price FROM sm_triggers  WHERE name = '" + id + "'");
+             ResultSet rs = pst.executeQuery()) {
+
+            while (rs.next()) {
+                Trigger alert = new Trigger(rs.getString(1), AlertType.getAlertType(rs.getString(2)), rs.getInt(3));
+                alerts.add(alert);
+            }
+
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        return alerts;
+    }
+
+
+
+
+
+
+
+
+    public static void addWatch(String name, Sauce sauce) {
+        try {
+            Connection con = DriverManager.getConnection(url, user, password);
+            Statement st = con.createStatement();
+
+            PreparedStatement pst = con.prepareStatement("SELECT id FROM sm_watch  WHERE name = '" + name + "' AND sauce='" + sauce.getName() + "'");
+            ResultSet rs = pst.executeQuery();
+            int id = -1;
+            while (rs.next()) {
+                id = rs.getInt(1);
+            }
+            if (id == -1) {
+                st.addBatch("insert into sm_watch (name, sauce) " +
+                        "VALUES ('" + name + "', '" + sauce.getName() + "')");
+            }
+            st.executeBatch();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    public static void deleteWatch(String name) {
+        try {
+            Connection con = DriverManager.getConnection(url, user, password);
+
+            Statement st = con.createStatement();
+
+//            con.setAutoCommit(false);
+
+            st.addBatch("DELETE from sm_watch WHERE name = '" + name + "'");
+            st.executeBatch();
+//            con.commit();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+    }
+
+
+    public static List<Watch> loadWatch(String id) {
+        List<Watch> watches = new ArrayList<>();
+        try (Connection con = DriverManager.getConnection(url, user, password);
+             PreparedStatement pst = con.prepareStatement("SELECT name, sauce FROM sm_watch  WHERE name = '" + id + "'");
+             ResultSet rs = pst.executeQuery()) {
+
+            while (rs.next()) {
+                Watch watch = new Watch(rs.getString(1), Sauce.getSauce(rs.getString(2)));
+                watches.add(watch);
+            }
+
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        return watches;
+    }
 }
