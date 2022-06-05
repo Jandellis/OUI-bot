@@ -12,21 +12,15 @@ import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class DoAlerts extends Action {
-    int startMin;
-
-    int cheapPrice = 45;
     String bbBot = "801210683483619438";
-    String smUpdate = "884718327753211964";
-//    String smChannel = "889662502324039690"; //test server
-    String smChannel = "841034380822577182";
-    String cheapPing = "975421913818095656";
+    String smUpdate;
+    String smChannel;
+    String cheapPing;
 
     public DoAlerts() {
-        startMin = 22;
-        cheapPrice = Integer.parseInt(config.get("cheapPrice"));
         smUpdate = config.get("smUpdate");
         cheapPing = config.get("cheapPing");
-//        smChannel = config.get("smChannel");
+        smChannel = config.get("smChannel");
     }
 
 
@@ -57,14 +51,18 @@ public class DoAlerts extends Action {
                                 prices.get(Sauce.chipotle));
 
                         for (Alert alert :Utils.loadAlerts()) {
+                            System.out.println(alert);
                             if (alert.type == AlertType.drop) {
-
                                 HashMap<Integer, Integer> saucePrices = Utils.loadLast3(Sauce.getSauce(alert.getTrigger()));
                                 printDrop(saucePrices, Sauce.getSauce(alert.getTrigger()), alert.getName());
                             }
                             if (alert.type == AlertType.high) {
                                 int price = alert.getPrice();
                                 printHigh(prices, price, alert.getName(), alert.getTrigger());
+                            }
+                            if (alert.type == AlertType.low) {
+                                int price = alert.getPrice();
+                                printLow(prices, price, alert.getName(), alert.getTrigger());
                             }
 
                         }
@@ -77,6 +75,28 @@ public class DoAlerts extends Action {
     }
 
 
+    public void printLow(HashMap<Sauce, Integer> prices, int priceTrigger, String person, String sauceName) {
+
+        StringBuilder sb = new StringBuilder();
+        AtomicBoolean cheap = new AtomicBoolean(false);
+        sb.append("<@" + person + "> price is low\r\n");
+
+
+        prices.forEach((sauce, price) -> {
+            if (priceTrigger > price && price != -1 && sauce.getName().equals(sauceName)) {
+                System.out.println("price is " + price);
+
+                sb.append(" - " + sauce.getName() + " $" + price + "\r\n");
+                cheap.set(true);
+            }
+        });
+
+        if (cheap.get())
+            client.getChannelById(Snowflake.of(smChannel)).createMessage(sb.toString()).block();
+        else {
+            System.out.println("No low sauce");
+        }
+    }
 
     public void printHigh(HashMap<Sauce, Integer> prices, int priceTrigger, String person, String sauceName) {
 
@@ -87,7 +107,7 @@ public class DoAlerts extends Action {
 
         prices.forEach((sauce, price) -> {
             if (priceTrigger < price && price != -1 && sauce.getName().equals(sauceName)) {
-
+                System.out.println("price is " + price);
                 sb.append(" - " + sauce.getName() + " $" + price + "\r\n");
                 cheap.set(true);
             }
@@ -96,7 +116,7 @@ public class DoAlerts extends Action {
         if (cheap.get())
             client.getChannelById(Snowflake.of(smChannel)).createMessage(sb.toString()).block();
         else {
-            System.out.println("No cheap sauce");
+            System.out.println("No high sauce");
         }
     }
 
@@ -109,6 +129,8 @@ public class DoAlerts extends Action {
         Integer now = prices.get(0);
         Integer hour1 = prices.get(1);
         Integer hour2 = prices.get(2);
+
+        System.out.println("now: " + now +", hour + 1: " + hour1 +", hour + 2:"+ hour2);
 
         if (hour1 == null) {
             hour1 = now;
@@ -135,7 +157,7 @@ public class DoAlerts extends Action {
         if (dropping.get())
             client.getChannelById(Snowflake.of(smChannel)).createMessage(sb.toString()).block();
         else {
-            System.out.println("No cheap sauce");
+            System.out.println("No dropping sauce");
         }
     }
 

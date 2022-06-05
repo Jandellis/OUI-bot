@@ -51,4 +51,15 @@ public class Alert {
     public Drop getDrop() {
         return drop;
     }
+
+    @Override
+    public String toString() {
+        return "Alert{" +
+                "name='" + name + '\'' +
+                ", type=" + type +
+                ", trigger='" + trigger + '\'' +
+                ", price=" + price +
+                ", drop=" + drop +
+                '}';
+    }
 }

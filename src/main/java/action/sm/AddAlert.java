@@ -6,12 +6,8 @@ import discord4j.core.object.entity.Message;
 import reactor.core.publisher.Mono;
 
 public class AddAlert extends Action {
-    int startMin;
-
-    int cheapPrice = 45;
-    String bbBot = "801210683483619438";
-    String smUpdate = "884718327753211964";
-    String cheapPing = "975421913818095656";
+    String smUpdate;
+    String cheapPing;
     String paramDrop;
     String paramDelete;
     String paramHigh;
@@ -23,11 +19,9 @@ public class AddAlert extends Action {
     String paramWatch;
     String paramWatchDelete;
     String paramWatchView;
-    String smChannel = "841034380822577182";
+    String smChannel;
 
     public AddAlert() {
-        startMin = 22;
-        cheapPrice = Integer.parseInt(config.get("cheapPrice"));
         smUpdate = config.get("smUpdate");
         cheapPing = config.get("cheapPing");
         paramDrop = "ouiSmDrop";

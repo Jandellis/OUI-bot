@@ -13,20 +13,13 @@ import java.util.List;
 public class UpdateAlerts extends Action {
 
     String tacoBot = "490707751832649738";
-    String smChannel = "841034380822577182";
+    String smChannel ;
 
     public UpdateAlerts() {
         param = "ouiSmDrop";
         smChannel = config.get("smChannel");
     }
 
-    /*
-    look at messagedata.embeds[0].author_value.iconUrl_value
-    292839877563908097/17211f5921073e431a0f28f6f4f864be.webp
-
-    292839877563908097 is the id
-
-     */
 
     @Override
     public Mono<Object> doAction(Message message) {
