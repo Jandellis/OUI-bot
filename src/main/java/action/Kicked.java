@@ -64,6 +64,8 @@ public class Kicked extends Action {
                     });
                 } catch (ClientException | IOException e) {
                     logger.info("user left the server " + finalAction);
+                } catch (Exception e) {
+                    printException(e);
                 }
                 return Mono.empty();
             });
@@ -80,7 +82,7 @@ public class Kicked extends Action {
             if (lines[0].equals(memberId)) {
                 try {
                     client.getChannelById(Snowflake.of(hitThread)).message(Snowflake.of(lines[1])).delete("old Message").block();
-                } catch ( Exception e) {
+                } catch (Exception e) {
                     logger.info("message already deleted");
                 }
             }

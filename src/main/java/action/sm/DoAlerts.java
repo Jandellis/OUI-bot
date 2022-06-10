@@ -30,43 +30,51 @@ public class DoAlerts extends Action {
         if (message.getChannelId().asString().equals(smUpdate)) {
             if (message.getAuthor().get().getId().asString().equals(bbBot)) {
                 for (Embed embed : message.getEmbeds()) {
+                    try {
 
-                    String title = embed.getData().author().get().name().get();
-                    if (title.contains("Hourly Sauce Market Update")) {
-                        logger.info("Got SM update - Do Alerts");
-                        HashMap<Sauce, Integer> prices = new HashMap<>();
+                        String title = embed.getData().author().get().name().get();
+                        if (title.contains("Hourly Sauce Market Update")) {
+                            logger.info("Got SM update - Do Alerts for id " + message.getAuthor().get().getId());
+                            HashMap<Sauce, Integer> prices = new HashMap<>();
 
-                        String[] sauces = embed.getData().description().get().split("\n\n");
-                        for (String sauce : sauces) {
-                            String[] info = sauce.split("\n");
-                            Sauce sauceName = Sauce.getSauce(info[0]);
-                            int price = Integer.parseInt(info[1].replace("$", " ").split("  ")[1]);
+                            String[] sauces = embed.getData().description().get().split("\n\n");
+                            for (String sauce : sauces) {
+                                String[] info = sauce.split("\n");
+                                Sauce sauceName = Sauce.getSauce(info[0]);
+                                int price = Integer.parseInt(info[1].replace("$", " ").split("  ")[1]);
 
-                            prices.put(sauceName, price);
+                                prices.put(sauceName, price);
+                            }
+                            logger.info("Got prices ");
+                            prices.forEach((sauce, price) -> logger.info(sauce.getName() + " at $" + price));
+                            Utils.updatePrices(prices.get(Sauce.pico),
+                                    prices.get(Sauce.guacamole),
+                                    prices.get(Sauce.salsa),
+                                    prices.get(Sauce.hotsauce),
+                                    prices.get(Sauce.chipotle));
+
+                            logger.info("Loading alerts ");
+
+                            for (Alert alert : Utils.loadAlerts()) {
+                                logger.info(alert);
+                                if (alert.type == AlertType.drop) {
+                                    HashMap<Integer, Integer> saucePrices = Utils.loadLast3(Sauce.getSauce(alert.getTrigger()));
+                                    printDrop(saucePrices, Sauce.getSauce(alert.getTrigger()), alert.getName());
+                                }
+                                if (alert.type == AlertType.high) {
+                                    int price = alert.getPrice();
+                                    printHigh(prices, price, alert.getName(), alert.getTrigger());
+                                }
+                                if (alert.type == AlertType.low) {
+                                    int price = alert.getPrice();
+                                    printLow(prices, price, alert.getName(), alert.getTrigger());
+                                }
+
+                            }
+                            logger.info("Finished");
                         }
-                        Utils.updatePrices(prices.get(Sauce.pico),
-                                prices.get(Sauce.guacamole),
-                                prices.get(Sauce.salsa),
-                                prices.get(Sauce.hotsauce),
-                                prices.get(Sauce.chipotle));
-
-                        for (Alert alert :Utils.loadAlerts()) {
-                            logger.info(alert);
-                            if (alert.type == AlertType.drop) {
-                                HashMap<Integer, Integer> saucePrices = Utils.loadLast3(Sauce.getSauce(alert.getTrigger()));
-                                printDrop(saucePrices, Sauce.getSauce(alert.getTrigger()), alert.getName());
-                            }
-                            if (alert.type == AlertType.high) {
-                                int price = alert.getPrice();
-                                printHigh(prices, price, alert.getName(), alert.getTrigger());
-                            }
-                            if (alert.type == AlertType.low) {
-                                int price = alert.getPrice();
-                                printLow(prices, price, alert.getName(), alert.getTrigger());
-                            }
-
-                        }
-                        logger.info("Finished");
+                    } catch (Exception e) {
+                        printException(e);
                     }
                 }
             }

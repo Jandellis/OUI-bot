@@ -11,7 +11,6 @@ import reactor.core.publisher.Mono;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -60,79 +59,84 @@ public class Hit extends Action {
                     e.printStackTrace();
                 }
 
+                try {
+
                                 /*
                                 find members who left
                                 find members who are on final warning and have most days unclean
                                  */
-                List<KickMember> serverMembers = new ArrayList<>();
-                List<KickMember> nonServerMembers = new ArrayList<>();
-                for (KickMember kickMember : kickMemberList) {
-                    boolean kicked = false;
-                    for (KickMember ex : exMembers) {
-                        if (ex.getId() == kickMember.getId()) {
-                            kicked = true;
-                            break;
+                    List<KickMember> serverMembers = new ArrayList<>();
+                    List<KickMember> nonServerMembers = new ArrayList<>();
+                    for (KickMember kickMember : kickMemberList) {
+                        boolean kicked = false;
+                        for (KickMember ex : exMembers) {
+                            if (ex.getId() == kickMember.getId()) {
+                                kicked = true;
+                                break;
+                            }
+                        }
+                        if (kicked) {
+                            continue;
+                        }
+
+                        MemberData memberData = null;
+                        try {
+
+                            logger.info("checking member " + kickMember.getId());
+                            memberData = client.getMemberById(Snowflake.of(guildId), Snowflake.of(kickMember.getId())).getData().block();
+
+                            memberData.roles().forEach(id -> {
+                                if (id.asLong() == finalWarning)
+                                    serverMembers.add(kickMember);
+                            });
+
+                        } catch (ClientException e) {
+                            //user left the server
+                            logger.info("user left the server " + kickMember.getId());
+                            nonServerMembers.add(kickMember);
                         }
                     }
-                    if (kicked) {
-                        continue;
-                    }
+                    serverMembers.sort((o1, o2) -> {
+                        if (o1.getDaysUnhappy() == o2.getDaysUnhappy())
+                            return 0;
+                        if (o1.getDaysUnhappy() < o2.getDaysUnhappy())
+                            return 1;
+                        else
+                            return -1;
+                    });
+                    //post to thread
+                    StringBuilder hitlist = new StringBuilder();
+                    hitlist.append("**Please check happiness and delete after kick** \r\n");
+                    hitlist.append("**Kick from top down** \r\n");
+                    String hitHeader = client.getChannelById(Snowflake.of(hitThread)).createMessage(hitlist.toString()).block().id().asString();
 
-                    MemberData memberData = null;
-                    try {
+                    int count = 0;
+                    HashMap<Long, String> hitMessages = new HashMap<>();
 
-                        logger.info("checking member " + kickMember.getId());
-                        memberData = client.getMemberById(Snowflake.of(guildId), Snowflake.of(kickMember.getId())).getData().block();
-
-                        memberData.roles().forEach(id -> {
-                            if (id.asLong() == finalWarning)
-                                serverMembers.add(kickMember);
-                        });
-
-                    } catch (ClientException e) {
-                        //user left the server
-                        logger.info("user left the server " + kickMember.getId());
-                        nonServerMembers.add(kickMember);
-                    }
-                }
-                serverMembers.sort((o1, o2) -> {
-                    if (o1.getDaysUnhappy() == o2.getDaysUnhappy())
-                        return 0;
-                    if (o1.getDaysUnhappy() < o2.getDaysUnhappy())
-                        return 1;
-                    else
-                        return -1;
-                });
-                //post to thread
-                StringBuilder hitlist = new StringBuilder();
-                hitlist.append("**Please check happiness and delete after kick** \r\n");
-                hitlist.append("**Kick from top down** \r\n");
-                String hitHeader = client.getChannelById(Snowflake.of(hitThread)).createMessage(hitlist.toString()).block().id().asString();
-
-                int count = 0;
-                HashMap<Long, String> hitMessages = new HashMap<>();
-
-                for (KickMember kickMember : nonServerMembers) {
-                    if (count < 10) {
-                        if (kickMember.getDaysNoWork() > 4 || kickMember.getDaysNoWork() > 4) {
+                    for (KickMember kickMember : nonServerMembers) {
+                        if (count < 10) {
+                            if (kickMember.getDaysNoWork() > 4 || kickMember.getDaysNoWork() > 4) {
 //                                            channel.createMessage(kickMember.id.toString()).block();
-                            String messageId = client.getChannelById(Snowflake.of(hitThread)).createMessage(kickMember.getId().toString()).block().id().asString();
+                                String messageId = client.getChannelById(Snowflake.of(hitThread)).createMessage(kickMember.getId().toString()).block().id().asString();
+                                hitMessages.put(kickMember.getId(), messageId);
+                                count++;
+                            }
+                        }
+                    }
+                    for (KickMember kickMember : serverMembers) {
+                        if (count < 10) {
+                            String messageId = client.getChannelById(Snowflake.of(hitThread)).createMessage("<@" + kickMember.getId().toString() + ">").block().id().asString();
                             hitMessages.put(kickMember.getId(), messageId);
                             count++;
                         }
                     }
-                }
-                for (KickMember kickMember : serverMembers) {
-                    if (count < 10) {
-                        String messageId = client.getChannelById(Snowflake.of(hitThread)).createMessage("<@"+kickMember.getId().toString()+">").block().id().asString();
-                        hitMessages.put(kickMember.getId(), messageId);
-                        count++;
+                    try {
+                        saveIds(hitHeader, hitMessages);
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
-                }
-                try {
-                    saveIds(hitHeader, hitMessages);
-                } catch (IOException e) {
-                    e.printStackTrace();
+                } catch (Exception e) {
+                    printException(e);
                 }
 
 
@@ -145,7 +149,7 @@ public class Hit extends Action {
 
     private void saveIds(String header, HashMap<Long, String> ids) throws IOException {
         BufferedWriter bwKick = new BufferedWriter(new FileWriter("hitlist.txt"));
-        bwKick.write(","+header);
+        bwKick.write("," + header);
         for (Map.Entry<Long, String> entry : ids.entrySet()) {
             Long memberId = entry.getKey();
             String messageId = entry.getValue();

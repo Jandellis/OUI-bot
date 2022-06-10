@@ -16,6 +16,8 @@ public class GiveawayMembers extends Action {
     String guildId;
     String giveawayRole;
     Long recruiter;
+    String tacoBot = "490707751832649738";
+
     public GiveawayMembers() {
         guildId = config.get("guildId");
         giveawayRole = config.get("giveawayRole");
@@ -92,28 +94,37 @@ public class GiveawayMembers extends Action {
             Snowflake messageId = Snowflake.of(message.getContent().replaceAll(param + " ", ""));
             logger.info("message id " + messageId);
             return message.getChannel().flatMap(channel -> {
+                String type = "NO DATA!!!! <@"+message.getAuthor().get().getId().asString()+">";
                 Message data = channel.getMessageById(messageId).block();
-                for (Embed embed : data.getEmbeds()) {
-                    String title = embed.getAuthor().get().getData().name().get();
-                    String desc = embed.getDescription().get();
+                if (data.getAuthor().get().getId().asString().equalsIgnoreCase(tacoBot)) {
 
-                    try {
-                        if (title.contains("Shifts")) {
-                            GiftAway.addData(desc, "work.csv");
+
+                    for (Embed embed : data.getEmbeds()) {
+                        String title = embed.getAuthor().get().getData().name().get();
+                        String desc = embed.getDescription().get();
+
+                        try {
+                            if (title.contains("Shifts")) {
+                                GiftAway.addData(desc, "work.csv");
+                                type = "work " + desc.substring(0, 6 );
+                            }
+                            if (title.contains("Votes")) {
+                                GiftAway.addData(desc, "vote.csv");
+                                type = "vote " + desc.substring(0, 6 );
+                            }
+                            if (title.contains("Overtimes")) {
+                                GiftAway.addData(desc, "ot.csv");
+                                type = "overtime " + desc.substring(0, 6 );
+                            }
+                        } catch (IOException e) {
+                            e.printStackTrace();
                         }
-                        if (title.contains("Votes")) {
-                            GiftAway.addData(desc, "vote.csv");
-                        }
-                        if (title.contains("Overtimes")) {
-                            GiftAway.addData(desc, "ot.csv");
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                        logger.info(desc);
                     }
-                    logger.info(desc);
-                }
 
-                return channel.createMessage("Imported Data");
+                    return channel.createMessage("Imported Data - " + type);
+                }
+                return channel.createMessage("Wrong data!! <@"+message.getAuthor().get().getId().asString()+">");
             });
         }
 

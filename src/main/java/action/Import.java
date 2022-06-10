@@ -55,7 +55,7 @@ public class Import extends Action {
                     kickList = Clean.main(url, "historic.csv", worklimit, uncleanlimit);
                     logger.info("processed data");
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    printException(e);
                 }
 
                 return channel.createMessage("Imported Data");

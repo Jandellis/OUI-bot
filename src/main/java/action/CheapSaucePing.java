@@ -28,29 +28,33 @@ public class CheapSaucePing extends Action {
 
     @Override
     public Mono<Object> doAction(Message message) {
-        if (message.getChannelId().asString().equals(smUpdate)) {
-            if (message.getAuthor().get().getId().asString().equals(bbBot)) {
-                for (Embed embed : message.getEmbeds()) {
+        try {
+            if (message.getChannelId().asString().equals(smUpdate)) {
+                if (message.getAuthor().get().getId().asString().equals(bbBot)) {
+                    for (Embed embed : message.getEmbeds()) {
 
-                    String title = embed.getData().author().get().name().get();
-                    if (title.contains("Hourly Sauce Market Update")) {
-                        System.out.println("Got SM update");
-                        HashMap<SauceObject, Integer> prices = new HashMap<>();
+                        String title = embed.getData().author().get().name().get();
+                        if (title.contains("Hourly Sauce Market Update")) {
+                            logger.info("Got SM update");
+                            HashMap<SauceObject, Integer> prices = new HashMap<>();
 
-                        String[] sauces = embed.getData().description().get().split("\n\n");
-                        for (String sauce : sauces) {
-                            String[] info = sauce.split("\n");
-                            Sauce sauceName = Sauce.getSauce(info[0]);
-                            int price = Integer.parseInt(info[1].replace("$", " ").split("  ")[1]);
-                            int oldPrice = Integer.parseInt(info[2].replace("$", " ").split("  ")[1]);
-                            SauceObject sauceObject = new SauceObject(sauceName, oldPrice, price);
-                            prices.put(sauceObject, price);
+                            String[] sauces = embed.getData().description().get().split("\n\n");
+                            for (String sauce : sauces) {
+                                String[] info = sauce.split("\n");
+                                Sauce sauceName = Sauce.getSauce(info[0]);
+                                int price = Integer.parseInt(info[1].replace("$", " ").split("  ")[1]);
+                                int oldPrice = Integer.parseInt(info[2].replace("$", " ").split("  ")[1]);
+                                SauceObject sauceObject = new SauceObject(sauceName, oldPrice, price);
+                                prices.put(sauceObject, price);
+                            }
+                            print(prices);
+                            logger.info("Finished");
                         }
-                        print(prices);
-                        System.out.println("Finished");
                     }
                 }
             }
+        } catch (Exception e) {
+            printException(e);
         }
         return Mono.empty();
     }
@@ -82,7 +86,7 @@ public class CheapSaucePing extends Action {
         if (cheap.get())
             client.getChannelById(Snowflake.of(smUpdate)).createMessage(sb.toString()).block();
         else {
-            System.out.println("No cheap sauce");
+            logger.info("No cheap sauce");
         }
     }
 }

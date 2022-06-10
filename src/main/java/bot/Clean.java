@@ -149,7 +149,7 @@ public class Clean {
                     bw.newLine();
 
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    logger.error("Exception", e);
                 }
         });
 

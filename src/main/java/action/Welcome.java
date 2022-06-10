@@ -1,10 +1,6 @@
 package action;
 
-import bot.Config;
 import discord4j.common.util.Snowflake;
-import discord4j.core.DiscordClient;
-import discord4j.core.GatewayDiscordClient;
-import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.User;
 import reactor.core.publisher.Mono;
@@ -25,7 +21,8 @@ public class Welcome extends Action {
     @Override
     protected Mono<Object> doAction(Message message) {
 
-        //watch for new users
+        try {
+            //watch for new users
             String action = getAction(message);
             if (action != null) {
                 if (!message.getAuthor().isPresent()) {
@@ -51,6 +48,10 @@ public class Welcome extends Action {
                 }
             }
 
-            return Mono.empty();
+        } catch (Exception e) {
+            printException(e);
+        }
+
+        return Mono.empty();
     }
 }

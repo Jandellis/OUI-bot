@@ -42,7 +42,7 @@ public class Utils {
             }
 
         } catch (SQLException ex) {
-            ex.printStackTrace();
+            logger.error("Exception", ex);
         }
         return prices;
 
@@ -72,7 +72,7 @@ public class Utils {
             st.executeBatch();
 
         } catch (SQLException ex) {
-            ex.printStackTrace();
+            logger.error("Exception", ex);
         }
     }
 
@@ -89,7 +89,7 @@ public class Utils {
             return prices;
 
         } catch (SQLException ex) {
-            ex.printStackTrace();
+            logger.error("Exception", ex);
         }
         return null;
 
@@ -108,7 +108,7 @@ public class Utils {
             }
 
         } catch (SQLException ex) {
-            ex.printStackTrace();
+            logger.error("Exception", ex);
         }
         return alerts;
     }
@@ -125,7 +125,7 @@ public class Utils {
             }
 
         } catch (SQLException ex) {
-            ex.printStackTrace();
+            logger.error("Exception", ex);
         }
         return alerts;
     }
@@ -145,7 +145,7 @@ public class Utils {
             st.executeBatch();
 //            con.commit();
         } catch (SQLException ex) {
-            ex.printStackTrace();
+            logger.error("Exception", ex);
         }
 
     }
@@ -162,7 +162,7 @@ public class Utils {
             st.executeBatch();
 //            con.commit();
         } catch (SQLException ex) {
-            ex.printStackTrace();
+            logger.error("Exception", ex);
         }
     }
 
@@ -230,7 +230,7 @@ public class Utils {
             st.executeBatch();
             con.commit();
         } catch (SQLException ex) {
-            ex.printStackTrace();
+            logger.error("Exception", ex);
         }
         return sauces;
 
@@ -273,7 +273,7 @@ public class Utils {
             st.executeBatch();
             con.commit();
         } catch (SQLException ex) {
-            ex.printStackTrace();
+            logger.error("Exception", ex);
         }
     }
 
@@ -297,7 +297,7 @@ public class Utils {
             }
             st.executeBatch();
         } catch (SQLException ex) {
-            ex.printStackTrace();
+            logger.error("Exception", ex);
         }
     }
 
@@ -313,7 +313,7 @@ public class Utils {
             st.executeBatch();
 //            con.commit();
         } catch (SQLException ex) {
-            ex.printStackTrace();
+            logger.error("Exception", ex);
         }
     }
 
@@ -330,7 +330,7 @@ public class Utils {
             }
 
         } catch (SQLException ex) {
-            ex.printStackTrace();
+            logger.error("Exception", ex);
         }
         return alerts;
     }
@@ -359,7 +359,7 @@ public class Utils {
             }
             st.executeBatch();
         } catch (SQLException ex) {
-            ex.printStackTrace();
+            logger.error("Exception", ex);
         }
     }
 
@@ -375,7 +375,7 @@ public class Utils {
             st.executeBatch();
 //            con.commit();
         } catch (SQLException ex) {
-            ex.printStackTrace();
+            logger.error("Exception", ex);
         }
     }
 
@@ -392,7 +392,7 @@ public class Utils {
             }
 
         } catch (SQLException ex) {
-            ex.printStackTrace();
+            logger.error("Exception", ex);
         }
         return watches;
     }

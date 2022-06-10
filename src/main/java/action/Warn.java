@@ -45,96 +45,102 @@ public class Warn extends Action {
         if (action != null && hasPermission(message, recruiter)) {
 
             return message.getChannel().flatMap(channel -> {
-                channel.createMessage("doing warnings...").block();
-
-                List<KickMember> kickMemberList = new ArrayList<>();
                 try {
-                    kickMemberList = Clean.mainNoImport("historic.csv");
-                    logger.info("processed data");
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+                    channel.createMessage("doing warnings...").block();
 
-                int level = Integer.parseInt(action);
-
-
-                StringBuilder workList = new StringBuilder();
-                workList.append("**__Please clean, vote, work & donate.__** \r\n");
-                workList.append("__You have not done work in a while, start doing shifts otherwise you may be kicked__ \r\n");
-                StringBuilder uncleanList = new StringBuilder();
-                uncleanList.append("**__Please clean, vote, work & donate.__** \r\n");
-                uncleanList.append("__Your status is unclean, clean your shack otherwise you may be kicked__ \r\n");
-                for (KickMember kickMember : kickMemberList) {
-                    boolean inServer = false;
-                    AtomicInteger warning = new AtomicInteger();
-                    AtomicBoolean imunity = new AtomicBoolean(false);
-                    MemberData memberData = null;
+                    List<KickMember> kickMemberList = new ArrayList<>();
                     try {
-                        memberData = client.getMemberById(Snowflake.of(guildId), Snowflake.of(kickMember.getId())).getData().block();
-
-                        memberData.roles().forEach(id -> {
-                            if (id.asLong() == immunityId)
-                                imunity.set(true);
-                            if (id.asLong() == firstWarning)
-                                warning.set(1);
-                            if (id.asLong() == secondWarning)
-                                warning.set(2);
-                            if (id.asLong() == finalWarning)
-                                warning.set(3);
-                        });
-                        inServer = true;
-                    } catch (ClientException e) {
-                        //member left the server
-                        logger.info("user left the server " + kickMember.getId());
-
-                    }
-                    boolean warnMember = false;
-                    if (kickMember.getDaysNoWork() >= level && !imunity.get()) {
-                        workList.append("<@" + kickMember.getId() + "> \r\n");
-                        warnMember = true;
-
+                        kickMemberList = Clean.mainNoImport("historic.csv");
+                        logger.info("processed data");
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
 
-                    if (kickMember.getDaysUnhappy() >= level && !imunity.get()) {
-                        uncleanList.append("<@" + kickMember.getId() + "> \r\n");
-                        warnMember = true;
-                    }
+                    int level = Integer.parseInt(action);
 
-                    if (inServer && warnMember) {
-                        if (warning.get() == 0) {
-                            client.getGuildById(Snowflake.of(guildId)).addMemberRole(
-                                    Snowflake.of(kickMember.getId()),
-                                    Snowflake.of(firstWarning),
-                                    "first warning").block();
+
+                    StringBuilder workList = new StringBuilder();
+                    workList.append("**__Please clean, vote, work & donate.__** \r\n");
+                    workList.append("__You have not done work in a while, start doing shifts otherwise you may be kicked__ \r\n");
+                    StringBuilder uncleanList = new StringBuilder();
+                    uncleanList.append("**__Please clean, vote, work & donate.__** \r\n");
+                    uncleanList.append("__Your status is unclean, clean your shack otherwise you may be kicked__ \r\n");
+                    for (KickMember kickMember : kickMemberList) {
+                        boolean inServer = false;
+                        AtomicInteger warning = new AtomicInteger();
+                        AtomicBoolean imunity = new AtomicBoolean(false);
+                        MemberData memberData = null;
+                        try {
+                            memberData = client.getMemberById(Snowflake.of(guildId), Snowflake.of(kickMember.getId())).getData().block();
+
+                            memberData.roles().forEach(id -> {
+                                if (id.asLong() == immunityId)
+                                    imunity.set(true);
+                                if (id.asLong() == firstWarning)
+                                    warning.set(1);
+                                if (id.asLong() == secondWarning)
+                                    warning.set(2);
+                                if (id.asLong() == finalWarning)
+                                    warning.set(3);
+                            });
+                            inServer = true;
+                        } catch (ClientException e) {
+                            //member left the server
+                            logger.info("user left the server " + kickMember.getId());
+
                         }
-                        if (warning.get() == 1) {
-                            client.getGuildById(Snowflake.of(guildId)).addMemberRole(
-                                    Snowflake.of(kickMember.getId()),
-                                    Snowflake.of(secondWarning),
-                                    "second warning").block();
-                            client.getGuildById(Snowflake.of(guildId)).removeMemberRole(
-                                    Snowflake.of(kickMember.getId()),
-                                    Snowflake.of(firstWarning),
-                                    "second warning").block();
+                        boolean warnMember = false;
+                        if (kickMember.getDaysNoWork() >= level && !imunity.get()) {
+                            workList.append("<@" + kickMember.getId() + "> \r\n");
+                            warnMember = true;
+
                         }
-                        if (warning.get() == 2) {
-                            client.getGuildById(Snowflake.of(guildId)).addMemberRole(
-                                    Snowflake.of(kickMember.getId()),
-                                    Snowflake.of(finalWarning),
-                                    "final warning").block();
-                            client.getGuildById(Snowflake.of(guildId)).removeMemberRole(
-                                    Snowflake.of(kickMember.getId()),
-                                    Snowflake.of(secondWarning),
-                                    "final warning").block();
+
+                        if (kickMember.getDaysUnhappy() >= level && !imunity.get()) {
+                            uncleanList.append("<@" + kickMember.getId() + "> \r\n");
+                            warnMember = true;
+                        }
+
+                        if (inServer && warnMember) {
+                            if (warning.get() == 0) {
+                                client.getGuildById(Snowflake.of(guildId)).addMemberRole(
+                                        Snowflake.of(kickMember.getId()),
+                                        Snowflake.of(firstWarning),
+                                        "first warning").block();
+                            }
+                            if (warning.get() == 1) {
+                                client.getGuildById(Snowflake.of(guildId)).addMemberRole(
+                                        Snowflake.of(kickMember.getId()),
+                                        Snowflake.of(secondWarning),
+                                        "second warning").block();
+                                client.getGuildById(Snowflake.of(guildId)).removeMemberRole(
+                                        Snowflake.of(kickMember.getId()),
+                                        Snowflake.of(firstWarning),
+                                        "second warning").block();
+                            }
+                            if (warning.get() == 2) {
+                                client.getGuildById(Snowflake.of(guildId)).addMemberRole(
+                                        Snowflake.of(kickMember.getId()),
+                                        Snowflake.of(finalWarning),
+                                        "final warning").block();
+                                client.getGuildById(Snowflake.of(guildId)).removeMemberRole(
+                                        Snowflake.of(kickMember.getId()),
+                                        Snowflake.of(secondWarning),
+                                        "final warning").block();
+                            }
                         }
                     }
+
+                    client.getChannelById(Snowflake.of(warnChannel)).createMessage(workList.toString()).block();
+                    logger.info(workList);
+
+                    client.getChannelById(Snowflake.of(warnChannel)).createMessage(uncleanList.toString()).block();
+                    logger.info(uncleanList);
+
+                } catch (Exception e) {
+                    printException(e);
+                    return channel.createMessage("Error");
                 }
-
-                client.getChannelById(Snowflake.of(warnChannel)).createMessage(workList.toString()).block();
-                logger.info(workList);
-
-                client.getChannelById(Snowflake.of(warnChannel)).createMessage(uncleanList.toString()).block();
-                logger.info(uncleanList);
 
 
                 return channel.createMessage("Done");

@@ -12,6 +12,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import reactor.core.publisher.Mono;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
+
 
 public abstract class Action {
 
@@ -38,26 +41,55 @@ public abstract class Action {
     }
 
     protected String getAction(Message message, String paramInput) {
-        if (message.getContent().toLowerCase().startsWith(paramInput)) {
-            logger.info(message.getContent());
+        try {
+            if (message.getContent().toLowerCase().startsWith(paramInput)) {
+                logger.info(message.getContent());
 
-            String temp = message.getContent().toLowerCase().replaceAll(paramInput + " ", "");
-            String action = temp.split(" ")[0];
-            logger.info("action " + action);
-            return action;
+                String temp = message.getContent().toLowerCase().replaceAll(paramInput + " ", "");
+                String action = temp.split(" ")[0];
+                logger.info("action " + action);
+                return action;
+            }
+        } catch (Exception e) {
+            printException(e);
         }
         return null;
     }
 
     protected boolean hasPermission(Message message, Long role) {
-        MemberData memberData = null;
+        try {
+            MemberData memberData = null;
 
-        memberData = client.getMemberById(Snowflake.of(guildId), message.getAuthor().get().getId()).getData().block();
+            memberData = client.getMemberById(Snowflake.of(guildId), message.getAuthor().get().getId()).getData().block();
 
-        for (Id id : memberData.roles()) {
-            if (id.asLong() == role)
-                return true;
+            for (Id id : memberData.roles()) {
+                if (id.asLong() == role)
+                    return true;
+            }
+
+        } catch (Exception e) {
+            printException(e);
         }
         return false;
+    }
+
+    protected void printException(Exception e) {
+        logger.error("Exception", e);
+
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        e.printStackTrace(pw);
+        String sStackTrace = sw.toString();
+
+        if (sStackTrace.length() > 1000) {
+            sStackTrace = sStackTrace.substring(0, 999);
+        }
+
+        String finalSStackTrace = sStackTrace;
+        gateway.getUserById(Snowflake.of("292839877563908097")).block().getPrivateChannel().flatMap(channel -> {
+            channel.createMessage("**something broke!!**\r\n\r\n " + finalSStackTrace).block();
+            logger.info("sent DM");
+            return Mono.empty();
+        }).block();
     }
 }

@@ -23,27 +23,30 @@ public class GiveawayAdd extends Action {
 
         if (message.getChannelId().asString().equals(giveawayChannel)) {
             if (message.getAuthor().get().getId().asString().equals(tacoBot)) {
+                try {
+                    for (Embed embed : message.getEmbeds()) {
 
-                for (Embed embed : message.getEmbeds()) {
+                        String line = embed.getDescription().get();
 
-                    String line = embed.getDescription().get();
+                        if (line.contains(" You have sent a gift of `$")) {
 
-                    if (line.contains(" You have sent a gift of `$")) {
-
-                        String amount = line.replace(" You have sent a gift of `", "");
-                        int index = amount.indexOf("$");
-                        amount = amount.substring(index + 1);
-                        amount = amount.replace(",", "");
-                        String[] split = amount.split("` to ");
-                        amount = split[0];
-                        try {
-                            Clean.addGift(Integer.parseInt(amount));
-                        } catch (IOException e) {
-                            e.printStackTrace();
+                            String amount = line.replace(" You have sent a gift of `", "");
+                            int index = amount.indexOf("$");
+                            amount = amount.substring(index + 1);
+                            amount = amount.replace(",", "");
+                            String[] split = amount.split("` to ");
+                            amount = split[0];
+                            try {
+                                Clean.addGift(Integer.parseInt(amount));
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                            logger.info("Added to gift");
+                            logger.info(embed.getData());
                         }
-                        logger.info("Added to gift");
-                        logger.info(embed.getData());
                     }
+                } catch (Exception e) {
+                    printException(e);
                 }
 
             }

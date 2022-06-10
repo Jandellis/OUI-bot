@@ -1,6 +1,5 @@
 package action;
 
-import bot.KickMember;
 import discord4j.common.util.Snowflake;
 import discord4j.core.object.PermissionOverwrite;
 import discord4j.core.object.entity.Message;
@@ -12,15 +11,12 @@ import reactor.core.publisher.Mono;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -59,19 +55,23 @@ public class SpeedJar extends Action {
         //lock in 15min for chef role
         //unlock 11.5h for chef role and send message to recruiter
         //
+        try {
+            if (message.getChannelId().asString().equals(speedJarChannel)) {
+                if (message.getAuthor().get().getId().asString().equals(customerBot)) {
+                    if (message.getContent().contains(param)) {
 
-        if (message.getChannelId().asString().equals(speedJarChannel)) {
-            if (message.getAuthor().get().getId().asString().equals(customerBot)) {
-                if (message.getContent().contains(param)) {
+                        return message.getChannel().flatMap(channel -> {
 
-                    return message.getChannel().flatMap(channel -> {
-
-                        runLock(12);
-                        runUnlock(690);
-                        return channel.createMessage("<@&" + speedJarPing + "> starting now!");
-                    });
+                            runLock(12);
+                            runUnlock(690);
+                            return channel.createMessage("<@&" + speedJarPing + "> starting now!");
+                        });
+                    }
                 }
             }
+
+        } catch (Exception e) {
+            printException(e);
         }
 
         return Mono.empty();
@@ -85,8 +85,15 @@ public class SpeedJar extends Action {
         PermissionOverwrite lock = PermissionOverwrite.forRole(Snowflake.of(everyone), allowed, deined);
         gateway.getGuildById(Snowflake.of(guildId)).block().
                 getChannelById(Snowflake.of(speedJarChannel)).ofType(TopLevelGuildChannel.class).
-                flatMap(guildChannel ->
-                        guildChannel.addRoleOverwrite(Snowflake.of(everyone), lock)
+                flatMap(guildChannel -> {
+                            try {
+                                guildChannel.addRoleOverwrite(Snowflake.of(everyone), lock);
+                            } catch (Exception e) {
+                                printException(e);
+                            }
+
+                            return Mono.empty();
+                        }
                 ).block();
 
         client.getChannelById(Snowflake.of(speedJarChannel)).createMessage("Thanks for playing speed jar, locked channel for 11.5 hours").block();
@@ -100,8 +107,15 @@ public class SpeedJar extends Action {
         PermissionOverwrite lock = PermissionOverwrite.forRole(Snowflake.of(everyone), allowed, deined);
         gateway.getGuildById(Snowflake.of(guildId)).block().
                 getChannelById(Snowflake.of(speedJarChannel)).ofType(TopLevelGuildChannel.class).
-                flatMap(guildChannel ->
-                        guildChannel.addRoleOverwrite(Snowflake.of(everyone), lock)
+                flatMap(guildChannel -> {
+                            try {
+                                guildChannel.addRoleOverwrite(Snowflake.of(everyone), lock);
+                            } catch (Exception e) {
+                                printException(e);
+                            }
+
+                            return Mono.empty();
+                        }
                 ).block();
 
         client.getChannelById(Snowflake.of(speedJarChannel)).createMessage("<@&" + recruiter + "> Speed Jar unlocked").block();
@@ -128,7 +142,7 @@ public class SpeedJar extends Action {
             writer.write(formatter.format(lockTime));
             writer.close();
         } catch (IOException e) {
-            e.printStackTrace();
+            printException(e);
         }
 
 
@@ -153,7 +167,7 @@ public class SpeedJar extends Action {
             writer.write(formatter.format(unlockTime));
             writer.close();
         } catch (IOException e) {
-            e.printStackTrace();
+            printException(e);
         }
         executorService.schedule(taskWrapper, delay, TimeUnit.MINUTES);
     }
@@ -179,12 +193,12 @@ public class SpeedJar extends Action {
 
         LocalDateTime localNow = LocalDateTime.now();
 
-        if (localNow.isBefore(lockTime)){
+        if (localNow.isBefore(lockTime)) {
             long delay = ChronoUnit.MINUTES.between(localNow, lockTime);
             runLock(delay);
         }
 
-        if (localNow.isBefore(unlockTime)){
+        if (localNow.isBefore(unlockTime)) {
             long delay = ChronoUnit.MINUTES.between(localNow, unlockTime);
             runUnlock(delay);
         }
