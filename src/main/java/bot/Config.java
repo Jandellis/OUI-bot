@@ -1,5 +1,6 @@
 package bot;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -22,6 +23,12 @@ public class Config {
     private Config() {
         prop = new Properties();
         String fileName = "app.config";
+        File file = new File(fileName);
+        if (!file.exists()) {
+            fileName = "/home/ubuntu/"+fileName;
+        }
+
+
         try (FileInputStream fis = new FileInputStream(fileName)) {
             prop.load(fis);
         } catch (FileNotFoundException ex) {

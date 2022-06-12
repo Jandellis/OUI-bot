@@ -87,7 +87,8 @@ public class SpeedJar extends Action {
                 getChannelById(Snowflake.of(speedJarChannel)).ofType(TopLevelGuildChannel.class).
                 flatMap(guildChannel -> {
                             try {
-                                guildChannel.addRoleOverwrite(Snowflake.of(everyone), lock);
+                                logger.info("locking channel for " + everyone);
+                                guildChannel.addRoleOverwrite(Snowflake.of(everyone), lock).block();
                             } catch (Exception e) {
                                 printException(e);
                             }
@@ -109,7 +110,7 @@ public class SpeedJar extends Action {
                 getChannelById(Snowflake.of(speedJarChannel)).ofType(TopLevelGuildChannel.class).
                 flatMap(guildChannel -> {
                             try {
-                                guildChannel.addRoleOverwrite(Snowflake.of(everyone), lock);
+                                guildChannel.addRoleOverwrite(Snowflake.of(everyone), lock).block();
                             } catch (Exception e) {
                                 printException(e);
                             }
