@@ -201,6 +201,7 @@ public class SpeedJar extends Action {
 
         if (localNow.isBefore(unlockTime)) {
             long delay = ChronoUnit.MINUTES.between(localNow, unlockTime);
+            delay = delay + 1;
             runUnlock(delay);
         }
 

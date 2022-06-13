@@ -6,6 +6,7 @@ import action.GiveawayMembers;
 import action.GiveawayTotal;
 import action.Hit;
 import action.Import;
+import action.Karen;
 import action.Kicked;
 import action.Left;
 import action.SpeedJar;
@@ -14,6 +15,7 @@ import action.Warn;
 import action.Welcome;
 import action.sm.AddAlert;
 import action.sm.DoAlerts;
+import action.sm.PriceCheck;
 import action.sm.UpdateAlerts;
 import discord4j.common.util.Snowflake;
 import discord4j.core.DiscordClient;
@@ -118,6 +120,9 @@ public class Bot {
                     } catch (IOException e) {
                         logger.error("Exception", e);
                     }
+                    PriceCheck priceCheck = new PriceCheck();
+                    priceCheck.action(gateway, client);
+                    priceCheck.startUp();
 
                     Mono<Void> handlePingCommand = gateway.on(MessageCreateEvent.class, event -> {
                         Message message = event.getMessage();
@@ -149,7 +154,8 @@ public class Bot {
                             .and(new CheapSaucePing().action(gateway, client))
                             .and(new SpeedJar().action(gateway, client))
                             .and(new AddAlert().action(gateway, client))
-                            .and(new DoAlerts().action(gateway, client))
+//                            .and(new DoAlerts().action(gateway, client))
+                            .and(new Karen().action(gateway, client))
                             .and(new Test().action(gateway, client))
                             .and(new Left().action(gateway, client))
                             .and(new UpdateAlerts().action(gateway,client));
