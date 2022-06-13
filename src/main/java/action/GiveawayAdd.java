@@ -3,6 +3,7 @@ package action;
 import bot.Clean;
 import discord4j.core.object.Embed;
 import discord4j.core.object.entity.Message;
+import discord4j.core.object.reaction.ReactionEmoji;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
@@ -43,6 +44,8 @@ public class GiveawayAdd extends Action {
                             }
                             logger.info("Added to gift");
                             logger.info(embed.getData());
+                            message.addReaction(ReactionEmoji.unicode("\uD83D\uDCB0")).block();
+
                         }
                     }
                 } catch (Exception e) {

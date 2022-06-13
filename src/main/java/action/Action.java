@@ -8,6 +8,7 @@ import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.object.entity.Message;
 import discord4j.discordjson.Id;
 import discord4j.discordjson.json.MemberData;
+import discord4j.rest.http.client.ClientException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import reactor.core.publisher.Mono;
@@ -58,16 +59,31 @@ public abstract class Action {
 
     protected boolean hasPermission(Message message, Long role) {
         try {
+
+            return hasPermission(message.getAuthor().get().getId().asString(), role);
+
+        } catch (Exception e) {
+            printException(e);
+        }
+        return false;
+    }
+
+    protected boolean hasPermission(String userId, Long role) {
+        try {
             MemberData memberData = null;
 
-            memberData = client.getMemberById(Snowflake.of(guildId), message.getAuthor().get().getId()).getData().block();
+            memberData = client.getMemberById(Snowflake.of(guildId), Snowflake.of(userId)).getData().block();
 
             for (Id id : memberData.roles()) {
                 if (id.asLong() == role)
                     return true;
             }
 
-        } catch (Exception e) {
+        } catch (ClientException e ){
+            logger.info("Member not in server");
+        }
+        catch (Exception e) {
+
             printException(e);
         }
         return false;

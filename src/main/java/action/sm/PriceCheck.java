@@ -119,6 +119,7 @@ public class PriceCheck extends Action {
                 nextRunTime = LocalDateTime.parse(line, formatter);
             }
             unlockReader.close();
+            logger.info("checking if price check needs to be done");
             if (LocalDateTime.now().isAfter(nextRunTime)) {
                 loadPrices();
             }

@@ -12,10 +12,12 @@ public class Karen extends Action {
 //    String customerBot = "292839877563908097";
 
     String param2;
+    String param3;
 
     public Karen() {
         param = "Someone left a tip for";
         param2 = "feeling a little extra hungry today";
+        param3 = "I want to buy";
         customerChannel = "840942880775471114";
         customerPing = "931599227824517151";
 
@@ -26,14 +28,15 @@ public class Karen extends Action {
         try {
             if (message.getChannelId().asString().equals(customerChannel)) {
                 if (message.getAuthor().get().getId().asString().equals(customerBot)) {
-                    if (message.getContent().contains(param2)) {
+                    if (message.getContent().contains(param2) || message.getContent().contains(param3)) {
+                        logger.info("got sell");
 
                         return message.getChannel().flatMap(channel -> {
                             return channel.createMessage("<@&" + customerPing + "> Karen is here, with sell :speaking_head:");
                         });
                     }
                     if (message.getContent().contains(param)) {
-
+                        logger.info("got unscramble");
                         return message.getChannel().flatMap(channel -> {
                             return channel.createMessage("<@&" + customerPing + "> Karen is here, with unscramble :speaking_head:");
                         });

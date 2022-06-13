@@ -14,6 +14,7 @@ import action.Test;
 import action.Warn;
 import action.Welcome;
 import action.sm.AddAlert;
+import action.sm.CleanUp;
 import action.sm.DoAlerts;
 import action.sm.PriceCheck;
 import action.sm.UpdateAlerts;
@@ -146,7 +147,7 @@ public class Bot {
                             .and(report(gateway))
                             .and(new Warn().action(gateway, client))
                             .and(new Hit().action(gateway, client))
-                            .and(new Kicked().action(gateway, client))
+//                            .and(new Kicked().action(gateway, client))
                             .and(new GiveawayAdd().action(gateway, client))
                             .and(new GiveawayMembers().action(gateway, client))
                             .and(new GiveawayTotal().action(gateway, client))
@@ -158,6 +159,7 @@ public class Bot {
                             .and(new Karen().action(gateway, client))
                             .and(new Test().action(gateway, client))
                             .and(new Left().action(gateway, client))
+                            .and(new CleanUp().action(gateway, client))
                             .and(new UpdateAlerts().action(gateway,client));
 
                 });

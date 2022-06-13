@@ -6,6 +6,11 @@ import discord4j.discordjson.json.MemberData;
 import discord4j.rest.http.client.ClientException;
 import reactor.core.publisher.Mono;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+
 
 public class Left extends Action {
 
@@ -13,11 +18,14 @@ public class Left extends Action {
     String guildId;
     String param2;
     String log;
+    String hitThread;
 
     public Left() {
         param = "has left the franchise!";
+        param2 = "has been kicked from the franchise by";
         guildId = config.get("guildId");
         log = config.get("log");
+        hitThread = config.get("hitThread");
     }
 
     @Override
@@ -27,7 +35,7 @@ public class Left extends Action {
         try {
 
             if (message.getChannelId().asString().equals(log)) {
-                if (message.getContent().contains(param)) {
+                if (message.getContent().contains(param)|| message.getContent().contains(param2)) {
                     logger.info("Left franchise " + message.getContent());
 
                     String memberId = message.getContent().split("`")[1].split("]")[0].substring(1);
@@ -36,6 +44,7 @@ public class Left extends Action {
 
                     MemberData memberData;
                     try {
+                        deleteOldMessages(memberId);
 
                         memberData = client.getMemberById(Snowflake.of(guildId), Snowflake.of(memberId)).getData().block();
 
@@ -58,6 +67,22 @@ public class Left extends Action {
         }
 
         return Mono.empty();
+    }
+
+    private void deleteOldMessages(String memberId) throws IOException {
+        BufferedReader br = new BufferedReader(new FileReader(new File("hitlist.txt")));
+        String line;
+        while ((line = br.readLine()) != null) {
+            String[] lines = line.split(",");
+            if (lines[0].equals(memberId)) {
+                try {
+                    client.getChannelById(Snowflake.of(hitThread)).message(Snowflake.of(lines[1])).delete("old Message").block();
+                } catch (Exception e) {
+                    logger.info("message already deleted");
+                }
+            }
+        }
+        br.close();
     }
 
 }
