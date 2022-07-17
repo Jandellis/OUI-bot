@@ -3,7 +3,7 @@ package action.reminder;
 public enum ReminderType {
     work("work"),
     tips("tips"),
-    ot("ot"),
+    ot("overtime"),
     vote("vote"),
     daily("daily"),
     clean("clean");

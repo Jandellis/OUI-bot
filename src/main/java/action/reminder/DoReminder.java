@@ -77,45 +77,55 @@ public class DoReminder extends Action {
     }
 
     public void startUp(){
+
         logger.info("Creating reminders on reboot");
         for (Reminder reminder: Utils.loadReminder()) {
             runReminder(reminder);
         }
 
-        List<String> watchChannels = new ArrayList<>();
-        watchChannels.add("841034380822577182");
-        AtomicBoolean watched = new AtomicBoolean(false);
+        Runnable taskWrapper = new Runnable() {
 
-        watchChannels.forEach(channelId -> {
+            @Override
+            public void run() {
+                logger.info("checking for missed messages");
 
-            List<MessageData> messageDataList = getMessagesOfChannel(client.getChannelById(Snowflake.of(channelId)));
 
-            for (MessageData messageData : messageDataList) {
-                boolean reacted = false;
-                if (messageData.reactions().toOptional().isPresent()) {
-                    for (ReactionData reaction:  messageData.reactions().get()) {
-                        if (reaction.me()) {
-                            reacted = true;
-                        }
-                    }
+                List<String> watchChannels = new ArrayList<>();
+                watchChannels.add("841034380822577182");
+//              watchChannels.add("889662502324039690");
+
+                watchChannels.forEach(channelId -> {
+
+                    // add error handing around this
+                    List<MessageData> messageDataList = getMessagesOfChannel(client.getChannelById(Snowflake.of(channelId)));
+
+                    for (MessageData messageData : messageDataList) {
+                        boolean reacted = false;
+                        if (messageData.reactions().toOptional().isPresent()) {
+                            for (ReactionData reaction:  messageData.reactions().get()) {
+                                if (reaction.me()) {
+                                    reacted = true;
+                                }
+                            }
 //                //messageData.reactions().get().
 //                "\uD83D\uDC3E"
 //                messageData.reactions().get().get(0).emoji().name().get()
-                }
+                        }
 
-                if (!reacted) {
-                    CreateReminder createReminder = new CreateReminder();
-                    createReminder.action(gateway, client);
+                        if (!reacted) {
+                            CreateReminder createReminder = new CreateReminder();
+                            createReminder.action(gateway, client);
 
-                    createReminder.doAction(gateway.getMessageById(Snowflake.of(channelId), Snowflake.of(messageData.id())).block());
-                }
+                            createReminder.doAction(gateway.getMessageById(Snowflake.of(channelId), Snowflake.of(messageData.id())).block());
+                        }
 
+                    }
+                });
             }
-        });
 
+        };
 
-
-
+        executorService.schedule(taskWrapper, 30, TimeUnit.SECONDS);
 
     }
 
