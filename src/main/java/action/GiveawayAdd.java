@@ -26,25 +26,29 @@ public class GiveawayAdd extends Action {
             if (message.getAuthor().get().getId().asString().equals(tacoBot)) {
                 try {
                     for (Embed embed : message.getEmbeds()) {
+                        if (embed.getDescription().isPresent()) {
 
-                        String line = embed.getDescription().get();
 
-                        if (line.contains(" You have sent a gift of `$")) {
+                            String line = embed.getDescription().get();
 
-                            String amount = line.replace(" You have sent a gift of `", "");
-                            int index = amount.indexOf("$");
-                            amount = amount.substring(index + 1);
-                            amount = amount.replace(",", "");
-                            String[] split = amount.split("` to ");
-                            amount = split[0];
-                            try {
-                                Clean.addGift(Integer.parseInt(amount));
-                            } catch (IOException e) {
-                                e.printStackTrace();
+                            if (line.contains(" You have sent a gift of `$")) {
+
+                                String amount = line.replace(" You have sent a gift of `", "");
+                                int index = amount.indexOf("$");
+                                amount = amount.substring(index + 1);
+                                amount = amount.replace(",", "");
+                                String[] split = amount.split("` to ");
+                                amount = split[0];
+                                try {
+                                    Clean.addGift(Integer.parseInt(amount));
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                                logger.info("Added to gift");
+                                logger.info(embed.getData());
+                                message.addReaction(ReactionEmoji.unicode("\uD83D\uDCB0")).block();
+
                             }
-                            logger.info("Added to gift");
-                            logger.info(embed.getData());
-                            message.addReaction(ReactionEmoji.unicode("\uD83D\uDCB0")).block();
 
                         }
                     }

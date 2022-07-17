@@ -3,6 +3,7 @@ package action;
 import discord4j.common.util.Snowflake;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.User;
+import discord4j.core.object.reaction.ReactionEmoji;
 import reactor.core.publisher.Mono;
 
 public class Welcome extends Action {
@@ -47,6 +48,8 @@ public class Welcome extends Action {
                         logger.info("sent DM");
                         return Mono.empty();
                     }).block();
+
+                    message.addReaction(ReactionEmoji.unicode("\uD83D\uDC4D")).block();
                 }
             }
 

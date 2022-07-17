@@ -7,28 +7,26 @@ import action.GiveawayTotal;
 import action.Hit;
 import action.Import;
 import action.Karen;
-import action.Kicked;
 import action.Left;
 import action.SpeedJar;
 import action.Test;
 import action.Warn;
 import action.Welcome;
+import action.reminder.CreateProfile;
+import action.reminder.CreateReminder;
+import action.reminder.DoReminder;
 import action.sm.AddAlert;
 import action.sm.CleanUp;
-import action.sm.DoAlerts;
 import action.sm.PriceCheck;
 import action.sm.UpdateAlerts;
-import discord4j.common.util.Snowflake;
 import discord4j.core.DiscordClient;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.event.domain.lifecycle.ReadyEvent;
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.User;
-import discord4j.core.object.presence.Activity;
 import discord4j.core.object.presence.ClientActivity;
 import discord4j.core.object.presence.ClientPresence;
-import discord4j.core.object.presence.Presence;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import reactor.core.publisher.Mono;
@@ -121,6 +119,14 @@ public class Bot {
                     } catch (IOException e) {
                         logger.error("Exception", e);
                     }
+
+                    DoReminder doReminder = new DoReminder(gateway, client);
+
+                    try {
+                        doReminder.startUp();
+                    } catch (Exception e) {
+                        logger.error("Exception", e);
+                    }
                     PriceCheck priceCheck = new PriceCheck();
                     priceCheck.action(gateway, client);
                     priceCheck.startUp();
@@ -160,6 +166,9 @@ public class Bot {
                             .and(new Test().action(gateway, client))
                             .and(new Left().action(gateway, client))
                             .and(new CleanUp().action(gateway, client))
+
+                            .and(new CreateProfile().action(gateway, client))
+                            .and(new CreateReminder().action(gateway, client))
                             .and(new UpdateAlerts().action(gateway,client));
 
                 });

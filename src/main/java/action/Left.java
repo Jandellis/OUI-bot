@@ -2,6 +2,7 @@ package action;
 
 import discord4j.common.util.Snowflake;
 import discord4j.core.object.entity.Message;
+import discord4j.core.object.reaction.ReactionEmoji;
 import discord4j.discordjson.json.MemberData;
 import discord4j.rest.http.client.ClientException;
 import reactor.core.publisher.Mono;
@@ -58,6 +59,8 @@ public class Left extends Action {
                     } catch (ClientException e) {
                         logger.info("user left the server " + memberId);
                     }
+
+                    message.addReaction(ReactionEmoji.unicode("\uD83D\uDD2B")).block();
                     return Mono.empty();
                 }
             }
@@ -72,11 +75,14 @@ public class Left extends Action {
     private void deleteOldMessages(String memberId) throws IOException {
         BufferedReader br = new BufferedReader(new FileReader(new File("hitlist.txt")));
         String line;
+        logger.info("looking for hitlist message");
         while ((line = br.readLine()) != null) {
             String[] lines = line.split(",");
             if (lines[0].equals(memberId)) {
                 try {
+                    logger.info("trying to  deleted " + lines[1]);
                     client.getChannelById(Snowflake.of(hitThread)).message(Snowflake.of(lines[1])).delete("old Message").block();
+                    logger.info("message deleted " + lines[1]);
                 } catch (Exception e) {
                     logger.info("message already deleted");
                 }

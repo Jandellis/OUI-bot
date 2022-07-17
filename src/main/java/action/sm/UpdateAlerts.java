@@ -34,26 +34,30 @@ public class UpdateAlerts extends Action {
                             EmbedAuthorData authorData = embed.getAuthor().get().getData();
 
                             if (authorData.name().get().startsWith("Your Sauces")) {
-                                String id = authorData.iconUrl().get().replace("https://cdn.discordapp.com/avatars/", "").split("/")[0];
-
-                                String line = embed.getDescription().get();
-                                List<Sauce> sauces = new ArrayList<>();
-
-                                for (Sauce sauce : Sauce.values()) {
-                                    if (line.toLowerCase().contains(sauce.getName())) {
-                                        sauces.add(sauce);
-                                    }
-                                }
-
-                                Utils.addAlerts(id, sauces);
-                                if (sauces.isEmpty()) {
-                                    message.getChannel().block().createMessage("Alerts cleared").block();
+                                if (authorData.iconUrl().isAbsent()) {
+                                    message.getChannel().block().createMessage("Sorry unable to update your sauces. If you add an avatar i will be able to update them").block();
                                 } else {
-                                    StringBuilder sb = new StringBuilder("Updated alerts");
-                                    for (Sauce sauce : sauces) {
-                                        sb.append("\r\n - " + sauce);
+                                    String id = authorData.iconUrl().get().replace("https://cdn.discordapp.com/avatars/", "").split("/")[0];
+
+                                    String line = embed.getDescription().get();
+                                    List<Sauce> sauces = new ArrayList<>();
+
+                                    for (Sauce sauce : Sauce.values()) {
+                                        if (line.toLowerCase().contains(sauce.getName())) {
+                                            sauces.add(sauce);
+                                        }
                                     }
-                                    message.getChannel().block().createMessage(sb.toString()).block();
+
+                                    Utils.addAlerts(id, sauces);
+                                    if (sauces.isEmpty()) {
+                                        message.getChannel().block().createMessage("Alerts cleared").block();
+                                    } else {
+                                        StringBuilder sb = new StringBuilder("Updated alerts");
+                                        for (Sauce sauce : sauces) {
+                                            sb.append("\r\n - " + sauce);
+                                        }
+                                        message.getChannel().block().createMessage(sb.toString()).block();
+                                    }
                                 }
 
                             }

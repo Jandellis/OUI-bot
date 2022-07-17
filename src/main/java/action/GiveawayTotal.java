@@ -1,6 +1,7 @@
 package action;
 
 import bot.Clean;
+import discord4j.common.util.Snowflake;
 import discord4j.core.object.entity.Message;
 import reactor.core.publisher.Mono;
 
@@ -29,6 +30,10 @@ public class GiveawayTotal extends Action {
                         String responseMessage = "The total of the last giveaway was $" + String.format("%,d", finalTotal) +
                                 "\r\nIf you would like to help increase this ask a recruiter to become a gifter today!";
 
+                        //write message to chat
+                        client.getChannelById(Snowflake.of("840395542394568707")).createMessage(responseMessage).block();
+
+                        //write message to giveaways
                         return message.getChannel().flatMap(channel -> channel.createMessage(responseMessage));
                     }
                 }
