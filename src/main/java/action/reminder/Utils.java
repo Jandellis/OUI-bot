@@ -126,10 +126,62 @@ public class Utils {
             int id = -1;
             while (rs.next()) {
                 id = rs.getInt(1);
+                st.executeUpdate("UPDATE profile SET shack_name = '" + shack + "' WHERE id = " + id);
             }
             if (id == -1) {
-                st.addBatch("insert into profile (name, shack_name, status) " +
-                        "VALUES ('" + name + "', '" + shack + "', '" + status.name() + "')");
+                st.addBatch("insert into profile (name, shack_name, status, enabled) " +
+                        "VALUES ('" + name + "', '" + shack + "', '" + status.name() + "', false)");
+            }
+            st.executeBatch();
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
+    }
+    public static void enableProfile(String name, boolean enable) {
+        try {
+            Connection con = DriverManager.getConnection(url, user, password);
+            Statement st = con.createStatement();
+
+            PreparedStatement pst = con.prepareStatement("SELECT id FROM profile  WHERE name = '" + name + "'");
+            ResultSet rs = pst.executeQuery();
+            int id = -1;
+            while (rs.next()) {
+                id = rs.getInt(1);
+                st.executeUpdate("UPDATE profile SET enabled = " + enable + " WHERE id = " + id);
+            }
+            st.executeBatch();
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
+    }
+    public static void addReact(String name, String react) {
+        try {
+            Connection con = DriverManager.getConnection(url, user, password);
+            Statement st = con.createStatement();
+
+            PreparedStatement pst = con.prepareStatement("SELECT id FROM profile  WHERE name = '" + name + "'");
+            ResultSet rs = pst.executeQuery();
+            int id = -1;
+            while (rs.next()) {
+                id = rs.getInt(1);
+                st.executeUpdate("UPDATE profile SET react = '" + react + "' WHERE id = " + id);
+            }
+            st.executeBatch();
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
+    }
+    public static void addMessage(String name, String message) {
+        try {
+            Connection con = DriverManager.getConnection(url, user, password);
+            Statement st = con.createStatement();
+
+            PreparedStatement pst = con.prepareStatement("SELECT id FROM profile  WHERE name = '" + name + "'");
+            ResultSet rs = pst.executeQuery();
+            int id = -1;
+            while (rs.next()) {
+                id = rs.getInt(1);
+                st.executeUpdate("UPDATE profile SET message = '" + message + "' WHERE id = " + id);
             }
             st.executeBatch();
         } catch (SQLException ex) {
@@ -145,10 +197,10 @@ public class Utils {
             Connection con = DriverManager.getConnection(url, user, password);
             Statement st = con.createStatement();
 
-            PreparedStatement pst = con.prepareStatement("SELECT name, shack_name, status FROM profile  WHERE shack_name = '" + shack + "'");
+            PreparedStatement pst = con.prepareStatement("SELECT name, shack_name, status, enabled, react, message FROM profile  WHERE shack_name = '" + shack + "' and enabled = true");
             ResultSet rs = pst.executeQuery();
             while (rs.next()) {
-                profile = new Profile(rs.getString(1), rs.getString(2), Status.getStatus(rs.getString(3)));
+                profile = new Profile(rs.getString(1), rs.getString(2), Status.getStatus(rs.getString(3)), rs.getBoolean(4), rs.getString(5), rs.getString(6));
 
             }
             st.executeBatch();
@@ -177,11 +229,11 @@ public class Utils {
     public static Profile loadProfileById(String id) {
         Profile profile = null;
         try (Connection con = DriverManager.getConnection(url, user, password);
-             PreparedStatement pst = con.prepareStatement("SELECT name, shack_name, status FROM profile  WHERE name = '" + id + "'");
+             PreparedStatement pst = con.prepareStatement("SELECT name, shack_name, status, enabled, react, message FROM profile  WHERE name = '" + id + "' and enabled = true");
              ResultSet rs = pst.executeQuery()) {
 
             while (rs.next()) {
-                profile = new Profile(rs.getString(1), rs.getString(2), Status.getStatus(rs.getString(3)));
+                profile = new Profile(rs.getString(1), rs.getString(2), Status.getStatus(rs.getString(3)), rs.getBoolean(4), rs.getString(5), rs.getString(6));
             }
 
         } catch (SQLException ex) {

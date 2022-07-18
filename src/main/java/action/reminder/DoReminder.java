@@ -28,6 +28,7 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -37,10 +38,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class DoReminder extends Action {
 
     String tacoBot = "490707751832649738";
+    List<String> watchChannels;
 
     public DoReminder(GatewayDiscordClient gateway, DiscordClient client) {
             this.client = client;
             this.gateway = gateway;
+        watchChannels = Arrays.asList(config.get("watchChannels").split(","));
     }
 
     ScheduledExecutorService executorService = Executors.newScheduledThreadPool(2);
@@ -71,8 +74,17 @@ public class DoReminder extends Action {
 
     private void remind(Reminder reminder) {
         logger.info("Doing reminder for "+reminder.getName()+" of " + reminder.getType().getName());
+        Profile profile = Utils.loadProfileById(reminder.getName());
+        String msg = "Boo {ping} go do `{task}`!";
 
-        client.getChannelById(Snowflake.of(reminder.getChannel())).createMessage("Boo <@"+reminder.getName()+"> go do `"+reminder.getType().getName()+"`!").block();
+        if ( profile.getMessage() != null &&  profile.getMessage().length() > 5 ) {
+            msg = profile.getMessage();
+        }
+        msg = msg.replace("{ping}", "<@"+reminder.getName()+">");
+        msg = msg.replace("{task}", reminder.getType().getName());
+
+
+        client.getChannelById(Snowflake.of(reminder.getChannel())).createMessage(msg).block();
         Utils.deleteReminder(reminder.getName(), reminder.getType());
     }
 
@@ -89,10 +101,6 @@ public class DoReminder extends Action {
             public void run() {
                 logger.info("checking for missed messages");
 
-
-                List<String> watchChannels = new ArrayList<>();
-                watchChannels.add("841034380822577182");
-//              watchChannels.add("889662502324039690");
 
                 watchChannels.forEach(channelId -> {
 

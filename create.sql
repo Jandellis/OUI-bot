@@ -42,3 +42,10 @@ CREATE TABLE IF NOT EXISTS reminder (
     type  VARCHAR(25),
     channel  VARCHAR(25)
 );
+
+alter table profile add enabled BOOLEAN ;
+alter table profile add react VARCHAR(25) ;
+
+ALTER TABLE profile ALTER COLUMN react TYPE VARCHAR(255);
+
+ALTER TABLE profile add  message VARCHAR(255);

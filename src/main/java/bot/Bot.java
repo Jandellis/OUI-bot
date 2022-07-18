@@ -15,6 +15,9 @@ import action.Welcome;
 import action.reminder.CreateProfile;
 import action.reminder.CreateReminder;
 import action.reminder.DoReminder;
+import action.reminder.EnableProfile;
+import action.reminder.Help;
+import action.reminder.React;
 import action.sm.AddAlert;
 import action.sm.CleanUp;
 import action.sm.PriceCheck;
@@ -169,6 +172,10 @@ public class Bot {
 
                             .and(new CreateProfile().action(gateway, client))
                             .and(new CreateReminder().action(gateway, client))
+                            .and(new EnableProfile().action(gateway, client))
+                            .and(new React().action(gateway, client))
+                            .and(new Help().action(gateway, client))
+                            .and(new action.reminder.Message().action(gateway, client))
                             .and(new UpdateAlerts().action(gateway,client));
 
                 });
