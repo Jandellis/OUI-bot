@@ -49,3 +49,23 @@ alter table profile add react VARCHAR(25) ;
 ALTER TABLE profile ALTER COLUMN react TYPE VARCHAR(255);
 
 ALTER TABLE profile add  message VARCHAR(255);
+
+CREATE TABLE IF NOT EXISTS member_data (
+    id serial PRIMARY KEY,
+    export_time timestamp,
+    name VARCHAR(25),
+    shack_name VARCHAR(30),
+    income int,
+    shifts int,
+    weekly_shifts int,
+    tips int,
+    donations bigint,
+    happy real
+);
+
+CREATE TABLE IF NOT EXISTS donations (
+    id serial PRIMARY KEY,
+    min_donation int,
+    max_donation int,
+    role VARCHAR(25)
+);

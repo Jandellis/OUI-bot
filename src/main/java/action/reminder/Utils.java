@@ -1,12 +1,6 @@
 package action.reminder;
 
-import action.sm.Alert;
-import action.sm.AlertType;
-import action.sm.Drop;
-import action.sm.Trigger;
-import action.sm.Watch;
 import bot.Config;
-import bot.Sauce;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -18,7 +12,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 public class Utils {
@@ -29,8 +22,6 @@ public class Utils {
     static String url = config.get("url");
     static String user = config.get("user");
     static String password = config.get("password");
-
-
 
 
     public static Reminder addReminder(String name, ReminderType type, Timestamp time, String channel) {
@@ -49,8 +40,23 @@ public class Utils {
                 st.executeUpdate("UPDATE reminder SET reminder_time = '" + time + "' WHERE id = " + id);
             } else {
                 st.addBatch("insert into reminder (name, type, reminder_time, channel) " +
-                        "VALUES ('" + name + "', '" + type.getName() + "', '" + time + "', '"+channel+"')");
+                        "VALUES ('" + name + "', '" + type.getName() + "', '" + time + "', '" + channel + "')");
             }
+            st.executeBatch();
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
+        return reminder;
+    }
+
+    public static Reminder addMultipleReminder(String name, ReminderType type, Timestamp time, String channel) {
+        Reminder reminder = new Reminder(name, type, time, channel);
+        try {
+            Connection con = DriverManager.getConnection(url, user, password);
+            Statement st = con.createStatement();
+
+            st.addBatch("insert into reminder (name, type, reminder_time, channel) " +
+                    "VALUES ('" + name + "', '" + type.getName() + "', '" + time + "', '" + channel + "')");
             st.executeBatch();
         } catch (SQLException ex) {
             logger.error("Exception", ex);
@@ -74,11 +80,55 @@ public class Utils {
         }
     }
 
+    public static void deleteReminder(Reminder reminder) {
+        try {
+            Connection con = DriverManager.getConnection(url, user, password);
+
+            Statement st = con.createStatement();
+
+
+            String sql = "DELETE from reminder WHERE name = ? and type = ? and time = ? ";
+            PreparedStatement p = con.prepareStatement(sql);
+            p.setString(1, reminder.getName());
+            p.setString(2, reminder.getType().getName());
+            p.setTimestamp(3, reminder.getTime());
+            p.execute();
+
+//            con.setAutoCommit(false);
+
+//            st.addBatch("DELETE from reminder WHERE name = '" + reminder.getName() + "' AND type='" + reminder.getType().getName() + "' AND time='" + reminder.getTime() + "'");
+//            st.executeBatch();
+//            con.commit();
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
+    }
+
+
+
 
     public static List<Reminder> loadReminder(String id) {
         List<Reminder> reminders = new ArrayList<>();
         try (Connection con = DriverManager.getConnection(url, user, password);
              PreparedStatement pst = con.prepareStatement("SELECT name, type, reminder_time, channel FROM reminder  WHERE name = '" + id + "'");
+             ResultSet rs = pst.executeQuery()) {
+
+            while (rs.next()) {
+                Reminder reminder = new Reminder(rs.getString(1), ReminderType.getReminderType(rs.getString(2)), rs.getTimestamp(3), rs.getString(4));
+                reminders.add(reminder);
+            }
+
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
+        return reminders;
+    }
+
+
+    public static List<Reminder> loadReminder(Reminder rem) {
+        List<Reminder> reminders = new ArrayList<>();
+        try (Connection con = DriverManager.getConnection(url, user, password);
+             PreparedStatement pst = con.prepareStatement("SELECT name, type, reminder_time, channel FROM reminder  WHERE name = '" + rem.getName() + "' and type = '" + rem.getType().getName() + "'");
              ResultSet rs = pst.executeQuery()) {
 
             while (rs.next()) {
@@ -110,13 +160,8 @@ public class Utils {
     }
 
 
-
-
-
-
-
-
-    public static void addProfile(String name, String shack, Status status) {
+    public static boolean addProfile(String name, String shack, Status status) {
+        Boolean newProfile = false;
         try {
             Connection con = DriverManager.getConnection(url, user, password);
             Statement st = con.createStatement();
@@ -126,18 +171,34 @@ public class Utils {
             int id = -1;
             while (rs.next()) {
                 id = rs.getInt(1);
-                st.executeUpdate("UPDATE profile SET shack_name = '" + shack + "' WHERE id = " + id);
+                String sql = "UPDATE profile SET shack_name = ? WHERE id = ?";
+                PreparedStatement p = con.prepareStatement(sql);
+                p.setString(1, shack);
+                p.setInt(2, id);
+                p.executeUpdate();
+//                st.executeUpdate("UPDATE profile SET shack_name = '" + shack + "' WHERE id = " + id);
             }
             if (id == -1) {
-                st.addBatch("insert into profile (name, shack_name, status, enabled) " +
-                        "VALUES ('" + name + "', '" + shack + "', '" + status.name() + "', false)");
+                String sql = "insert into profile (name, shack_name, status, enabled) " +
+                        "VALUES (?, ?, ?, false)";
+                PreparedStatement p = con.prepareStatement(sql);
+                p.setString(1, name);
+                p.setString(2, shack);
+                p.setString(3, status.name());
+                p.execute();
+                newProfile = true;
+//                st.addBatch("insert into profile (name, shack_name, status, enabled) " +
+//                        "VALUES ('" + name + "', '" + shack + "', '" + status.name() + "', false)");
             }
             st.executeBatch();
         } catch (SQLException ex) {
             logger.error("Exception", ex);
         }
+        return newProfile;
     }
-    public static void enableProfile(String name, boolean enable) {
+
+    public static boolean enableProfile(String name, boolean enable) {
+        boolean updated = false;
         try {
             Connection con = DriverManager.getConnection(url, user, password);
             Statement st = con.createStatement();
@@ -148,12 +209,15 @@ public class Utils {
             while (rs.next()) {
                 id = rs.getInt(1);
                 st.executeUpdate("UPDATE profile SET enabled = " + enable + " WHERE id = " + id);
+                updated = true;
             }
             st.executeBatch();
         } catch (SQLException ex) {
             logger.error("Exception", ex);
         }
+        return  updated;
     }
+
     public static void addReact(String name, String react) {
         try {
             Connection con = DriverManager.getConnection(url, user, password);
@@ -171,17 +235,25 @@ public class Utils {
             logger.error("Exception", ex);
         }
     }
+
     public static void addMessage(String name, String message) {
         try {
             Connection con = DriverManager.getConnection(url, user, password);
             Statement st = con.createStatement();
 
-            PreparedStatement pst = con.prepareStatement("SELECT id FROM profile  WHERE name = '" + name + "'");
+            PreparedStatement pst = con.prepareStatement("SELECT id FROM profile  WHERE name = ?");
+            pst.setString(1, name);
             ResultSet rs = pst.executeQuery();
             int id = -1;
             while (rs.next()) {
                 id = rs.getInt(1);
-                st.executeUpdate("UPDATE profile SET message = '" + message + "' WHERE id = " + id);
+
+                String sql = "UPDATE profile SET message = ? WHERE id = ?";
+                PreparedStatement p = con.prepareStatement(sql);
+                p.setString(1, message);
+                p.setInt(2, id);
+                p.executeUpdate();
+//                st.executeUpdate("UPDATE profile SET message = '" + message + "' WHERE id = " + id);
             }
             st.executeBatch();
         } catch (SQLException ex) {
@@ -190,14 +262,14 @@ public class Utils {
     }
 
 
-
-    public static Profile loadProfileByName( String shack) {
+    public static Profile loadProfileByName(String shack) {
         Profile profile = null;
         try {
             Connection con = DriverManager.getConnection(url, user, password);
             Statement st = con.createStatement();
 
-            PreparedStatement pst = con.prepareStatement("SELECT name, shack_name, status, enabled, react, message FROM profile  WHERE shack_name = '" + shack + "' and enabled = true");
+            PreparedStatement pst = con.prepareStatement("SELECT name, shack_name, status, enabled, react, message FROM profile  WHERE shack_name = ? and enabled = true");
+            pst.setString(1, shack);
             ResultSet rs = pst.executeQuery();
             while (rs.next()) {
                 profile = new Profile(rs.getString(1), rs.getString(2), Status.getStatus(rs.getString(3)), rs.getBoolean(4), rs.getString(5), rs.getString(6));
@@ -209,6 +281,7 @@ public class Utils {
         }
         return profile;
     }
+
     public static void deleteProfile(String name) {
         try {
             Connection con = DriverManager.getConnection(url, user, password);

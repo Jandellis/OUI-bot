@@ -70,7 +70,7 @@ public class CreateReminder extends Action {
                             }
 
                             //vote
-                            if (desc.startsWith("\u2705") && desc.contains("Voting Daily Streak Progress")) {
+                            if ((desc.startsWith("\u2705") || desc.startsWith("\uD83C\uDF89"))  && desc.contains("Voting Daily Streak Progress")) {
                                 //go look for history and find the last message that has claim and use that for the userid
                                 List<MessageData> historic = getMessagesOfChannel(message.getRestChannel());
 //                                Collections.reverse(historic);

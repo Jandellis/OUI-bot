@@ -6,7 +6,8 @@ public enum ReminderType {
     ot("overtime"),
     vote("vote"),
     daily("daily"),
-    clean("clean");
+    clean("clean"),
+    gift("gift");
 
 
     String name;

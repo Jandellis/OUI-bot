@@ -4,36 +4,22 @@ import action.Action;
 import discord4j.common.util.Snowflake;
 import discord4j.core.DiscordClient;
 import discord4j.core.GatewayDiscordClient;
-import discord4j.core.object.Embed;
-import discord4j.core.object.PermissionOverwrite;
 import discord4j.core.object.entity.Message;
-import discord4j.core.object.entity.channel.MessageChannel;
-import discord4j.core.object.entity.channel.TopLevelGuildChannel;
-import discord4j.discordjson.json.EmojiData;
 import discord4j.discordjson.json.MessageData;
 import discord4j.discordjson.json.ReactionData;
 import discord4j.rest.entity.RestChannel;
-import discord4j.rest.util.Permission;
-import discord4j.rest.util.PermissionSet;
 import reactor.core.publisher.Mono;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class DoReminder extends Action {
 
@@ -41,8 +27,8 @@ public class DoReminder extends Action {
     List<String> watchChannels;
 
     public DoReminder(GatewayDiscordClient gateway, DiscordClient client) {
-            this.client = client;
-            this.gateway = gateway;
+        this.client = client;
+        this.gateway = gateway;
         watchChannels = Arrays.asList(config.get("watchChannels").split(","));
     }
 
@@ -61,37 +47,63 @@ public class DoReminder extends Action {
 
         };
 
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now().minusMinutes(10);
         LocalDateTime reminderTime = reminder.getTime().toLocalDateTime();
-//        if (now.isBefore(reminderTime)) {
-            Duration delay = Duration.between(now, reminderTime);
-            logger.info("reminder for "+reminder.getName()+" at " + formatter.format(reminderTime) +" of " + reminder.getType().getName());
+        if (now.isBefore(reminderTime)) {
+            Duration delay = Duration.between(LocalDateTime.now(), reminderTime);
+            logger.info("reminder for " + reminder.getName() + " at " + formatter.format(reminderTime) + " of " + reminder.getType().getName());
 
             executorService.schedule(taskWrapper, delay.getSeconds(), TimeUnit.SECONDS);
-//        }
+        } else {
+            logger.info("deleting old reminder"); {
+                Utils.deleteReminder(reminder.getName(), reminder.getType());
+            }
+        }
 
     }
 
     private void remind(Reminder reminder) {
-        logger.info("Doing reminder for "+reminder.getName()+" of " + reminder.getType().getName());
+        logger.info("Doing reminder for " + reminder.getName() + " of " + reminder.getType().getName());
+
+        List<Reminder> dbReminder = Utils.loadReminder(reminder);
+        if (dbReminder.size() == 0) {
+            logger.info("Reminder already deleted");
+            return;
+        }
+        boolean inDB = false;
+        for (Reminder rem : dbReminder) {
+            if (rem.time.equals(reminder.getTime())) {
+                inDB = true;
+            }
+        }
+        if (!inDB) {
+            logger.info("Reminder not in database, should be done already");
+            return;
+        }
+
         Profile profile = Utils.loadProfileById(reminder.getName());
         String msg = "Boo {ping} go do `{task}`!";
 
-        if ( profile.getMessage() != null &&  profile.getMessage().length() > 5 ) {
+        if (profile.getMessage() != null && profile.getMessage().length() > 5) {
             msg = profile.getMessage();
         }
-        msg = msg.replace("{ping}", "<@"+reminder.getName()+">");
+        msg = msg.replace("{ping}", "<@" + reminder.getName() + ">");
         msg = msg.replace("{task}", reminder.getType().getName());
 
 
         client.getChannelById(Snowflake.of(reminder.getChannel())).createMessage(msg).block();
-        Utils.deleteReminder(reminder.getName(), reminder.getType());
+        if (reminder.getType() == ReminderType.gift) {
+            //for gifts only delete that reminder
+            Utils.deleteReminder(reminder);
+        } else {
+            Utils.deleteReminder(reminder.getName(), reminder.getType());
+        }
     }
 
-    public void startUp(){
+    public void startUp() {
 
         logger.info("Creating reminders on reboot");
-        for (Reminder reminder: Utils.loadReminder()) {
+        for (Reminder reminder : Utils.loadReminder()) {
             runReminder(reminder);
         }
 
@@ -110,7 +122,7 @@ public class DoReminder extends Action {
                     for (MessageData messageData : messageDataList) {
                         boolean reacted = false;
                         if (messageData.reactions().toOptional().isPresent()) {
-                            for (ReactionData reaction:  messageData.reactions().get()) {
+                            for (ReactionData reaction : messageData.reactions().get()) {
                                 if (reaction.me()) {
                                     reacted = true;
                                 }
@@ -137,11 +149,10 @@ public class DoReminder extends Action {
 
     }
 
-    public static List<MessageData> getMessagesOfChannel(RestChannel channel){
-        Snowflake time = Snowflake.of(Instant.now().minus(5, ChronoUnit.MINUTES));
+    public static List<MessageData> getMessagesOfChannel(RestChannel channel) {
+        Snowflake time = Snowflake.of(Instant.now().minus(10, ChronoUnit.MINUTES));
         return channel.getMessagesAfter(time).collectList().block();
     }
-
 
 
     @Override

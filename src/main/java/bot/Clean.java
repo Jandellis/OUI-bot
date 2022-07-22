@@ -1,5 +1,6 @@
 package bot;
 
+import action.export.Utils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -13,6 +14,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.sql.Time;
+import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -23,10 +26,10 @@ public class Clean {
 
 
     protected static final Logger logger = LogManager.getLogger("ouiBot");
-    public static KickList main(String url, String historyFile, int work, int unclean) throws Exception {
+    public static KickList main(String url, String historyFile, int work, int unclean, Timestamp importTime) throws Exception {
 
 
-        HashMap<Long, Member> current = parseCurrent(url);
+        HashMap<Long, Member> current = parseCurrent(url, importTime);
         HashMap<Long, MemberHistory> history = parseHistory(new File(historyFile));
 
         return writeHistory(new File(historyFile), current, history, work, unclean);
@@ -185,7 +188,7 @@ public class Clean {
     }
 
 
-    private static HashMap<Long, Member> parseCurrent(String url) throws Exception {
+    private static HashMap<Long, Member> parseCurrent(String url, Timestamp importTime) throws Exception {
 
         URLConnection hc = new URL(url).openConnection();
         hc.setRequestProperty("User-Agent", "Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10.4; en-US; rv:1.9.2.2) Gecko/20100316 Firefox/3.6.2");
@@ -218,6 +221,7 @@ public class Clean {
                 Member member = new Member(data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7]);
 
                 members.put(Long.parseLong(data[0]), member);
+                Utils.addMember(member, importTime);
             }
         }
         br.close();
@@ -288,102 +292,5 @@ class MemberHistory {
         this.happy = happy;
     }
 
-}
-
-class Member {
-    Long id;
-    String name;
-    int income;
-    int shifts;
-    int weeklyShifts;
-    int tips;
-    int donations;
-    double happy;
-
-    public Member(Long id, String name, int income, int shifts, int weeklyShifts, int tips, int donations, double happy) {
-        this.id = id;
-        this.name = name;
-        this.income = income;
-        this.shifts = shifts;
-        this.weeklyShifts = weeklyShifts;
-        this.tips = tips;
-        this.donations = donations;
-        this.happy = happy;
-    }
-
-    public Member(String id, String name, String income, String shifts, String weeklyShifts, String tips, String donations, String happy) {
-        this.id = Long.parseLong(id);
-        this.name = name;
-        this.income = Integer.parseInt(income);
-        this.shifts = Integer.parseInt(shifts);
-        this.weeklyShifts = Integer.parseInt(weeklyShifts);
-        this.tips = Integer.parseInt(tips);
-        //this.donations = Integer.parseInt(donations);
-        this.happy = Double.parseDouble(happy);
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public int getIncome() {
-        return income;
-    }
-
-    public void setIncome(int income) {
-        this.income = income;
-    }
-
-    public int getShifts() {
-        return shifts;
-    }
-
-    public void setShifts(int shifts) {
-        this.shifts = shifts;
-    }
-
-    public int getWeeklyShifts() {
-        return weeklyShifts;
-    }
-
-    public void setWeeklyShifts(int weeklyShifts) {
-        this.weeklyShifts = weeklyShifts;
-    }
-
-    public int getTips() {
-        return tips;
-    }
-
-    public void setTips(int tips) {
-        this.tips = tips;
-    }
-
-    public int getDonations() {
-        return donations;
-    }
-
-    public void setDonations(int donations) {
-        this.donations = donations;
-    }
-
-    public double getHappy() {
-        return happy;
-    }
-
-    public void setHappy(double happy) {
-        this.happy = happy;
-    }
 }
 

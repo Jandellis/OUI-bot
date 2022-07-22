@@ -40,13 +40,30 @@ public class EnableProfile extends Action {
                 String action = getAction(message);
 
                 if (action != null) {
+                    boolean updated = false;
+                    String response = "";
+                    boolean enable = false;
+                    boolean onOff = false;
                     if (action.equalsIgnoreCase("on")) {
-                        Utils.enableProfile(message.getAuthor().get().getId().asString(), true);
-                        message.getChannel().block().createMessage("Reminders on").block();
+                        enable = true;
+                        onOff = true;
+                        response = "Reminders on";
                     }
                     if (action.equalsIgnoreCase("off")) {
-                        Utils.enableProfile(message.getAuthor().get().getId().asString(), false);
-                        message.getChannel().block().createMessage("Reminders off").block();
+                        enable = false;
+                        onOff = true;
+                        response = "Reminders off";
+                    }
+
+                    if (onOff) {
+                        updated = Utils.enableProfile(message.getAuthor().get().getId().asString(), enable);
+                        if (!updated) {
+                            message.getChannel().block().createMessage("Profile does not exists. Please type `!shack`").block();
+                        } else {
+                            message.getChannel().block().createMessage(response).block();
+                        }
+                    } else {
+                        message.getChannel().block().createMessage("Sorry, i don't know what you mean. It should be `on` or `off`").block();
                     }
                 }
 
