@@ -3,11 +3,10 @@ package action.export;
 import action.Action;
 import bot.Clean;
 import bot.KickList;
-import bot.KickMember;
 import discord4j.common.util.Snowflake;
 import discord4j.core.object.entity.Message;
 import discord4j.core.spec.EmbedCreateSpec;
-import discord4j.discordjson.json.MemberData;
+import discord4j.discordjson.Id;
 import discord4j.rest.http.client.ClientException;
 import discord4j.rest.util.Color;
 import reactor.core.publisher.Mono;
@@ -19,11 +18,11 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.Timestamp;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Import extends Action {
 
@@ -35,7 +34,7 @@ public class Import extends Action {
     Long recruiter;
 
     public Import() {
-        param = "bbfimport";
+        param = "ouiimport";
         guildId = config.get("guildId");
 
         finalWarning = Long.parseLong(config.get("finalWarning"));
@@ -64,51 +63,97 @@ public class Import extends Action {
                 try {
                     kickList = Clean.main(url, "historic.csv", worklimit, uncleanlimit, Timestamp.from(data.getTimestamp()));
                     logger.info("processed data");
+                    HashMap<Long, List<ExportData>> history = Utils.loadMemberHistory();
+                    List<WeeklyBestData> work = new ArrayList<>();
+                    List<WeeklyBestData> tips = new ArrayList<>();
+                    List<WeeklyBestData> donations = new ArrayList<>();
+
+                    history.forEach((id, dataList) -> {
+                        //get old entry
+                        int startWork = dataList.get(0).getMember().getShifts();
+                        int startTips = dataList.get(0).getMember().getTips();
+                        long startDonations = dataList.get(0).getMember().getDonations();
+
+                        //get current entry
+                        int endWork = dataList.get(dataList.size() - 1).getMember().getShifts();
+                        int endTips = dataList.get(dataList.size() - 1).getMember().getTips();
+                        long endDonations = dataList.get(dataList.size() - 1).getMember().getDonations();
+
+                        work.add(new WeeklyBestData(id, endWork - startWork));
+                        tips.add(new WeeklyBestData(id, endTips - startTips));
+                        donations.add(new WeeklyBestData(id, endDonations - startDonations));
+
+                    });
+
+                    WeeklyBestData.sort(work);
+                    WeeklyBestData.sort(tips);
+                    WeeklyBestData.sort(donations);
+                    EmbedCreateSpec.Builder embed = EmbedCreateSpec.builder();
+                    embed.color(Color.SUMMER_SKY);
+                    embed.title("OUI Weekly Best");
+                    embed.addField("Top Work", getBest(work, false), true);
+                    embed.addField("Top Tips", getBest(tips, false), false);
+                    embed.addField("Top Donations", getBest(donations, true), true);
+
+
+                    client.getChannelById(Snowflake.of(flex)).createMessage(embed.build().asRequest()).block();
+
+                    channel.createMessage(embed.build()).block();
+
+                    channel.createMessage("Checking Roles").block();
+
+                    checkRoles(history);
+
                 } catch (Exception e) {
                     printException(e);
                 }
-                HashMap<Long, List<ExportData>> history = Utils.loadMemberHistory();
-                List<WeeklyBestData> work = new ArrayList<>();
-                List<WeeklyBestData> tips = new ArrayList<>();
-                List<WeeklyBestData> donations = new ArrayList<>();
 
-                history.forEach((id, dataList) -> {
-                    //get old entry
-                    int startWork = dataList.get(0).getMember().getShifts();
-                    int startTips = dataList.get(0).getMember().getTips();
-                    long startDonations = dataList.get(0).getMember().getDonations();
-
-                    //get current entry
-                    int endWork = dataList.get(dataList.size()-1).getMember().getShifts();
-                    int endTips = dataList.get(dataList.size()-1).getMember().getTips();
-                    long endDonations = dataList.get(dataList.size()-1).getMember().getDonations();
-
-                    work.add(new WeeklyBestData(id, endWork - startWork));
-                    tips.add(new WeeklyBestData(id, endTips - startTips));
-                    donations.add(new WeeklyBestData(id, endDonations - startDonations));
-
-                });
-
-                WeeklyBestData.sort(work);
-                WeeklyBestData.sort(tips);
-                WeeklyBestData.sort(donations);
-                EmbedCreateSpec.Builder embed = EmbedCreateSpec.builder();
-                embed.color(Color.SUMMER_SKY);
-                embed.title("OUI Weekly Best");
-                embed.addField("Top Work", getBest(work, false), true);
-                embed.addField("Top Tips", getBest(tips, false), false);
-                embed.addField("Top Donations", getBest(donations, true), true);
-
-
-                client.getChannelById(Snowflake.of(flex)).createMessage(embed.build().asRequest()).block();
-
-                channel.createMessage(embed.build()).block();
 
                 return channel.createMessage("Imported Data");
             });
         }
 
         return Mono.empty();
+    }
+
+    private void checkRoles(HashMap<Long, List<ExportData>> history) {
+        List<Donations> donations = Utils.loadDonations();
+        history.forEach((id, dataList) -> {
+            //get current donation amount
+            long amount = dataList.get(dataList.size()-1).getMember().getDonations();
+            logger.info("checking  id " + id + " has " + amount);
+            try {
+                List<Id> roles = client.getGuildById(Snowflake.of(guildId)).getMember(Snowflake.of(id)).block().roles();
+                donations.forEach((donate) -> {
+                    AtomicBoolean hasRole = new AtomicBoolean(false);
+                    roles.forEach((roleId) -> {
+                        if (roleId.asLong() == Long.parseLong(donate.getRole())) {
+                            hasRole.set(true);
+                        }
+                    });
+                    if (donate.getMaxDonation() >= amount && donate.getMinDonation() <= amount) {
+                        if (!hasRole.get()) {
+                            client.getGuildById(Snowflake.of(guildId)).addMemberRole(
+                                    Snowflake.of(id),
+                                    Snowflake.of(donate.getRole()),
+                                    "donation role").block();
+                            logger.info("giving user role " + donate.getRole());
+                        }
+                    } else {
+                        if (hasRole.get()) {
+                            client.getGuildById(Snowflake.of(guildId)).removeMemberRole(
+                                    Snowflake.of(id),
+                                    Snowflake.of(donate.getRole()),
+                                    "donation role").block();
+                        }
+                    }
+
+                });
+            } catch (ClientException e) {
+                //member left the server
+                logger.info("user left the server " + id);
+            }
+        });
     }
 
     private String getBest(List<WeeklyBestData> weeklyBestData, boolean money) {
@@ -119,7 +164,7 @@ public class Import extends Action {
             if (count == 10) {
                 break;
             }
-            count ++;
+            count++;
 
             String value = "";
             if (money) {
@@ -127,14 +172,14 @@ public class Import extends Action {
             }
             value = value + String.format("%,d", data.getValue());
 //            builder.addField(count + start, "**"+ count + "**<@"+ data.getId() +"> - " + value, false);
-            sb.append("**"+ count + "** - <@"+ data.getId() +"> - " + value + "\r\n");
+            sb.append("**" + count + "** - <@" + data.getId() + "> - " + value + "\r\n");
         }
         return sb.toString();
     }
 
     private void saveIds(String header, HashMap<Long, String> ids) throws IOException {
         BufferedWriter bwKick = new BufferedWriter(new FileWriter("hitlist.txt"));
-        bwKick.write(","+header);
+        bwKick.write("," + header);
         for (Map.Entry<Long, String> entry : ids.entrySet()) {
             Long memberId = entry.getKey();
             String messageId = entry.getValue();

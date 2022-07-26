@@ -54,7 +54,7 @@ public class CreateProfile extends Action {
 
                                     message.addReaction(ReactionEmoji.unicode("\uD83D\uDC4B")).block();
                                     if (newProfile) {
-                                        message.getChannel().block().createMessage("Your profile has been created. Would you like to turn on reminders? Type `ouirm on`").block();
+                                        message.getChannel().block().createMessage("Your profile has been created. Would you like to turn on reminders? Type `ouirm on` \r\nFor more details, type `ouihelp`").block();
                                     }
                                 }
                             }

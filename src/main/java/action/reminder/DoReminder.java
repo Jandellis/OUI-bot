@@ -1,6 +1,7 @@
 package action.reminder;
 
 import action.Action;
+import action.GiveawayAdd;
 import discord4j.common.util.Snowflake;
 import discord4j.core.DiscordClient;
 import discord4j.core.GatewayDiscordClient;
@@ -25,11 +26,13 @@ public class DoReminder extends Action {
 
     String tacoBot = "490707751832649738";
     List<String> watchChannels;
+    String giveawayChannel;
 
     public DoReminder(GatewayDiscordClient gateway, DiscordClient client) {
         this.client = client;
         this.gateway = gateway;
         watchChannels = Arrays.asList(config.get("watchChannels").split(","));
+        giveawayChannel = config.get("giveawayChannel");
     }
 
     ScheduledExecutorService executorService = Executors.newScheduledThreadPool(2);
@@ -127,9 +130,6 @@ public class DoReminder extends Action {
                                     reacted = true;
                                 }
                             }
-//                //messageData.reactions().get().
-//                "\uD83D\uDC3E"
-//                messageData.reactions().get().get(0).emoji().name().get()
                         }
 
                         if (!reacted) {
@@ -141,16 +141,38 @@ public class DoReminder extends Action {
 
                     }
                 });
+
+
+                List<MessageData> messageDataList = getMessagesOfChannel(client.getChannelById(Snowflake.of(giveawayChannel)));
+
+                for (MessageData messageData : messageDataList) {
+                    boolean reacted = false;
+                    if (messageData.reactions().toOptional().isPresent()) {
+                        for (ReactionData reaction : messageData.reactions().get()) {
+                            if (reaction.me()) {
+                                reacted = true;
+                            }
+                        }
+                    }
+
+                    if (!reacted) {
+                        GiveawayAdd giveawayAdd = new GiveawayAdd();
+                        giveawayAdd.action(gateway, client);
+
+                        giveawayAdd.doAction(gateway.getMessageById(Snowflake.of(giveawayChannel), Snowflake.of(messageData.id())).block());
+                    }
+
+                }
             }
 
         };
 
-        executorService.schedule(taskWrapper, 30, TimeUnit.SECONDS);
+        executorService.schedule(taskWrapper, 15, TimeUnit.SECONDS);
 
     }
 
     public static List<MessageData> getMessagesOfChannel(RestChannel channel) {
-        Snowflake time = Snowflake.of(Instant.now().minus(10, ChronoUnit.MINUTES));
+        Snowflake time = Snowflake.of(Instant.now().minus(15, ChronoUnit.MINUTES));
         return channel.getMessagesAfter(time).collectList().block();
     }
 

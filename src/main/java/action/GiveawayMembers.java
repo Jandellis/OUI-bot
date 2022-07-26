@@ -61,7 +61,7 @@ public class GiveawayMembers extends Action {
                     int otlimit = 30;
                     gifts = GiftAway.main(null, null, null, worklimit, otlimit, votelimit, guildId, giveawayRole, client);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    printException(e);
                 }
                 StringBuilder sb = new StringBuilder();
                 int count = 0;

@@ -11,6 +11,7 @@ import reactor.core.publisher.Mono;
 
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
@@ -50,7 +51,6 @@ public class CreateReminder extends Action {
                     for (Embed embed : message.getEmbeds()) {
 
 
-
                         if (embed.getDescription().isPresent()) {
                             String desc = embed.getDescription().get();
                             //tips
@@ -70,15 +70,18 @@ public class CreateReminder extends Action {
                             }
 
                             //vote
-                            if ((desc.startsWith("\u2705") || desc.startsWith("\uD83C\uDF89"))  && desc.contains("Voting Daily Streak Progress")) {
+                            if ((desc.startsWith("\u2705") || desc.startsWith("\uD83C\uDF89")) && desc.contains("Voting Daily Streak Progress")) {
                                 //go look for history and find the last message that has claim and use that for the userid
-                                List<MessageData> historic = getMessagesOfChannel(message.getRestChannel());
+                                List<MessageData> historic = getMessagesOfChannel(message);
 //                                Collections.reverse(historic);
                                 AtomicReference<String> userId = new AtomicReference<>("");
 
                                 historic.forEach(messageData -> {
-                                    if (messageData.content().toLowerCase().contains("claim")) {
-                                        userId.set(messageData.author().id().toString());
+                                    Instant messageDataTime = DateTimeFormatter.ISO_OFFSET_DATE_TIME.parse(messageData.timestamp(), Instant::from);
+                                    if (Timestamp.from(messageDataTime).before(Timestamp.from(message.getTimestamp()))) {
+                                        if (messageData.content().toLowerCase().contains("claim")) {
+                                            userId.set(messageData.author().id().toString());
+                                        }
                                     }
                                 });
                                 Profile profile = Utils.loadProfileById(userId.get());
@@ -90,13 +93,16 @@ public class CreateReminder extends Action {
 
                             //daily
                             if ((desc.startsWith("\u2705") || desc.startsWith("\uD83C\uDF89")) && desc.contains("Daily Streak Progress")) {
-                                List<MessageData> historic = getMessagesOfChannel(message.getRestChannel());
+                                List<MessageData> historic = getMessagesOfChannel(message);
                                 AtomicReference<String> userId = new AtomicReference<>("");
 
                                 historic.forEach(messageData -> {
-                                    String noSpace = messageData.content().toLowerCase().replace(" ", "");
-                                    if (noSpace.contains("!d") || noSpace.contains("!daily")) {
-                                        userId.set(messageData.author().id().toString());
+                                    Instant messageDataTime = DateTimeFormatter.ISO_OFFSET_DATE_TIME.parse(messageData.timestamp(), Instant::from);
+                                    if (Timestamp.from(messageDataTime).before(Timestamp.from(message.getTimestamp()))) {
+                                        String noSpace = messageData.content().toLowerCase().replace(" ", "");
+                                        if (noSpace.contains("!d") || noSpace.contains("!daily")) {
+                                            userId.set(messageData.author().id().toString());
+                                        }
                                     }
                                 });
                                 Profile profile = Utils.loadProfileById(userId.get());
@@ -108,13 +114,16 @@ public class CreateReminder extends Action {
                             //clean
                             if (desc.startsWith("\u2705") && desc.contains("You have cleaned all of your locations!")) {
 
-                                List<MessageData> historic = getMessagesOfChannel(message.getRestChannel());
+                                List<MessageData> historic = getMessagesOfChannel(message);
 //                                Collections.reverse(historic);
                                 AtomicReference<String> userId = new AtomicReference<>("");
 
                                 historic.forEach(messageData -> {
-                                    if (messageData.content().toLowerCase().contains("clean")) {
-                                        userId.set(messageData.author().id().toString());
+                                    Instant messageDataTime = DateTimeFormatter.ISO_OFFSET_DATE_TIME.parse(messageData.timestamp(), Instant::from);
+                                    if (Timestamp.from(messageDataTime).before(Timestamp.from(message.getTimestamp()))) {
+                                        if (messageData.content().toLowerCase().contains("clean")) {
+                                            userId.set(messageData.author().id().toString());
+                                        }
                                     }
                                 });
                                 Profile profile = Utils.loadProfileById(userId.get());
@@ -133,13 +142,16 @@ public class CreateReminder extends Action {
                             if (title.startsWith("\u23F1") && title.contains("Cooldowns |")) {
                                 String footer = embed.getData().footer().get().text();
 
-                                List<MessageData> historic = getMessagesOfChannel(message.getRestChannel());
+                                List<MessageData> historic = getMessagesOfChannel(message);
 //                                Collections.reverse(historic);
                                 AtomicReference<String> userId = new AtomicReference<>("");
 
                                 historic.forEach(messageData -> {
-                                    if (footer.contains(messageData.author().discriminator())) {
-                                        userId.set(messageData.author().id().toString());
+                                    Instant messageDataTime = DateTimeFormatter.ISO_OFFSET_DATE_TIME.parse(messageData.timestamp(), Instant::from);
+                                    if (Timestamp.from(messageDataTime).before(Timestamp.from(message.getTimestamp()))) {
+                                        if (footer.contains(messageData.author().discriminator())) {
+                                            userId.set(messageData.author().id().toString());
+                                        }
                                     }
                                 });
                                 Profile profile = Utils.loadProfileById(userId.get());
@@ -221,7 +233,7 @@ public class CreateReminder extends Action {
         return Mono.empty();
     }
 
-    public int getSeconds (String value) {
+    public int getSeconds(String value) {
         int seconds = 0;
         if (value.startsWith("\u274C")) {
             seconds = Integer.parseInt(value.split(" ")[1]);
@@ -239,6 +251,13 @@ public class CreateReminder extends Action {
     public static List<MessageData> getMessagesOfChannel(RestChannel channel) {
         Snowflake time = Snowflake.of(Instant.now().minus(15, ChronoUnit.SECONDS));
         return channel.getMessagesAfter(time).collectList().block();
+    }
+
+
+    public static List<MessageData> getMessagesOfChannel(Message message) {
+
+        Snowflake time = Snowflake.of(message.getTimestamp().minus(15, ChronoUnit.SECONDS));
+        return message.getRestChannel().getMessagesAfter(time).collectList().block();
     }
 
 
@@ -379,4 +398,5 @@ public class CreateReminder extends Action {
 
     // once slash look at
     // message.data.interaction_value.user.id_value
+    // if this is not a person, for vote look at the vote streak count
 }

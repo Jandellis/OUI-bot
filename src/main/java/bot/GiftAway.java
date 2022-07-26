@@ -25,7 +25,9 @@ public class GiftAway {
     public static List<String> main(String work, String ot, String vote, int shifts, int overtimes, int votes, String guildId, String giveawayRole, DiscordClient client) throws Exception {
         List<String> result = new ArrayList<>();
 
-        StringBuilder output = new StringBuilder(""); 
+        StringBuilder output = new StringBuilder("");
+
+        franchiseMembers = new HashMap<>();
 
 
         work(work);
@@ -68,6 +70,7 @@ public class GiftAway {
                             "givaway role").block();
                     logger.info("Given role to " + person.getName());
                 } catch (Exception e) {
+                    logger.info("Not in server " + person.getName());
 
                 }
             }
@@ -92,7 +95,7 @@ public class GiftAway {
                             "givaway role").block();
                     logger.info("Given role to " + person.getName());
                 } catch (Exception e) {
-
+                    logger.info("Not in server " + person.getName());
                 }
             }
         });
@@ -116,6 +119,7 @@ public class GiftAway {
                             "givaway role").block();
                     logger.info("Removed role from " + person.getName());
                 } catch (Exception e) {
+                    logger.info("Not in server " + person.getName());
 
                 }
             }
@@ -141,6 +145,7 @@ public class GiftAway {
                             "givaway role").block();
                     logger.info("Removed role from " + person.getName());
                 } catch (Exception e) {
+                    logger.info("Not in server " + person.getName());
 
                 }
             }

@@ -12,6 +12,7 @@ import action.SpeedJar;
 import action.Test;
 import action.Warn;
 import action.Welcome;
+import action.reminder.CreateBoostReminder;
 import action.reminder.CreateProfile;
 import action.reminder.CreateReminder;
 import action.reminder.DoReminder;
@@ -111,7 +112,7 @@ public class Bot {
                                     Mono.fromRunnable(() -> {
                                         final User self = event.getSelf();
                                         logger.info("Logged in as " + self.getUsername() +" " + self.getDiscriminator());
-                                        gateway.updatePresence(ClientPresence.online(ClientActivity.watching("ouiSM for sauce market help"))).subscribe();
+                                        gateway.updatePresence(ClientPresence.online(ClientActivity.watching("ouiHelp"))).subscribe();
                                     }))
                             .then();
 
@@ -176,6 +177,7 @@ public class Bot {
                             .and(new React().action(gateway, client))
                             .and(new Help().action(gateway, client))
                             .and(new action.reminder.Message().action(gateway, client))
+                            .and(new CreateBoostReminder().action(gateway, client))
                             .and(new UpdateAlerts().action(gateway,client));
 
                 });

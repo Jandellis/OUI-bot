@@ -1,5 +1,7 @@
 package action;
 
+import action.sm.SystemReminderType;
+import action.sm.Utils;
 import discord4j.common.util.Snowflake;
 import discord4j.core.object.PermissionOverwrite;
 import discord4j.core.object.entity.Message;
@@ -191,6 +193,10 @@ public class SpeedJar extends Action {
             lockTime = LocalDateTime.parse(line, formatter);
         }
         lockReader.close();
+//
+//        Utils.loadReminder(SystemReminderType.speedJarLock);
+//        Utils.loadReminder(SystemReminderType.speedJarUnlock);
+
 
         LocalDateTime localNow = LocalDateTime.now();
 

@@ -1,5 +1,7 @@
 package action.sm;
 
+import action.reminder.Reminder;
+import action.reminder.ReminderType;
 import bot.Config;
 import bot.Sauce;
 import org.apache.logging.log4j.LogManager;
@@ -11,6 +13,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -395,5 +398,85 @@ public class Utils {
             logger.error("Exception", ex);
         }
         return watches;
+    }
+
+
+
+
+    public static List<SystemReminder> loadReminder(SystemReminderType rem) {
+        List<SystemReminder> reminders = new ArrayList<>();
+        try (Connection con = DriverManager.getConnection(url, user, password);
+             PreparedStatement pst = con.prepareStatement("SELECT type, reminder_time FROM system_reminder  WHERE type = '" + rem.getName() + "'");
+             ResultSet rs = pst.executeQuery()) {
+
+            while (rs.next()) {
+                SystemReminder reminder = new SystemReminder( SystemReminderType.getReminderType(rs.getString(1)), rs.getTimestamp(2));
+                reminders.add(reminder);
+            }
+
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
+        return reminders;
+    }
+
+    public static List<SystemReminder> loadReminder() {
+        List<SystemReminder> reminders = new ArrayList<>();
+        try (Connection con = DriverManager.getConnection(url, user, password);
+             PreparedStatement pst = con.prepareStatement("SELECT type, reminder_time FROM system_reminder ");
+             ResultSet rs = pst.executeQuery()) {
+
+            while (rs.next()) {
+                SystemReminder reminder = new SystemReminder( SystemReminderType.getReminderType(rs.getString(1)), rs.getTimestamp(2));
+                reminders.add(reminder);
+            }
+
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
+        return reminders;
+    }
+
+
+    public static SystemReminder addReminder(SystemReminderType type, Timestamp time) {
+        SystemReminder reminder = new SystemReminder(type, time);
+        try {
+            Connection con = DriverManager.getConnection(url, user, password);
+            Statement st = con.createStatement();
+
+            PreparedStatement pst = con.prepareStatement("SELECT id FROM system_reminder  WHERE type='" + type.getName() + "'");
+            ResultSet rs = pst.executeQuery();
+            int id = -1;
+            while (rs.next()) {
+                id = rs.getInt(1);
+            }
+            if (id != -1) {
+                st.executeUpdate("UPDATE system_reminder SET reminder_time = '" + time + "' WHERE id = " + id);
+            } else {
+                st.addBatch("insert into system_reminder (name, type, reminder_time, channel) " +
+                        "VALUES ('" + type.getName() + "', '" + time + "')");
+            }
+            st.executeBatch();
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
+        return reminder;
+    }
+
+
+    public static void deleteReminder(SystemReminderType type) {
+        try {
+            Connection con = DriverManager.getConnection(url, user, password);
+
+            Statement st = con.createStatement();
+
+//            con.setAutoCommit(false);
+
+            st.addBatch("DELETE from system_reminder WHERE type='" + type.getName() + "'");
+            st.executeBatch();
+//            con.commit();
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
     }
 }

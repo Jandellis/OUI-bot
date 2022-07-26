@@ -65,7 +65,45 @@ CREATE TABLE IF NOT EXISTS member_data (
 
 CREATE TABLE IF NOT EXISTS donations (
     id serial PRIMARY KEY,
-    min_donation int,
-    max_donation int,
+    min_donation bigint,
+    max_donation bigint,
     role VARCHAR(25)
+);
+
+
+insert into donations (role, min_donation, max_donation)
+VALUES ('931846572851986492', 0, 19999999);
+
+insert into donations (role, min_donation, max_donation)
+VALUES ('931845256889126922', 20000000, 49999999);
+
+insert into donations (role, min_donation, max_donation)
+VALUES ('931269453063266375', 50000000, 99999999);
+
+insert into donations (role, min_donation, max_donation)
+VALUES ('931273576739405864', 100000000, 249999999);
+
+insert into donations (role, min_donation, max_donation)
+VALUES ('931276083326771220', 250000000, 499999999);
+
+insert into donations (role, min_donation, max_donation)
+VALUES ('931277539270344744', 500000000, 999999999);
+
+insert into donations (role, min_donation, max_donation)
+VALUES ('931281334570197022', 1000000000, 100000000000);
+
+--$0 to $19999999 - @Styrofoam (931846572851986492)
+--$20000000 to $49999999 - @Copper (931845256889126922)
+--$50000000 to $99999999 - @Bronze (931269453063266375)
+--$100000000 to $249999999 - @Silver (931273576739405864)
+--$250000000 to $499999999 - @Gold (931276083326771220)
+--$500000000 to $999999999 - @Diamond (931277539270344744)
+--$1,000000000 to ∞ - @Platinum (931281334570197022)
+
+
+
+CREATE TABLE IF NOT EXISTS system_reminder (
+    id serial PRIMARY KEY,
+    reminder_time timestamp,
+    type  VARCHAR(25)
 );

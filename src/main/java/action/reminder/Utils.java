@@ -87,7 +87,7 @@ public class Utils {
             Statement st = con.createStatement();
 
 
-            String sql = "DELETE from reminder WHERE name = ? and type = ? and time = ? ";
+            String sql = "DELETE from reminder WHERE name = ? and type = ? and reminder_time = ? ";
             PreparedStatement p = con.prepareStatement(sql);
             p.setString(1, reminder.getName());
             p.setString(2, reminder.getType().getName());

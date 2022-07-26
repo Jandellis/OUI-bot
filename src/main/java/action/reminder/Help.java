@@ -37,7 +37,9 @@ public class Help extends Action {
 
 
                 if (message.getContent().equalsIgnoreCase(param)) {
-                    StringBuilder sb = new StringBuilder("I can reminder you when things are off coolodwn");
+                    StringBuilder sb = new StringBuilder("I can reminder you when things are off coolodwn and help you on the sauce market.");
+
+                    sb.append("For sauce market help, type `ouism`\r\n\n");
                     sb.append("To set me up, first type `!shack`\r\n");
                     sb.append("Then type `ouirm on`\r\n");
                     sb.append("Type `ouirm off` to turn me off\r\n");

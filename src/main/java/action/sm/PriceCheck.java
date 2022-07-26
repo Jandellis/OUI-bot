@@ -4,10 +4,8 @@ import action.Action;
 import bot.Config;
 import bot.Sauce;
 import com.gargoylesoftware.htmlunit.WebClient;
-import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import discord4j.common.util.Snowflake;
 import discord4j.core.object.entity.Message;
-import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import reactor.core.publisher.Mono;
@@ -15,7 +13,6 @@ import reactor.core.publisher.Mono;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -38,6 +35,7 @@ public class PriceCheck extends Action {
     String smChannel;
     String cheapPing;
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+    static long chefRole;
 
 
     ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
@@ -48,6 +46,7 @@ public class PriceCheck extends Action {
         cheapPing = config.get("cheapPing");
         smChannel = config.get("smChannel");
         startMin = Integer.parseInt(config.get("priceCheck"));
+        chefRole = Long.parseLong(config.get("chefRole"));
     }
 
     public void loadPrices() {
@@ -69,7 +68,7 @@ public class PriceCheck extends Action {
             HashMap<Sauce, Integer> prices = new HashMap<>();
 
             for (Sauce sauce : Sauce.values()) {
-                int price = Integer.parseInt(((JSONObject)((JSONObject) obj).get(sauce.getName())).get("price").toString());
+                int price = Integer.parseInt(((JSONObject) ((JSONObject) obj).get(sauce.getName())).get("price").toString());
 
                 logger.info(sauce + " at $" + price);
                 prices.put(sauce, price);
@@ -83,23 +82,45 @@ public class PriceCheck extends Action {
                     prices.get(Sauce.chipotle));
 
             logger.info("Loading alerts");
+            HashMap<String, StringBuilder> alerts = new HashMap<>();
 
             for (Alert alert : Utils.loadAlerts()) {
                 logger.info(alert);
+                if (!alerts.containsKey(alert.getName())) {
+                    alerts.put(alert.getName(), new StringBuilder("__Your alerts <@" + alert.getName() + "> __\r\n"));
+
+                }
+
                 if (alert.type == AlertType.drop) {
                     HashMap<Integer, Integer> saucePrices = Utils.loadLast3(Sauce.getSauce(alert.getTrigger()));
-                    printDrop(saucePrices, Sauce.getSauce(alert.getTrigger()), alert.getName());
+                    alerts.get(alert.getName()).append(printDrop(saucePrices, Sauce.getSauce(alert.getTrigger()), alert.getName()));
                 }
                 if (alert.type == AlertType.high) {
                     int price = alert.getPrice();
-                    printHigh(prices, price, alert.getName(), alert.getTrigger());
+                    alerts.get(alert.getName()).append(printHigh(prices, price, alert.getName(), alert.getTrigger()));
                 }
                 if (alert.type == AlertType.low) {
                     int price = alert.getPrice();
-                    printLow(prices, price, alert.getName(), alert.getTrigger());
+                    alerts.get(alert.getName()).append(printLow(prices, price, alert.getName(), alert.getTrigger()));
                 }
 
             }
+
+            alerts.forEach((person, sb) -> {
+                if (hasPermission(person, chefRole)) {
+                    if (sb.toString().equals("__Your alerts <@" + person + "> __\r\n")) {
+
+                        logger.info("No alerts for " + person);
+                    } else {
+                        sb.append("\r\n-----------------------------------\r\n");
+
+                        client.getChannelById(Snowflake.of(smChannel)).createMessage(sb.toString()).block();
+                    }
+                } else {
+                    logger.info("User does not have chef role " + person);
+
+                }
+            });
             logger.info("Finished");
         } catch (Exception e) {
             printException(e);
@@ -193,56 +214,58 @@ public class PriceCheck extends Action {
     }
 
 
-    public void printLow(HashMap<Sauce, Integer> prices, int priceTrigger, String person, String sauceName) {
+    public String printLow(HashMap<Sauce, Integer> prices, int priceTrigger, String person, String sauceName) {
 
         StringBuilder sb = new StringBuilder();
         AtomicBoolean cheap = new AtomicBoolean(false);
-        sb.append("<@" + person + "> price is low\r\n");
 
 
         prices.forEach((sauce, price) -> {
             if (priceTrigger > price && price != -1 && sauce.getName().equals(sauceName)) {
                 logger.info("price is " + price);
 
-                sb.append(" - " + sauce.getName() + " $" + price + "\r\n");
+                sb.append(" :small_blue_diamond:  " + sauce.getName() + " is low $" + price + "\r\n");
                 cheap.set(true);
             }
         });
 
         if (cheap.get())
-            client.getChannelById(Snowflake.of(smChannel)).createMessage(sb.toString()).block();
+//            client.getChannelById(Snowflake.of(smChannel)).createMessage(sb.toString()).block();
+            return sb.toString();
         else {
             logger.info("No low sauce");
+            return "";
         }
     }
 
-    public void printHigh(HashMap<Sauce, Integer> prices, int priceTrigger, String person, String sauceName) {
+    public String printHigh(HashMap<Sauce, Integer> prices, int priceTrigger, String person, String sauceName) {
 
         StringBuilder sb = new StringBuilder();
         AtomicBoolean cheap = new AtomicBoolean(false);
-        sb.append("<@" + person + "> price is high\r\n");
 
 
         prices.forEach((sauce, price) -> {
             if (priceTrigger < price && price != -1 && sauce.getName().equals(sauceName)) {
                 logger.info("price is " + price);
-                sb.append(" - " + sauce.getName() + " $" + price + "\r\n");
+                sb.append(" :small_orange_diamond:  " + sauce.getName() + " is high $" + price + "\r\n");
                 cheap.set(true);
             }
         });
 
         if (cheap.get())
-            client.getChannelById(Snowflake.of(smChannel)).createMessage(sb.toString()).block();
+            return sb.toString();
+//            client.getChannelById(Snowflake.of(smChannel)).createMessage(sb.toString()).block();
         else {
             logger.info("No high sauce");
+            return "";
         }
     }
 
-    public void printDrop(HashMap<Integer, Integer> prices, Sauce sauce, String person) {
+    public String printDrop(HashMap<Integer, Integer> prices, Sauce sauce, String person) {
 
         StringBuilder sb = new StringBuilder();
         AtomicBoolean dropping = new AtomicBoolean(false);
-        sb.append("<@" + person + "> " + sauce + " is dropping");
+        sb.append(" :small_blue_diamond:  " + sauce + " is dropping");
 
         Integer now = prices.get(0);
         Integer hour1 = prices.get(1);
@@ -262,20 +285,22 @@ public class PriceCheck extends Action {
 
         if (dif < -9) {
             int drop = dif * -1;
-            sb.append("\r\ndown $" + drop + " last hour ");
+            sb.append("\r\n  -  down $" + drop + " last hour ");
             dropping.set(true);
         }
         if (dif < 0 && dif2 < 0) {
             int drop2 = (now - hour2) * -1;
-            sb.append("\r\ndown $" + drop2 + " last 2 hours");
+            sb.append("\r\n  -  down $" + drop2 + " last 2 hours");
             dropping.set(true);
         }
 
 
         if (dropping.get())
-            client.getChannelById(Snowflake.of(smChannel)).createMessage(sb.toString()).block();
+            return sb.toString() + " \r\n";
+//             client.getChannelById(Snowflake.of(smChannel)).createMessage(sb.toString()).block();
         else {
             logger.info("No dropping sauce");
+            return "";
         }
     }
 

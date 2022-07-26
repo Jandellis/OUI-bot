@@ -7,7 +7,29 @@ public enum ReminderType {
     vote("vote"),
     daily("daily"),
     clean("clean"),
-    gift("gift");
+    gift("gift"),
+
+    //city
+    happy("Happy Hour"),
+    samples("Samples"),
+    Mascot("Mascot"),
+    Delivery("Online Delivery"),
+    Bus("Bus Sign"),
+
+    //shack
+    Chef("Rent-A-Chef"),
+    Music("Live Music"),
+    Karaoke("Karaoke Night"),
+    Flipper("Sign Flipper"),
+    Airplane("Airplane Sign"),
+
+
+    //beach
+    Concert("Concert"),
+    Hammock("Hammock"),
+    Parasailing("Parasailing "),
+    Chairs("Beach Chairs"),
+    Helicopter("Helicopter Tours");
 
 
     String name;
@@ -22,7 +44,7 @@ public enum ReminderType {
 
     public static ReminderType getReminderType(String name) {
         for (ReminderType value : values()) {
-            if (name.toLowerCase().contains(value.name))
+            if (name.toLowerCase().contains(value.name.toLowerCase()))
                 return value;
         }
         return null;

@@ -125,4 +125,32 @@ public class Utils {
             logger.error("Exception", ex);
         }
     }
+
+
+    public static List<Donations> loadDonations () {
+        List<Donations> donations = new ArrayList<>();
+
+        try {
+            Connection con = DriverManager.getConnection(url, user, password);
+            Statement st = con.createStatement();
+
+
+            PreparedStatement pst = con.prepareStatement("SELECT max_donation, min_donation, role FROM Donations");
+            ResultSet rs = pst.executeQuery();
+            while (rs.next()) {
+
+                Donations donation = new Donations(rs.getLong(1),
+                        rs.getLong(2),
+                        rs.getString(3)
+                );
+                donations.add(donation);
+            }
+
+
+            st.executeBatch();
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
+        return donations;
+    }
 }
