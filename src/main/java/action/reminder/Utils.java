@@ -110,7 +110,7 @@ public class Utils {
     public static List<Reminder> loadReminder(String id) {
         List<Reminder> reminders = new ArrayList<>();
         try (Connection con = DriverManager.getConnection(url, user, password);
-             PreparedStatement pst = con.prepareStatement("SELECT name, type, reminder_time, channel FROM reminder  WHERE name = '" + id + "'");
+             PreparedStatement pst = con.prepareStatement("SELECT name, type, reminder_time, channel FROM reminder  WHERE name = '" + id + "' order by reminder_time");
              ResultSet rs = pst.executeQuery()) {
 
             while (rs.next()) {

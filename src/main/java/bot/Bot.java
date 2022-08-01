@@ -4,6 +4,7 @@ import action.CheapSaucePing;
 import action.GiveawayAdd;
 import action.GiveawayMembers;
 import action.GiveawayTotal;
+import action.Heartbeat;
 import action.Hit;
 import action.export.Import;
 import action.Karen;
@@ -23,6 +24,7 @@ import action.sm.AddAlert;
 import action.sm.CleanUp;
 import action.sm.PriceCheck;
 import action.sm.UpdateAlerts;
+import discord4j.common.util.Snowflake;
 import discord4j.core.DiscordClient;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.event.domain.lifecycle.ReadyEvent;
@@ -112,6 +114,8 @@ public class Bot {
                                     Mono.fromRunnable(() -> {
                                         final User self = event.getSelf();
                                         logger.info("Logged in as " + self.getUsername() +" " + self.getDiscriminator());
+
+                                        client.getChannelById(Snowflake.of("1002115224876359680")).createMessage("Logged in").block();
                                         gateway.updatePresence(ClientPresence.online(ClientActivity.watching("ouiHelp"))).subscribe();
                                     }))
                             .then();
@@ -162,7 +166,7 @@ public class Bot {
                             .and(new GiveawayMembers().action(gateway, client))
                             .and(new GiveawayTotal().action(gateway, client))
                             .and(new Welcome().action(gateway, client))
-                            .and(new CheapSaucePing().action(gateway, client))
+//                            .and(new CheapSaucePing().action(gateway, client))
                             .and(new SpeedJar().action(gateway, client))
                             .and(new AddAlert().action(gateway, client))
 //                            .and(new DoAlerts().action(gateway, client))
@@ -178,6 +182,7 @@ public class Bot {
                             .and(new Help().action(gateway, client))
                             .and(new action.reminder.Message().action(gateway, client))
                             .and(new CreateBoostReminder().action(gateway, client))
+                            .and(new Heartbeat().action(gateway, client))
                             .and(new UpdateAlerts().action(gateway,client));
 
                 });

@@ -1,11 +1,16 @@
 package action;
 
+import action.reminder.CreateReminder;
+import action.sm.SystemReminder;
 import action.sm.SystemReminderType;
 import action.sm.Utils;
 import discord4j.common.util.Snowflake;
 import discord4j.core.object.PermissionOverwrite;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.channel.TopLevelGuildChannel;
+import discord4j.discordjson.json.MessageData;
+import discord4j.discordjson.json.ReactionData;
+import discord4j.rest.entity.RestChannel;
 import discord4j.rest.util.Permission;
 import discord4j.rest.util.PermissionSet;
 import reactor.core.publisher.Mono;
@@ -16,9 +21,12 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -50,6 +58,9 @@ public class SpeedJar extends Action {
 
     }
 
+    // on start up if no unlock look at last 15min
+    // find start message and create lock and unlock time but dont print start message
+
     @Override
     public Mono<Object> doAction(Message message) {
         //✅ Speed Jar Started!
@@ -64,8 +75,18 @@ public class SpeedJar extends Action {
 
                         return message.getChannel().flatMap(channel -> {
 
-                            runLock(12);
-                            runUnlock(690);
+//                            runLock(12);
+//                            runUnlock(690);
+//
+//
+//                            LocalDateTime unlockTime = Timestamp.from(message.getTimestamp()).toLocalDateTime().plusMinutes(690);
+//                            Utils.addReminder(SystemReminderType.speedJarUnlock, Timestamp.valueOf(unlockTime));
+//
+//                            LocalDateTime lockTime = Timestamp.from(message.getTimestamp()).toLocalDateTime().plusMinutes(12);
+//                            Utils.addReminder(SystemReminderType.speedJarLock, Timestamp.valueOf(lockTime));
+
+                            create(message.getTimestamp());
+
                             return channel.createMessage("<@&" + speedJarPing + "> starting now!");
                         });
                     }
@@ -79,7 +100,27 @@ public class SpeedJar extends Action {
         return Mono.empty();
     }
 
+    private void create(Instant messageTime) {
+//        runLock(12);
+//        runUnlock(690);
+
+
+        LocalDateTime unlockTime = Timestamp.from(messageTime).toLocalDateTime().plusMinutes(690);
+        Utils.addReminder(SystemReminderType.speedJarUnlock, Timestamp.valueOf(unlockTime));
+
+        LocalDateTime lockTime = Timestamp.from(messageTime).toLocalDateTime().plusMinutes(12);
+        Utils.addReminder(SystemReminderType.speedJarLock, Timestamp.valueOf(lockTime));
+
+
+        LocalDateTime localNow = LocalDateTime.now();
+        runLock(ChronoUnit.MINUTES.between(localNow, lockTime));
+        runUnlock(ChronoUnit.MINUTES.between(localNow, unlockTime));
+
+    }
+
     private void lock() {
+
+        Utils.deleteReminder(SystemReminderType.speedJarLock);
         PermissionSet deined = PermissionSet.of(Permission.SEND_MESSAGES);
         PermissionSet allowed = PermissionSet.none();
 
@@ -103,6 +144,8 @@ public class SpeedJar extends Action {
     }
 
     private void unlock() {
+        Utils.deleteReminder(SystemReminderType.speedJarUnlock);
+
         PermissionSet allowed = PermissionSet.of(Permission.SEND_MESSAGES);
         PermissionSet deined = PermissionSet.none();
 
@@ -140,13 +183,13 @@ public class SpeedJar extends Action {
         logger.info("lock at " + formatter.format(lockTime));
 
 
-        try {
-            BufferedWriter writer = new BufferedWriter(new FileWriter("lock.txt"));
-            writer.write(formatter.format(lockTime));
-            writer.close();
-        } catch (IOException e) {
-            printException(e);
-        }
+//        try {
+//            BufferedWriter writer = new BufferedWriter(new FileWriter("lock.txt"));
+//            writer.write(formatter.format(lockTime));
+//            writer.close();
+//        } catch (IOException e) {
+//            printException(e);
+//        }
 
 
         executorService.schedule(taskWrapper, delay, TimeUnit.MINUTES);
@@ -165,13 +208,13 @@ public class SpeedJar extends Action {
 
         LocalDateTime unlockTime = LocalDateTime.now().plusMinutes(delay);
         logger.info("unlock at " + formatter.format(unlockTime));
-        try {
-            BufferedWriter writer = new BufferedWriter(new FileWriter("unlock.txt"));
-            writer.write(formatter.format(unlockTime));
-            writer.close();
-        } catch (IOException e) {
-            printException(e);
-        }
+//        try {
+//            BufferedWriter writer = new BufferedWriter(new FileWriter("unlock.txt"));
+//            writer.write(formatter.format(unlockTime));
+//            writer.close();
+//        } catch (IOException e) {
+//            printException(e);
+//        }
         executorService.schedule(taskWrapper, delay, TimeUnit.MINUTES);
     }
 
@@ -181,37 +224,81 @@ public class SpeedJar extends Action {
         LocalDateTime lockTime = LocalDateTime.now().minusMinutes(1);
         LocalDateTime unlockTime = LocalDateTime.now().minusMinutes(1);
 
-        BufferedReader unlockReader = new BufferedReader(new FileReader(new File("unlock.txt")));
-        String line;
-        while ((line = unlockReader.readLine()) != null) {
-            unlockTime = LocalDateTime.parse(line, formatter);
-        }
-        unlockReader.close();
-
-        BufferedReader lockReader = new BufferedReader(new FileReader(new File("lock.txt")));
-        while ((line = lockReader.readLine()) != null) {
-            lockTime = LocalDateTime.parse(line, formatter);
-        }
-        lockReader.close();
+//        BufferedReader unlockReader = new BufferedReader(new FileReader(new File("unlock.txt")));
+//        String line;
+//        while ((line = unlockReader.readLine()) != null) {
+//            unlockTime = LocalDateTime.parse(line, formatter);
+//        }
+//        unlockReader.close();
 //
-//        Utils.loadReminder(SystemReminderType.speedJarLock);
-//        Utils.loadReminder(SystemReminderType.speedJarUnlock);
+//        BufferedReader lockReader = new BufferedReader(new FileReader(new File("lock.txt")));
+//        while ((line = lockReader.readLine()) != null) {
+//            lockTime = LocalDateTime.parse(line, formatter);
+//        }
+//        lockReader.close();
+
+        List<SystemReminder> lockReminder = Utils.loadReminder(SystemReminderType.speedJarLock);
+        List<SystemReminder> unlockReminder = Utils.loadReminder(SystemReminderType.speedJarUnlock);
+
 
 
         LocalDateTime localNow = LocalDateTime.now();
 
-        if (localNow.isBefore(lockTime)) {
+//        if (localNow.isBefore(lockTime)) {
+//            long delay = ChronoUnit.MINUTES.between(localNow, lockTime);
+//            delay = delay + 1;
+//            runLock(delay);
+//        }
+//
+//        if (localNow.isBefore(unlockTime)) {
+//            long delay = ChronoUnit.MINUTES.between(localNow, unlockTime);
+//            delay = delay + 1;
+//            runUnlock(delay);
+//        }
+
+
+        if (!lockReminder.isEmpty() ){
+            lockTime = lockReminder.get(0).getTime().toLocalDateTime();
             long delay = ChronoUnit.MINUTES.between(localNow, lockTime);
-            delay = delay + 1;
             runLock(delay);
         }
-
-        if (localNow.isBefore(unlockTime)) {
+        if (!unlockReminder.isEmpty() ){
+            unlockTime = unlockReminder.get(0).getTime().toLocalDateTime();
             long delay = ChronoUnit.MINUTES.between(localNow, unlockTime);
-            delay = delay + 1;
             runUnlock(delay);
+        } else {
+
+            Runnable taskWrapper = new Runnable() {
+
+                @Override
+                public void run() {
+                    logger.info("checking for missed messages");
+
+
+                    List<MessageData> messageDataList = getMessagesOfChannel(client.getChannelById(Snowflake.of(speedJarChannel)));
+
+                    for (MessageData messageData : messageDataList) {
+                        if (messageData.author().id().toString().equals(customerBot)) {
+                            if (messageData.content().contains(param)) {
+                                Instant messageDataTime = DateTimeFormatter.ISO_OFFSET_DATE_TIME.parse(messageData.timestamp(), Instant::from);
+                                create(messageDataTime);
+                            }
+                        }
+
+                    }
+                }
+
+            };
+
+            executorService.schedule(taskWrapper, 15, TimeUnit.SECONDS);
         }
 
 
+    }
+
+
+    public static List<MessageData> getMessagesOfChannel(RestChannel channel) {
+        Snowflake time = Snowflake.of(Instant.now().minus(15, ChronoUnit.MINUTES));
+        return channel.getMessagesAfter(time).collectList().block();
     }
 }

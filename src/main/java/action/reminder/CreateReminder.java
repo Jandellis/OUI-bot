@@ -63,6 +63,10 @@ public class CreateReminder extends Action {
                                     && !desc.contains("** while working overtime!")) {
                                 createReminder(ReminderType.work, message, desc);
                             }
+                            if (desc.startsWith("\uD83D\uDCB5") && desc.contains("** while working!")) {
+
+                                createReminder(ReminderType.work, message, desc);
+                            }
                             //ot
                             if (desc.startsWith("\uD83D\uDCB5") && desc.contains("** while working overtime!")) {
                                 createReminder(ReminderType.ot, message, desc);
@@ -112,7 +116,7 @@ public class CreateReminder extends Action {
 
                             }
                             //clean
-                            if (desc.startsWith("\u2705") && desc.contains("You have cleaned all of your locations!")) {
+                            if (desc.startsWith("\u2705") && desc.contains("You have cleaned")) {
 
                                 List<MessageData> historic = getMessagesOfChannel(message);
 //                                Collections.reverse(historic);

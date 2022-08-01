@@ -3,9 +3,13 @@ package action.sm;
 import action.Action;
 import bot.Config;
 import bot.Sauce;
+import bot.SauceObject;
 import com.gargoylesoftware.htmlunit.WebClient;
 import discord4j.common.util.Snowflake;
 import discord4j.core.object.entity.Message;
+import discord4j.core.spec.EmbedCreateSpec;
+import discord4j.rest.util.Color;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import reactor.core.publisher.Mono;
@@ -16,6 +20,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -36,6 +41,7 @@ public class PriceCheck extends Action {
     String cheapPing;
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
     static long chefRole;
+    int cheapPrice = 45;
 
 
     ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
@@ -47,6 +53,7 @@ public class PriceCheck extends Action {
         smChannel = config.get("smChannel");
         startMin = Integer.parseInt(config.get("priceCheck"));
         chefRole = Long.parseLong(config.get("chefRole"));
+        cheapPrice = Integer.parseInt(config.get("cheapPrice"));
     }
 
     public void loadPrices() {
@@ -66,12 +73,16 @@ public class PriceCheck extends Action {
 
             Object obj = jsonParser.parse(data);
             HashMap<Sauce, Integer> prices = new HashMap<>();
+            HashMap<Sauce, SauceObject> SauceObjectPrices = new HashMap<>();
 
             for (Sauce sauce : Sauce.values()) {
                 int price = Integer.parseInt(((JSONObject) ((JSONObject) obj).get(sauce.getName())).get("price").toString());
+                int price2 = Integer.parseInt(((JSONArray)((JSONObject) ((JSONObject) obj).get(sauce.getName())).get("history")).get(0).toString());
 
                 logger.info(sauce + " at $" + price);
                 prices.put(sauce, price);
+                SauceObject sauceObject = new SauceObject(sauce, price2, price);
+                SauceObjectPrices.put(sauce, sauceObject);
             }
 
 
@@ -121,11 +132,88 @@ public class PriceCheck extends Action {
 
                 }
             });
+
+
+            EmbedCreateSpec.Builder embed = EmbedCreateSpec.builder();
+            embed.color(Color.SUMMER_SKY);
+            embed.title("Sauce Market");
+            embed.description("------------------");
+
+            addSauce(SauceObjectPrices.get(Sauce.salsa), embed);
+            addSauce(SauceObjectPrices.get(Sauce.hotsauce), embed);
+            addSauce(SauceObjectPrices.get(Sauce.guacamole), embed);
+            addSauce(SauceObjectPrices.get(Sauce.pico), embed);
+            addSauce(SauceObjectPrices.get(Sauce.chipotle), embed);
+
+            client.getChannelById(Snowflake.of(smUpdate)).createMessage(embed.build().asRequest()).block();
+            printCheap(SauceObjectPrices);
+
+
+
+
             logger.info("Finished");
         } catch (Exception e) {
             printException(e);
         }
 
+    }
+
+    private void addSauce(SauceObject sauce, EmbedCreateSpec.Builder embed) {
+        String name = sauce.getSauce().getName().substring(0, 1).toUpperCase() + sauce.getSauce().getName().substring(1);
+
+
+        int change = sauce.getPrice() - sauce.getOldPrice();
+        String direction = " | :white_check_mark: +$" + change;
+        if (change < 0) {
+            change = change * -1;
+            direction = " | :small_red_triangle_down: -$"+ change;
+        }
+        if (change == 0) {
+            direction = " | :black_small_square: No Change";
+        }
+
+        String line = "\r\n------------------";
+
+
+
+        embed.addField(name, "$" + sauce.getPrice()  + direction + line, false);
+
+
+//        embed.addField(sauce.getSauce().getName(), "$" + sauce.getPrice(), true);
+//        embed.addField("Change", direction, false);
+
+    }
+
+
+    public void printCheap(HashMap<Sauce, SauceObject> prices) {
+
+        StringBuilder sb = new StringBuilder();
+        AtomicBoolean cheap = new AtomicBoolean(false);
+        sb.append("<@&" + cheapPing + "> we have some cheap sauce\r\n");
+
+
+        prices.forEach((sauce, sauceObject) -> {
+            if (cheapPrice > sauceObject.getPrice() && sauceObject.getPrice() != -1) {
+                int difference = sauceObject.getOldPrice() -sauceObject.getPrice();
+                String move = " No change";
+                if (difference > 0) {
+                    move = " :chart_with_downwards_trend: down " + difference;
+                }
+                if (difference < 0) {
+                    difference = difference * -1;
+                    move = " :chart_with_upwards_trend: up " + difference;
+                }
+
+                sb.append(" - " + sauce.getName() + " $" + sauceObject.getPrice() + move + "\r\n");
+                cheap.set(true);
+            }
+        });
+
+        if (cheap.get())
+            client.getChannelById(Snowflake.of(smUpdate)).createMessage(sb.toString()).block();
+        else {
+            logger.info("No cheap sauce");
+        }
     }
 
     public void startUp() {
@@ -162,6 +250,8 @@ public class PriceCheck extends Action {
             @Override
             public void run() {
                 logger.info("running price check");
+
+                Utils.deleteReminder(SystemReminderType.sauce);
                 loadPrices();
                 start();
             }
@@ -171,6 +261,8 @@ public class PriceCheck extends Action {
 
 
         LocalDateTime priceCheckTime = LocalDateTime.now().plusMinutes(delay);
+
+        Utils.addReminder(SystemReminderType.sauce, Timestamp.valueOf(priceCheckTime));
         logger.info("price check at " + formatter.format(priceCheckTime));
         try {
             BufferedWriter writer = new BufferedWriter(new FileWriter("priceCheck.txt"));

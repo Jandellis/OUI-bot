@@ -453,7 +453,7 @@ public class Utils {
             if (id != -1) {
                 st.executeUpdate("UPDATE system_reminder SET reminder_time = '" + time + "' WHERE id = " + id);
             } else {
-                st.addBatch("insert into system_reminder (name, type, reminder_time, channel) " +
+                st.addBatch("insert into system_reminder (type, reminder_time) " +
                         "VALUES ('" + type.getName() + "', '" + time + "')");
             }
             st.executeBatch();

@@ -47,6 +47,8 @@ public class Help extends Action {
                     sb.append("Currently I only work for work, tips, overtime, daily, clean and vote\r\n");
                     sb.append("When you do one of these, i will tell you if im missing any cooldowns by reacting with the first letter\r\n");
 
+                    sb.append("Type `ouirm list` to view your current reminders\r\n");
+
                     sb.append("\r\n");
                     sb.append("You can also add a custom emote for me to react with\r\n");
                     sb.append("Type `ouireact <emote>`, for example to get me to react with :small_blue_diamond:, type ouireact :small_blue_diamond: \r\n");
