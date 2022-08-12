@@ -15,6 +15,11 @@ import reactor.core.publisher.Mono;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 
 public abstract class Action {
@@ -26,6 +31,7 @@ public abstract class Action {
     protected String guildId;
 
     protected static final Logger logger = LogManager.getLogger("ouiBot");
+    protected ScheduledExecutorService executorService = Executors.newScheduledThreadPool(5);
 
 
     public Mono<Void> action(GatewayDiscordClient gateway, DiscordClient client) {
@@ -59,6 +65,9 @@ public abstract class Action {
 
     protected boolean hasPermission(Message message, Long role) {
         try {
+            if (!message.getAuthor().isPresent()) {
+                return false;
+            }
 
             return hasPermission(message.getAuthor().get().getId().asString(), role);
 
@@ -79,10 +88,9 @@ public abstract class Action {
                     return true;
             }
 
-        } catch (ClientException e ){
+        } catch (ClientException e) {
             logger.info("Member not in server");
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
 
             printException(e);
         }
@@ -90,22 +98,72 @@ public abstract class Action {
     }
 
     protected void printException(Exception e) {
-        logger.error("Exception", e);
+        try {
+            logger.error("Exception", e);
 
-        StringWriter sw = new StringWriter();
-        PrintWriter pw = new PrintWriter(sw);
-        e.printStackTrace(pw);
-        String sStackTrace = sw.toString();
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            e.printStackTrace(pw);
+            String sStackTrace = sw.toString();
 
-        if (sStackTrace.length() > 1000) {
-            sStackTrace = sStackTrace.substring(0, 999);
+            if (sStackTrace.length() > 1000) {
+                sStackTrace = sStackTrace.substring(0, 999);
+            }
+
+            String finalSStackTrace = sStackTrace;
+            gateway.getUserById(Snowflake.of("292839877563908097")).block().getPrivateChannel().flatMap(channel -> {
+                channel.createMessage("**something broke!!**\r\n\r\n " + finalSStackTrace).block();
+                logger.info("sent DM");
+                return Mono.empty();
+            }).block();
+        } catch (Throwable e2) {
+
+            logger.error("Exception", e2);
         }
+    }
 
-        String finalSStackTrace = sStackTrace;
-        gateway.getUserById(Snowflake.of("292839877563908097")).block().getPrivateChannel().flatMap(channel -> {
-            channel.createMessage("**something broke!!**\r\n\r\n " + finalSStackTrace).block();
-            logger.info("sent DM");
-            return Mono.empty();
-        }).block();
+    protected String getId(Message message) {
+        if (message.getData().interaction().isAbsent()) {
+            if (message.getReferencedMessage().isPresent()) {
+                return getId(message.getReferencedMessage().get());
+            }
+            if (message.getMessageReference().isPresent()) {
+                Message msg = gateway.getMessageById(Snowflake.of(message.getChannelId().asString()), Snowflake.of(message.getMessageReference().get().getMessageId().get().asLong())).block();
+                return getId(msg);
+            }
+            return "";
+        }
+        return message.getData().interaction().get().user().id().toString();
+
+    }
+
+
+    protected void checkMessageAgain(Message message) {
+
+        Runnable taskWrapper = new Runnable() {
+
+            @Override
+            public void run() {
+//                logger.info("checking message again");
+                Message msg = gateway.getMessageById(Snowflake.of(message.getChannelId().asString()), Snowflake.of(message.getId().asString())).block();
+                doAction(msg);
+            }
+
+        };
+//        logger.info("checking message again in 0.5 sec");
+        executorService.schedule(taskWrapper, 500, TimeUnit.MILLISECONDS);
+    }
+
+    protected boolean checkAge(Message message) {
+        LocalDateTime now = LocalDateTime.now().minusSeconds(10);
+        boolean notTooOld = now.isBefore((Timestamp.from(message.getTimestamp()).toLocalDateTime()));
+        if (notTooOld && message.getEmbeds().isEmpty()) {
+//            checkMessageAgain(message);
+            return true;
+        }
+        if (!notTooOld) {
+            logger.info("message is too old " + message.getId());
+        }
+        return false;
     }
 }

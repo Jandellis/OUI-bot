@@ -48,15 +48,27 @@ public class Heartbeat extends Action {
 
             @Override
             public void run() {
-                logger.info("Doing heartbeat check, last message " + formatter.format(lastHeartbeat));
-                long minutes = ChronoUnit.MINUTES.between(lastHeartbeat, LocalDateTime.now()) % 60;
-                long sec = ChronoUnit.SECONDS.between(lastHeartbeat, LocalDateTime.now()) % 60;
-                client.getChannelById(Snowflake.of(statusChannel)).createMessage("Heartbeat - Last message "+ minutes + " minutes and " + sec +" seconds ago!").block();
-                if (LocalDateTime.now().minusMinutes(delay+1).isAfter(lastHeartbeat)) {
-                    client.getChannelById(Snowflake.of(statusChannel)).createMessage("Heartbeat failed, rebooting").block();
-                    System.exit(0);
+                try {
+                    //if failes again, put doHeartbeatCheck here
+
+                    logger.info("Doing heartbeat check, last message " + formatter.format(lastHeartbeat));
+                    long minutes = ChronoUnit.MINUTES.between(lastHeartbeat, LocalDateTime.now()) % 60;
+                    long sec = ChronoUnit.SECONDS.between(lastHeartbeat, LocalDateTime.now()) % 60;
+                    client.getChannelById(Snowflake.of(statusChannel)).createMessage("Heartbeat - Last message " + minutes + " minutes and " + sec + " seconds ago!").block();
+                    if (LocalDateTime.now().minusMinutes(delay + 1).isAfter(lastHeartbeat)) {
+                        logger.info("Rebooting");
+                        client.getChannelById(Snowflake.of(statusChannel)).createMessage("Heartbeat failed, rebooting").block();
+                        System.exit(0);
+                    }
+                } catch (Exception e ){
+                    logger.info("something went wrong");
+                    printException(e);
+                } catch (Throwable e) {
+                    logger.info("something went more wrong");
+                    e.printStackTrace();
+                } finally {
+                    doHeartbeatCheck();
                 }
-                doHeartbeatCheck();
             }
 
         };

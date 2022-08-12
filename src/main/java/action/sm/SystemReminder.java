@@ -7,10 +7,12 @@ public class SystemReminder {
 
     SystemReminderType type;
     Timestamp time;
+    String messageId;
 
-    public SystemReminder(SystemReminderType type, Timestamp time) {
+    public SystemReminder(SystemReminderType type, Timestamp time, String messageId) {
         this.type = type;
         this.time = time;
+        this.messageId = messageId;
     }
 
 
@@ -21,5 +23,9 @@ public class SystemReminder {
 
     public Timestamp getTime() {
         return time;
+    }
+
+    public String getMessageId() {
+        return messageId;
     }
 }

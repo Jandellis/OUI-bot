@@ -18,7 +18,7 @@ public class GiveawayTotal extends Action {
         //work out how much people got in
         try {
             if (message.getChannelId().asString().equals("876714404819918918")) {
-                if (message.getAuthor().get().getId().asString().equals("530082442967646230")) {
+                if (message.getAuthor().isPresent() && message.getAuthor().get().getId().asString().equals("530082442967646230")) {
                     if (message.getContent().startsWith("^<@&875881574409859163>")) {
                         int total = 0;
                         try {
@@ -35,6 +35,17 @@ public class GiveawayTotal extends Action {
 
                         //write message to giveaways
                         return message.getChannel().flatMap(channel -> channel.createMessage(responseMessage));
+                    }
+                    if (message.getContent().startsWith("Congratulations to")) {
+                        logger.info("got congrats message");
+                        String id = message.getContent().split(" ")[2];
+
+                        logger.info("id is " + id);
+
+                        message.getChannel().block().createMessage("Use this to send a gift to the winner").block();
+//                        message.getChannel().block().createMessage("`!gift "+id+"`").block();
+
+                        return message.getChannel().flatMap(channel -> channel.createMessage("`!gift "+id+"`"));
                     }
                 }
             }

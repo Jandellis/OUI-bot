@@ -1,18 +1,18 @@
 package bot;
 
-import action.CheapSaucePing;
+import action.GiveAWay;
 import action.GiveawayAdd;
 import action.GiveawayMembers;
 import action.GiveawayTotal;
 import action.Heartbeat;
 import action.Hit;
-import action.export.Import;
 import action.Karen;
 import action.Left;
 import action.SpeedJar;
 import action.Test;
 import action.Warn;
 import action.Welcome;
+import action.export.Import;
 import action.reminder.CreateBoostReminder;
 import action.reminder.CreateProfile;
 import action.reminder.CreateReminder;
@@ -46,6 +46,7 @@ import java.sql.Statement;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class Bot {
@@ -67,6 +68,8 @@ public class Bot {
         DiscordClient client;
         Config config = Config.getInstance();
 
+        System.setProperty("java.awt.headless", "true");
+
         //OUI-Bot-test
         client = DiscordClient.create(config.get("client"));
         warnChannel = config.get("warnChannel");
@@ -78,6 +81,7 @@ public class Bot {
         secondWarning = Long.parseLong(config.get("secondWarning"));//Purple
         finalWarning = Long.parseLong(config.get("finalWarning"));//Green
         chefRole = Long.parseLong(config.get("chefRole"));//Orange
+        List<String> admins = Arrays.asList(config.get("admin").split(","));
 
 
         String url = config.get("url");
@@ -104,7 +108,6 @@ public class Bot {
         }
 
 
-
         while (true) {
             try {
 
@@ -113,7 +116,7 @@ public class Bot {
                     Mono<Void> printOnLogin = gateway.on(ReadyEvent.class, event ->
                                     Mono.fromRunnable(() -> {
                                         final User self = event.getSelf();
-                                        logger.info("Logged in as " + self.getUsername() +" " + self.getDiscriminator());
+                                        logger.info("Logged in as " + self.getUsername() + " " + self.getDiscriminator());
 
                                         client.getChannelById(Snowflake.of("1002115224876359680")).createMessage("Logged in").block();
                                         gateway.updatePresence(ClientPresence.online(ClientActivity.watching("ouiHelp"))).subscribe();
@@ -139,6 +142,10 @@ public class Bot {
                     priceCheck.action(gateway, client);
                     priceCheck.startUp();
 
+                    GiveAWay giveAWay = new GiveAWay();
+                    giveAWay.action(gateway, client);
+                    giveAWay.startUp();
+
                     Mono<Void> handlePingCommand = gateway.on(MessageCreateEvent.class, event -> {
                         Message message = event.getMessage();
 
@@ -150,6 +157,19 @@ public class Bot {
                                     .flatMap(channel -> channel.createMessage("pong! Latency " + time + "ms"));
                         }
 
+                        if (message.getContent().equalsIgnoreCase("!reboot")) {
+                            admins.forEach(admin -> {
+                                if (admin.equals(message.getAuthor().get().getId().asLong() + "")) {
+                                    message.getChannel()
+                                            .flatMap(channel -> channel.createMessage("Rebooting!")).block();
+                                    System.exit(0);
+                                }
+                            });
+
+                            return message.getChannel()
+                                    .flatMap(channel -> channel.createMessage("reboot failed"));
+                        }
+
                         return Mono.empty();
                     }).then();
 
@@ -157,7 +177,7 @@ public class Bot {
                     return printOnLogin.and(handlePingCommand)
 //                            .and(input(gateway))
 //                            .and(gift(gateway))
-                            .and(new Import().action(gateway,client))
+                            .and(new Import().action(gateway, client))
                             .and(report(gateway))
                             .and(new Warn().action(gateway, client))
                             .and(new Hit().action(gateway, client))
@@ -183,7 +203,8 @@ public class Bot {
                             .and(new action.reminder.Message().action(gateway, client))
                             .and(new CreateBoostReminder().action(gateway, client))
                             .and(new Heartbeat().action(gateway, client))
-                            .and(new UpdateAlerts().action(gateway,client));
+                            .and(new GiveAWay().action(gateway, client))
+                            .and(new UpdateAlerts().action(gateway, client));
 
                 });
 
@@ -197,100 +218,100 @@ public class Bot {
         }
     }
 
-/*
-    private static Mono<Void> input(GatewayDiscordClient gateway) {
-        return gateway.on(MessageCreateEvent.class, event -> {
-            Message message = event.getMessage();
-            String param = "bbfimport";
+    /*
+        private static Mono<Void> input(GatewayDiscordClient gateway) {
+            return gateway.on(MessageCreateEvent.class, event -> {
+                Message message = event.getMessage();
+                String param = "bbfimport";
 
-            if (message.getContent().toLowerCase().startsWith(param)) {
-                logger.info(message.getContent());
+                if (message.getContent().toLowerCase().startsWith(param)) {
+                    logger.info(message.getContent());
 
-                Snowflake messageId = Snowflake.of(message.getContent().toLowerCase().replaceAll(param + " ", ""));
-                logger.info("message id " + messageId);
-                int worklimit = 5;
-                int uncleanlimit = 7;
+                    Snowflake messageId = Snowflake.of(message.getContent().toLowerCase().replaceAll(param + " ", ""));
+                    logger.info("message id " + messageId);
+                    int worklimit = 5;
+                    int uncleanlimit = 7;
 
-                return message.getChannel().flatMap(channel -> {
-                    Message data = channel.getMessageById(messageId).block();
+                    return message.getChannel().flatMap(channel -> {
+                        Message data = channel.getMessageById(messageId).block();
 
-                    //download file
-                    String url = data.getData().attachments().get(0).url();
-                    KickList kickList = new KickList();
-                    try {
-                        kickList = Clean.main(url, "historic.csv", worklimit, uncleanlimit);
-                        logger.info("processed data");
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-
-                    return channel.createMessage("Imported Data");
-                });
-            }
-
-            return Mono.empty();
-        }).then();
-    }
-
-    private static Mono<Void> gift(GatewayDiscordClient gateway) {
-
-        //work out who is in the giveaway list
-       return gateway.on(MessageCreateEvent.class, event -> {
-            Message message = event.getMessage();
-            String param = "oldgifts";
-
-            if (message.getContent().startsWith(param)) {
-                logger.info(message.getContent());
-                logger.info(message.getContent().replaceAll(param + " ", ""));
-
-                Snowflake messageId = Snowflake.of(message.getContent().replaceAll(param + " ", ""));
-                logger.info("message id " + messageId);
-                int worklimit = 5;
-                int votelimit = 7;
-                int otlimit = 7;
-
-                return message.getChannel().flatMap(channel -> {
-                    Message data = channel.getMessageById(messageId).block();
-
-                    //download file
-                    String otUrl = "";
-                    String workUrl = "";
-                    String voteUrl = "";
-
-                    for (AttachmentData attachmentData : data.getData().attachments()) {
-                        if (attachmentData.filename().contains("ot")) {
-                            otUrl = attachmentData.url();
+                        //download file
+                        String url = data.getData().attachments().get(0).url();
+                        KickList kickList = new KickList();
+                        try {
+                            kickList = Clean.main(url, "historic.csv", worklimit, uncleanlimit);
+                            logger.info("processed data");
+                        } catch (Exception e) {
+                            e.printStackTrace();
                         }
-                        if (attachmentData.filename().contains("work")) {
-                            workUrl = attachmentData.url();
+
+                        return channel.createMessage("Imported Data");
+                    });
+                }
+
+                return Mono.empty();
+            }).then();
+        }
+
+        private static Mono<Void> gift(GatewayDiscordClient gateway) {
+
+            //work out who is in the giveaway list
+           return gateway.on(MessageCreateEvent.class, event -> {
+                Message message = event.getMessage();
+                String param = "oldgifts";
+
+                if (message.getContent().startsWith(param)) {
+                    logger.info(message.getContent());
+                    logger.info(message.getContent().replaceAll(param + " ", ""));
+
+                    Snowflake messageId = Snowflake.of(message.getContent().replaceAll(param + " ", ""));
+                    logger.info("message id " + messageId);
+                    int worklimit = 5;
+                    int votelimit = 7;
+                    int otlimit = 7;
+
+                    return message.getChannel().flatMap(channel -> {
+                        Message data = channel.getMessageById(messageId).block();
+
+                        //download file
+                        String otUrl = "";
+                        String workUrl = "";
+                        String voteUrl = "";
+
+                        for (AttachmentData attachmentData : data.getData().attachments()) {
+                            if (attachmentData.filename().contains("ot")) {
+                                otUrl = attachmentData.url();
+                            }
+                            if (attachmentData.filename().contains("work")) {
+                                workUrl = attachmentData.url();
+                            }
+                            if (attachmentData.filename().contains("vote")) {
+                                voteUrl = attachmentData.url();
+                            }
                         }
-                        if (attachmentData.filename().contains("vote")) {
-                            voteUrl = attachmentData.url();
+
+
+                        List<String> gifts = new ArrayList<>();
+                        try {
+                            gifts = GiftAway.main(workUrl, otUrl, voteUrl, worklimit, otlimit, votelimit);
+                        } catch (Exception e) {
+                            e.printStackTrace();
                         }
-                    }
 
+                        for (String giftString : gifts) {
 
-                    List<String> gifts = new ArrayList<>();
-                    try {
-                        gifts = GiftAway.main(workUrl, otUrl, voteUrl, worklimit, otlimit, votelimit);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
+                            logger.info(giftString);
+                            channel.createMessage(giftString).block();
+                        }
 
-                    for (String giftString : gifts) {
+                        return channel.createMessage("done");
+                    });
+                }
 
-                        logger.info(giftString);
-                        channel.createMessage(giftString).block();
-                    }
-
-                    return channel.createMessage("done");
-                });
-            }
-
-            return Mono.empty();
-        }).then();
-    }
-*/
+                return Mono.empty();
+            }).then();
+        }
+    */
     private static Mono<Void> report(GatewayDiscordClient gateway) {
 
         //create various report
@@ -527,7 +548,6 @@ public class Bot {
 //        }).then();
 //
 //    }
-
 
 
 }

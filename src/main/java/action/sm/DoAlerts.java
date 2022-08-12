@@ -28,7 +28,7 @@ public class DoAlerts extends Action {
     @Override
     public Mono<Object> doAction(Message message) {
         if (message.getChannelId().asString().equals(smUpdate)) {
-            if (message.getAuthor().get().getId().asString().equals(bbBot)) {
+            if (message.getAuthor().isPresent() && message.getAuthor().get().getId().asString().equals(bbBot)) {
                 for (Embed embed : message.getEmbeds()) {
                     try {
 

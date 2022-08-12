@@ -1,6 +1,9 @@
 package action.export;
 
 import action.Action;
+import action.reminder.DoReminder;
+import action.reminder.Reminder;
+import action.reminder.ReminderType;
 import bot.Clean;
 import bot.KickList;
 import discord4j.common.util.Snowflake;
@@ -18,6 +21,8 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -45,9 +50,9 @@ public class Import extends Action {
 
     @Override
     public Mono<Object> doAction(Message message) {
-        String action = getAction(message);
-        if (action != null && hasPermission(message, recruiter)) {
-            Snowflake messageId = Snowflake.of(action);
+        String actionData = getAction(message);
+        if (actionData != null && hasPermission(message, recruiter)) {
+            Snowflake messageId = Snowflake.of(actionData);
             int worklimit = 5;
             int uncleanlimit = 7;
 
@@ -103,6 +108,12 @@ public class Import extends Action {
                     channel.createMessage("Checking Roles").block();
 
                     checkRoles(history);
+
+                    Instant reminderTime = message.getTimestamp().plus(23, ChronoUnit.HOURS);
+
+                    Reminder reminder = action.reminder.Utils.addReminder(message.getAuthor().get().getId().asString(), ReminderType.importData, Timestamp.from(reminderTime), message.getChannelId().asString());
+                    DoReminder doReminder = new DoReminder(gateway, client);
+                    doReminder.runReminder(reminder);
 
                 } catch (Exception e) {
                     printException(e);

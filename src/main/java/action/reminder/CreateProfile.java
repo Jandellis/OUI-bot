@@ -1,6 +1,7 @@
 package action.reminder;
 
 import action.Action;
+import discord4j.common.util.Snowflake;
 import discord4j.core.object.Embed;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.reaction.ReactionEmoji;
@@ -9,6 +10,9 @@ import reactor.core.publisher.Mono;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class CreateProfile extends Action {
@@ -19,9 +23,16 @@ public class CreateProfile extends Action {
     public CreateProfile() {
         watchChannels = Arrays.asList(config.get("watchChannels").split(","));
     }
+    ScheduledExecutorService executorService = Executors.newScheduledThreadPool(5);
+
 
     @Override
     public Mono<Object> doAction(Message message) {
+        return doAction(message, true);
+    }
+
+
+    public Mono<Object> doAction(Message message, boolean checkEmbeds) {
         //work out how much people got in
 
         AtomicBoolean watched = new AtomicBoolean(false);
@@ -33,8 +44,12 @@ public class CreateProfile extends Action {
         });
         //if in watch channel
         if (watched.get()) {
-            if (message.getAuthor().get().getId().asString().equals(tacoBot)) {
+            if (message.getData().author().id().asString().equals(tacoBot)) {
                 try {
+                    //for some reason the embeds will be empty from slash, but if i load it again it will have data
+                    if (checkAge(message)) {
+                        checkMessageAgain(message);
+                    }
                     for (Embed embed : message.getEmbeds()) {
 
                         if (embed.getFields().size() > 1 && embed.getFields().get(0).getName().equals("Shack Name")) {
@@ -70,4 +85,21 @@ public class CreateProfile extends Action {
         }
         return Mono.empty();
     }
+//
+//    @Override
+//    public void checkMessageAgain(Message message) {
+//
+//        Runnable taskWrapper = new Runnable() {
+//
+//            @Override
+//            public void run() {
+//                logger.info("checking message again");
+//                Message msg = gateway.getMessageById(Snowflake.of(message.getChannelId().asString()), Snowflake.of(message.getId().asString())).block();
+//                doAction(msg, false);
+//            }
+//
+//        };
+//        logger.info("checking message again in 2 sec");
+//        executorService.schedule(taskWrapper, 2, TimeUnit.SECONDS);
+//    }
 }

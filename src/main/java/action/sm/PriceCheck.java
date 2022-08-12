@@ -8,24 +8,36 @@ import com.gargoylesoftware.htmlunit.WebClient;
 import discord4j.common.util.Snowflake;
 import discord4j.core.object.entity.Message;
 import discord4j.core.spec.EmbedCreateSpec;
+import discord4j.core.spec.MessageCreateSpec;
 import discord4j.rest.util.Color;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+import org.knowm.xchart.BitmapEncoder;
+import org.knowm.xchart.XYChart;
+import org.knowm.xchart.XYChartBuilder;
+import org.knowm.xchart.XYSeries;
+import org.knowm.xchart.style.Styler;
 import reactor.core.publisher.Mono;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -77,7 +89,7 @@ public class PriceCheck extends Action {
 
             for (Sauce sauce : Sauce.values()) {
                 int price = Integer.parseInt(((JSONObject) ((JSONObject) obj).get(sauce.getName())).get("price").toString());
-                int price2 = Integer.parseInt(((JSONArray)((JSONObject) ((JSONObject) obj).get(sauce.getName())).get("history")).get(0).toString());
+                int price2 = Integer.parseInt(((JSONArray) ((JSONObject) ((JSONObject) obj).get(sauce.getName())).get("history")).get(0).toString());
 
                 logger.info(sauce + " at $" + price);
                 prices.put(sauce, price);
@@ -146,27 +158,37 @@ public class PriceCheck extends Action {
             addSauce(SauceObjectPrices.get(Sauce.chipotle), embed);
 
             client.getChannelById(Snowflake.of(smUpdate)).createMessage(embed.build().asRequest()).block();
+
             printCheap(SauceObjectPrices);
+            logger.info("creating chart");
+            createChart(data);
+            logger.info("got chart");
+            InputStream inputStream = new BufferedInputStream(new FileInputStream("line_chart.png"));
+            MessageCreateSpec msg = MessageCreateSpec.builder()
+                    .addFile("line_chart.png", inputStream)
+                    .build();
 
-
+            client.getChannelById(Snowflake.of(smUpdate)).createMessage(msg.asRequest()).block();
 
 
             logger.info("Finished");
         } catch (Exception e) {
             printException(e);
+        } catch (Throwable e) {
+            e.printStackTrace();
         }
 
     }
 
     private void addSauce(SauceObject sauce, EmbedCreateSpec.Builder embed) {
-        String name = sauce.getSauce().getName().substring(0, 1).toUpperCase() + sauce.getSauce().getName().substring(1);
+        String name = sauce.getSauce().getUppercaseName();
 
 
         int change = sauce.getPrice() - sauce.getOldPrice();
         String direction = " | :white_check_mark: +$" + change;
         if (change < 0) {
             change = change * -1;
-            direction = " | :small_red_triangle_down: -$"+ change;
+            direction = " | :small_red_triangle_down: -$" + change;
         }
         if (change == 0) {
             direction = " | :black_small_square: No Change";
@@ -175,8 +197,7 @@ public class PriceCheck extends Action {
         String line = "\r\n------------------";
 
 
-
-        embed.addField(name, "$" + sauce.getPrice()  + direction + line, false);
+        embed.addField(name, "$" + sauce.getPrice() + direction + line, false);
 
 
 //        embed.addField(sauce.getSauce().getName(), "$" + sauce.getPrice(), true);
@@ -194,7 +215,7 @@ public class PriceCheck extends Action {
 
         prices.forEach((sauce, sauceObject) -> {
             if (cheapPrice > sauceObject.getPrice() && sauceObject.getPrice() != -1) {
-                int difference = sauceObject.getOldPrice() -sauceObject.getPrice();
+                int difference = sauceObject.getOldPrice() - sauceObject.getPrice();
                 String move = " No change";
                 if (difference > 0) {
                     move = " :chart_with_downwards_trend: down " + difference;
@@ -262,7 +283,7 @@ public class PriceCheck extends Action {
 
         LocalDateTime priceCheckTime = LocalDateTime.now().plusMinutes(delay);
 
-        Utils.addReminder(SystemReminderType.sauce, Timestamp.valueOf(priceCheckTime));
+        Utils.addReminder(SystemReminderType.sauce, Timestamp.valueOf(priceCheckTime), "");
         logger.info("price check at " + formatter.format(priceCheckTime));
         try {
             BufferedWriter writer = new BufferedWriter(new FileWriter("priceCheck.txt"));
@@ -399,5 +420,117 @@ public class PriceCheck extends Action {
     @Override
     protected Mono<Object> doAction(Message message) {
         return Mono.empty();
+    }
+
+    /**
+     *
+     */
+
+    private void createChart(String data) throws IOException, ParseException {
+        logger.info("getting chart data");
+        XYChart chart = readData(data);
+        logger.info("got chart data");
+        BitmapEncoder.saveBitmap(chart, "./line_chart", BitmapEncoder.BitmapFormat.PNG);
+
+//        JFreeChart chart = ChartFactory.createXYLineChart(
+//                "Sauce Market last 24 hours",
+//                "Time",
+//                "Price",
+//                dataset,
+//                PlotOrientation.VERTICAL,
+//                true,
+//                true,
+//                false
+//        );
+//        logger.info("got ChartFactory");
+//
+//        XYPlot plot = chart.getXYPlot();
+//
+//        XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer();
+//
+//        renderer.setSeriesPaint(0, java.awt.Color.RED);
+//        renderer.setSeriesStroke(0, new BasicStroke(2.0f));
+//        renderer.setSeriesPaint(1, java.awt.Color.BLUE);
+//        renderer.setSeriesStroke(1, new BasicStroke(2.0f));
+//        renderer.setSeriesPaint(2, java.awt.Color.GREEN);
+//        renderer.setSeriesStroke(2, new BasicStroke(2.0f));
+//        renderer.setSeriesPaint(3, java.awt.Color.CYAN);
+//        renderer.setSeriesStroke(3, new BasicStroke(2.0f));
+//        renderer.setSeriesPaint(4, java.awt.Color.MAGENTA);
+//        renderer.setSeriesStroke(4, new BasicStroke(2.0f));
+//
+//        plot.setRenderer(renderer);
+//        plot.setBackgroundPaint(java.awt.Color.white);
+//        plot.setRangeGridlinesVisible(true);
+//        plot.setDomainGridlinesVisible(true);
+//
+//
+//        plot.setRangeGridlinesVisible(true);
+//        plot.setRangeGridlinePaint(java.awt.Color.BLACK);
+//
+//        plot.setDomainGridlinesVisible(true);
+//        plot.setDomainGridlinePaint(java.awt.Color.BLACK);
+//
+//
+//        plot.getDomainAxis().setRange(-24, 0);
+//
+//        chart.getLegend().setFrame(BlockBorder.NONE);
+//
+//        chart.setTitle(new TextTitle("Sauce Market last 24 hours",
+//                        new Font("Arial", Font.BOLD, 18)
+//                )
+//        );
+//
+//        ChartUtils.saveChartAsPNG(new File("line_chart.png"), chart, 900, 400);
+    }
+
+
+    private XYChart readData(String data) throws ParseException {
+        // Create Chart
+        logger.info("getting builder");
+        XYChart chart = new XYChartBuilder().width(900).height(600)
+                .title("Sauce Market last 24 hours")
+                .xAxisTitle("Hours ago")
+                .yAxisTitle("Price").build();
+        logger.info("got builder");
+
+        // Customize Chart
+        chart.getStyler().setLegendPosition(Styler.LegendPosition.InsideNW);
+        chart.getStyler().setDefaultSeriesRenderStyle(XYSeries.XYSeriesRenderStyle.Line);
+//        chart.getStyler().setYAxisLabelAlignment(Styler.TextAlignment.Right);
+//        chart.getStyler().setYAxisDecimalPattern("$ #,###.##");
+        chart.getStyler().setPlotMargin(0);
+        chart.getStyler().setYAxisMin(0d);
+//        chart.getStyler().setPlotContentSize(.95);
+
+
+//        XYSeriesCollection dataset = new XYSeriesCollection();
+        JSONParser jsonParser = new JSONParser();
+
+        Object obj = jsonParser.parse(data);
+
+        for (Sauce sauce : Sauce.values()) {
+//            XYSeries series = new XYSeries(sauce.getUppercaseName());
+
+            int price = Integer.parseInt(((JSONObject) ((JSONObject) obj).get(sauce.getName())).get("price").toString());
+            JSONArray history = (JSONArray) ((JSONObject) ((JSONObject) obj).get(sauce.getName())).get("history");
+
+//            series.add(0, price);
+            List<Integer> xData = new ArrayList<>();
+            List<Integer> yData = new ArrayList<>();
+            xData.add(0);
+            yData.add(price);
+            for (int i = 0; i < history.size(); i++) {
+                int value = Integer.parseInt(history.get(i).toString());
+                int position = (i + 1) * -1;
+//                series.add(position, value);
+                xData.add(position);
+                yData.add(value);
+            }
+//            dataset.addSeries(series);
+            chart.addSeries(sauce.getUppercaseName(), xData, yData);
+        }
+
+        return chart;
     }
 }

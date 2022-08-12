@@ -11,10 +11,14 @@ import reactor.core.publisher.Mono;
 
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -24,6 +28,7 @@ public class CreateBoostReminder extends Action {
     List<String> watchChannels;
     String defaultReact = "\uD83D\uDC4B";
     List<Boost> boosts;
+    ScheduledExecutorService executorService = Executors.newScheduledThreadPool(5);
 
     public CreateBoostReminder() {
 
@@ -71,8 +76,12 @@ public class CreateBoostReminder extends Action {
         });
         //if in watch channel
         if (watched.get()) {
-            if (message.getAuthor().get().getId().asString().equals(tacoBot)) {
+            if (message.getData().author().id().asString().equals(tacoBot)) {
                 try {
+                    //for some reason the embeds will be empty from slash, but if i load it again it will have data
+                    if (checkAge(message)) {
+                        checkMessageAgain(message);
+                    }
                     for (Embed embed : message.getEmbeds()) {
 
 
@@ -92,6 +101,9 @@ public class CreateBoostReminder extends Action {
                                         userId.set(messageData.author().id().toString());
                                     }
                                 });
+                                if (userId.get().equals("")) {
+                                    userId.set(getId(message));
+                                }
                                 Profile profile = Utils.loadProfileById(userId.get());
                                 if (profile != null) {
 
@@ -153,6 +165,24 @@ public class CreateBoostReminder extends Action {
             message.addReaction(ReactionEmoji.unicode(react)).block();
         }
     }
+
+//
+//    @Override
+//    public void checkMessageAgain(Message message) {
+//
+//        Runnable taskWrapper = new Runnable() {
+//
+//            @Override
+//            public void run() {
+//                logger.info("checking message again");
+//                Message msg = gateway.getMessageById(Snowflake.of(message.getChannelId().asString()), Snowflake.of(message.getId().asString())).block();
+//                doAction(msg, false);
+//            }
+//
+//        };
+//        logger.info("checking message again in 2 sec");
+//        executorService.schedule(taskWrapper, 2, TimeUnit.SECONDS);
+//    }
 
     //
 //        "\uD83C\uDDFC" - W

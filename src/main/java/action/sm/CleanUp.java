@@ -28,7 +28,7 @@ public class CleanUp extends Action {
         try {
 
             if (message.getChannelId().asString().equals(smChannel)) {
-                if (message.getAuthor().get().getId().asString().equals(bbBot)) {
+                if (message.getAuthor().isPresent() && message.getAuthor().get().getId().asString().equals(bbBot)) {
                     if (message.getContent().contains(param)) {
                         try {
                             logger.info(message.getContent());

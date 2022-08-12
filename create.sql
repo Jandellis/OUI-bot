@@ -107,3 +107,6 @@ CREATE TABLE IF NOT EXISTS system_reminder (
     reminder_time timestamp,
     type  VARCHAR(25)
 );
+
+
+ALTER TABLE system_reminder add message_id VARCHAR(255);

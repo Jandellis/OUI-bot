@@ -70,7 +70,7 @@ public class SpeedJar extends Action {
         //
         try {
             if (message.getChannelId().asString().equals(speedJarChannel)) {
-                if (message.getAuthor().get().getId().asString().equals(customerBot)) {
+                if (message.getAuthor().isPresent() && message.getAuthor().get().getId().asString().equals(customerBot)) {
                     if (message.getContent().contains(param)) {
 
                         return message.getChannel().flatMap(channel -> {
@@ -106,10 +106,10 @@ public class SpeedJar extends Action {
 
 
         LocalDateTime unlockTime = Timestamp.from(messageTime).toLocalDateTime().plusMinutes(690);
-        Utils.addReminder(SystemReminderType.speedJarUnlock, Timestamp.valueOf(unlockTime));
+        Utils.addReminder(SystemReminderType.speedJarUnlock, Timestamp.valueOf(unlockTime), "");
 
         LocalDateTime lockTime = Timestamp.from(messageTime).toLocalDateTime().plusMinutes(12);
-        Utils.addReminder(SystemReminderType.speedJarLock, Timestamp.valueOf(lockTime));
+        Utils.addReminder(SystemReminderType.speedJarLock, Timestamp.valueOf(lockTime), "");
 
 
         LocalDateTime localNow = LocalDateTime.now();

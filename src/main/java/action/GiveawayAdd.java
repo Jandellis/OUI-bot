@@ -36,8 +36,13 @@ public class GiveawayAdd extends Action {
 
 
         if (message.getChannelId().asString().equals(giveawayChannel)) {
-            if (message.getAuthor().get().getId().asString().equals(tacoBot)) {
+            if (message.getAuthor().isPresent() && message.getAuthor().get().getId().asString().equals(tacoBot)) {
                 try {
+                    //for some reason the embeds will be empty from slash, but if i load it again it will have data
+                    if (checkAge(message)) {
+                        checkMessageAgain(message);
+                    }
+
                     for (Embed embed : message.getEmbeds()) {
                         if (embed.getDescription().isPresent()) {
 
@@ -88,6 +93,10 @@ public class GiveawayAdd extends Action {
                 }
             }
         });
+
+        if (userId.get().equals("")) {
+            userId.set(getId(message));
+        }
         Profile profile = Utils.loadProfileById(userId.get());
         if (profile != null) {
             Instant reminderTime = message.getTimestamp().plus(60 * 24, ChronoUnit.MINUTES);

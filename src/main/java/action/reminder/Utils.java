@@ -38,11 +38,17 @@ public class Utils {
             }
             if (id != -1) {
                 st.executeUpdate("UPDATE reminder SET reminder_time = '" + time + "' WHERE id = " + id);
+                reminder.setId(-2);
+                st.executeBatch();
             } else {
-                st.addBatch("insert into reminder (name, type, reminder_time, channel) " +
-                        "VALUES ('" + name + "', '" + type.getName() + "', '" + time + "', '" + channel + "')");
+
+                PreparedStatement pst2 = con.prepareStatement("insert into reminder (name, type, reminder_time, channel) " +
+                        "VALUES ('" + name + "', '" + type.getName() + "', '" + time + "', '" + channel + "') RETURNING id");
+                ResultSet rs2 = pst2.executeQuery();
+                while (rs2.next()) {
+                    reminder.setId(rs2.getInt(1));
+                }
             }
-            st.executeBatch();
         } catch (SQLException ex) {
             logger.error("Exception", ex);
         }
@@ -105,8 +111,6 @@ public class Utils {
     }
 
 
-
-
     public static List<Reminder> loadReminder(String id) {
         List<Reminder> reminders = new ArrayList<>();
         try (Connection con = DriverManager.getConnection(url, user, password);
@@ -129,6 +133,22 @@ public class Utils {
         List<Reminder> reminders = new ArrayList<>();
         try (Connection con = DriverManager.getConnection(url, user, password);
              PreparedStatement pst = con.prepareStatement("SELECT name, type, reminder_time, channel FROM reminder  WHERE name = '" + rem.getName() + "' and type = '" + rem.getType().getName() + "'");
+             ResultSet rs = pst.executeQuery()) {
+
+            while (rs.next()) {
+                Reminder reminder = new Reminder(rs.getString(1), ReminderType.getReminderType(rs.getString(2)), rs.getTimestamp(3), rs.getString(4));
+                reminders.add(reminder);
+            }
+
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
+        return reminders;
+    }
+    public static List<Reminder> loadReminder(long id) {
+        List<Reminder> reminders = new ArrayList<>();
+        try (Connection con = DriverManager.getConnection(url, user, password);
+             PreparedStatement pst = con.prepareStatement("SELECT name, type, reminder_time, channel FROM reminder  WHERE id = " + id);
              ResultSet rs = pst.executeQuery()) {
 
             while (rs.next()) {
@@ -215,7 +235,7 @@ public class Utils {
         } catch (SQLException ex) {
             logger.error("Exception", ex);
         }
-        return  updated;
+        return updated;
     }
 
     public static void addReact(String name, String react) {

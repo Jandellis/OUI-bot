@@ -3,7 +3,8 @@ package action.sm;
 public enum SystemReminderType {
     sauce("sauce"),
     speedJarUnlock("speedJarUnlock"),
-    speedJarLock("speedJarLock");
+    speedJarLock("speedJarLock"),
+    giveaway("giveaway");
 
 
     String name;

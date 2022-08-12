@@ -73,6 +73,15 @@ public class DoReminder extends Action {
             logger.info("Reminder already deleted");
             return;
         }
+        if (reminder.getId() != -1) {
+            // this means we have an id, make sure its still in the db otherwise do nothing
+            List<Reminder> idReminder = Utils.loadReminder(reminder.getId());
+            if (idReminder.size() == 0) {
+                logger.info("Reminder already deleted");
+                return;
+            }
+        }
+
         boolean inDB = false;
         for (Reminder rem : dbReminder) {
             if (rem.time.equals(reminder.getTime())) {

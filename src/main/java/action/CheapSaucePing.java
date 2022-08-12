@@ -30,7 +30,7 @@ public class CheapSaucePing extends Action {
     public Mono<Object> doAction(Message message) {
         try {
             if (message.getChannelId().asString().equals(smUpdate)) {
-                if (message.getAuthor().get().getId().asString().equals(bbBot)) {
+                if (message.getAuthor().isPresent() && message.getAuthor().get().getId().asString().equals(bbBot)) {
                     for (Embed embed : message.getEmbeds()) {
 
                         String title = embed.getData().author().get().name().get();

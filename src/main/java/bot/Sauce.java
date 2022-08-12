@@ -17,6 +17,11 @@ public enum Sauce {
         return name;
     }
 
+
+    public String getUppercaseName() {
+        return getName().substring(0, 1).toUpperCase() + getName().substring(1);
+    }
+
     public static Sauce getSauce(String name) {
         if (name.equals("guac")) {
             name = "guacamole";

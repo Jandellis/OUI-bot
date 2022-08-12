@@ -27,7 +27,7 @@ public class Karen extends Action {
     public Mono<Object> doAction(Message message) {
         try {
             if (message.getChannelId().asString().equals(customerChannel)) {
-                if (message.getAuthor().get().getId().asString().equals(customerBot)) {
+                if (message.getAuthor().isPresent() && message.getAuthor().get().getId().asString().equals(customerBot)) {
                     if (message.getContent().contains(param2) || message.getContent().contains(param3)) {
                         logger.info("got sell");
 

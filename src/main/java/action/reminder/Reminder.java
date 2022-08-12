@@ -8,12 +8,14 @@ public class Reminder {
     ReminderType type;
     String channel;
     Timestamp time;
+    long id;
 
     public Reminder(String name, ReminderType type, Timestamp time, String channel) {
         this.name = name;
         this.type = type;
         this.channel = channel;
         this.time = time;
+        id = -1;
     }
 
     public String getName() {
@@ -30,5 +32,13 @@ public class Reminder {
 
     public Timestamp getTime() {
         return time;
+    }
+
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
     }
 }
