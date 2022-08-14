@@ -124,7 +124,11 @@ public class CreateReminder extends Action {
                                 }
 
                                 //daily
-                                if ((desc.startsWith("\u2705") || desc.startsWith("\uD83C\uDF89")) && desc.contains("Daily Streak Progress") && desc.contains("daily")) {
+                                if ((desc.startsWith("\u2705") || desc.startsWith("\uD83C\uDF89"))
+                                        && desc.contains("__**Daily Streak Progress**__")
+//                                        && embed.getFooter().isPresent()
+//                                        && embed.getFooter().get().getText().contains("daily")
+                                        ) {
 
                                     AtomicReference<String> userId = new AtomicReference<>("");
                                     userId.set(getId(message));
