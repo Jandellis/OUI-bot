@@ -91,18 +91,18 @@ public class CreateBoostReminder extends Action {
                             if (desc.startsWith("\u2705") && desc.contains("You have purchased:")) {
 
 
-                                List<MessageData> historic = getMessagesOfChannel(message.getRestChannel());
                                 AtomicReference<String> userId = new AtomicReference<>("");
+                                userId.set(getId(message));
 
-                                historic.forEach(messageData -> {
-
-                                    String noSpace = messageData.content().toLowerCase().replace(" ", "");
-                                    if (noSpace.contains("!buy")) {
-                                        userId.set(messageData.author().id().toString());
-                                    }
-                                });
                                 if (userId.get().equals("")) {
-                                    userId.set(getId(message));
+                                    List<MessageData> historic = getMessagesOfChannel(message.getRestChannel());
+                                    historic.forEach(messageData -> {
+
+                                        String noSpace = messageData.content().toLowerCase().replace(" ", "");
+                                        if (noSpace.contains("!buy")) {
+                                            userId.set(messageData.author().id().toString());
+                                        }
+                                    });
                                 }
                                 Profile profile = Utils.loadProfileById(userId.get());
                                 if (profile != null) {

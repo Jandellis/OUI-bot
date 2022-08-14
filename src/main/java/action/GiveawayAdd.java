@@ -36,7 +36,7 @@ public class GiveawayAdd extends Action {
 
 
         if (message.getChannelId().asString().equals(giveawayChannel)) {
-            if (message.getAuthor().isPresent() && message.getAuthor().get().getId().asString().equals(tacoBot)) {
+            if (message.getData().author().id().asString().equals(tacoBot)) {
                 try {
                     //for some reason the embeds will be empty from slash, but if i load it again it will have data
                     if (checkAge(message)) {
@@ -81,21 +81,21 @@ public class GiveawayAdd extends Action {
     }
 
     private void doReminderCheck(Message message) {
-        List<MessageData> historic = getMessagesOfChannel(message);
         AtomicReference<String> userId = new AtomicReference<>("");
+        userId.set(getId(message));
 
-        historic.forEach(messageData -> {
-            Instant messageDataTime = DateTimeFormatter.ISO_OFFSET_DATE_TIME.parse(messageData.timestamp(), Instant::from);
-            if (Timestamp.from(messageDataTime).before(Timestamp.from(message.getTimestamp()))) {
-                String noSpace = messageData.content().toLowerCase().replace(" ", "");
-                if (noSpace.contains("!gift")) {
-                    userId.set(messageData.author().id().toString());
-                }
-            }
-        });
 
         if (userId.get().equals("")) {
-            userId.set(getId(message));
+            List<MessageData> historic = getMessagesOfChannel(message);
+            historic.forEach(messageData -> {
+                Instant messageDataTime = DateTimeFormatter.ISO_OFFSET_DATE_TIME.parse(messageData.timestamp(), Instant::from);
+                if (Timestamp.from(messageDataTime).before(Timestamp.from(message.getTimestamp()))) {
+                    String noSpace = messageData.content().toLowerCase().replace(" ", "");
+                    if (noSpace.contains("!gift")) {
+                        userId.set(messageData.author().id().toString());
+                    }
+                }
+            });
         }
         Profile profile = Utils.loadProfileById(userId.get());
         if (profile != null) {

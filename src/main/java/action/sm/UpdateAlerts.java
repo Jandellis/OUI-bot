@@ -1,10 +1,6 @@
 package action.sm;
 
 import action.Action;
-import action.reminder.DoReminder;
-import action.reminder.Profile;
-import action.reminder.Reminder;
-import action.reminder.ReminderType;
 import bot.Sauce;
 import discord4j.common.util.Snowflake;
 import discord4j.core.object.Embed;
@@ -21,7 +17,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class UpdateAlerts extends Action {
@@ -46,23 +41,25 @@ public class UpdateAlerts extends Action {
         try {
 
             if (message.getChannelId().asString().equals(smChannel)) {
-                if (message.getAuthor().isPresent() && message.getAuthor().get().getId().asString().equals(tacoBot)) {
-
+                if (message.getData().author().id().asString().equals(tacoBot)) {
                     //for some reason the embeds will be empty from slash, but if i load it again it will have data
                     if (checkAge(message)) {
                         checkMessageAgain(message);
-                    }
-                    for (Embed embed : message.getEmbeds()) {
+                    } else {
+                        for (Embed embed : message.getEmbeds()) {
 
-                        if (embed.getAuthor().isPresent()) {
-                            EmbedAuthorData authorData = embed.getAuthor().get().getData();
+                            if (embed.getAuthor().isPresent()) {
+                                EmbedAuthorData authorData = embed.getAuthor().get().getData();
 
-                            if (authorData.name().get().startsWith("Your Sauces")) {
-                                if (authorData.iconUrl().isAbsent()) {
-                                    message.getChannel().block().createMessage("Sorry unable to update your sauces. If you add an avatar i will be able to update them").block();
-                                } else {
-                                    String id = authorData.iconUrl().get().replace("https://cdn.discordapp.com/avatars/", "").split("/")[0];
-
+                                if (authorData.name().get().startsWith("Your Sauces")) {
+                                    String id = getId(message);
+                                    if (id == null) {
+                                        if (authorData.iconUrl().isAbsent()) {
+                                            message.getChannel().block().createMessage("Sorry unable to update your sauces. If you add an avatar i will be able to update them").block();
+                                        } else {
+                                            id = authorData.iconUrl().get().replace("https://cdn.discordapp.com/avatars/", "").split("/")[0];
+                                        }
+                                    }
                                     String line = embed.getDescription().get();
                                     List<Sauce> sauces = new ArrayList<>();
 
@@ -83,15 +80,14 @@ public class UpdateAlerts extends Action {
                                         message.getChannel().block().createMessage(sb.toString()).block();
                                     }
                                 }
+                            } else {
+                                if (embed.getDescription().isPresent() && embed.getDescription().get().contains("You do not own any sauces!")) {
+                                    clearSauces(message);
+                                }
+                            }
 
-                            }
-                        } else {
-                            if (embed.getDescription().isPresent() && embed.getDescription().get().contains("You do not own any sauces!")) {
-                                clearSauces(message);
-                            }
+
                         }
-
-
                     }
                 }
             }
@@ -105,24 +101,24 @@ public class UpdateAlerts extends Action {
 
 
     private void clearSauces(Message message) {
-        List<MessageData> historic = getMessagesOfChannel(message);
         AtomicReference<String> userId = new AtomicReference<>("");
+        userId.set(getId(message));
 
-        historic.forEach(messageData -> {
-            Instant messageDataTime = DateTimeFormatter.ISO_OFFSET_DATE_TIME.parse(messageData.timestamp(), Instant::from);
-            if (Timestamp.from(messageDataTime).before(Timestamp.from(message.getTimestamp()))) {
-                String noSpace = messageData.content().toLowerCase().replace(" ", "");
-                if (noSpace.contains("!smlist")) {
-                    userId.set(messageData.author().id().toString());
-                }
-            }
-        });
         if (userId.get().equals("")) {
-            userId.set(getId(message));
+            List<MessageData> historic = getMessagesOfChannel(message);
+            historic.forEach(messageData -> {
+                Instant messageDataTime = DateTimeFormatter.ISO_OFFSET_DATE_TIME.parse(messageData.timestamp(), Instant::from);
+                if (Timestamp.from(messageDataTime).before(Timestamp.from(message.getTimestamp()))) {
+                    String noSpace = messageData.content().toLowerCase().replace(" ", "");
+                    if (noSpace.contains("!smlist")) {
+                        userId.set(messageData.author().id().toString());
+                    }
+                }
+            });
         }
         List<Sauce> sauces = new ArrayList<>();
         Utils.addAlerts(userId.get(), sauces);
-            message.getChannel().block().createMessage("Alerts cleared").block();
+        message.getChannel().block().createMessage("Alerts cleared").block();
 
     }
 

@@ -37,14 +37,14 @@ public class Help extends Action {
 
 
                 if (message.getContent().equalsIgnoreCase(param)) {
-                    StringBuilder sb = new StringBuilder("I can reminder you when things are off coolodwn and help you on the sauce market.");
+                    StringBuilder sb = new StringBuilder("I can reminder you when things are off coolodwn and help you on the sauce market. ");
 
                     sb.append("For sauce market help, type `ouism`\r\n\n");
-                    sb.append("To set me up, first type `!shack`\r\n");
+                    sb.append("To set me up, first type `!shack` or `/shack`\r\n");
                     sb.append("Then type `ouirm on`\r\n");
                     sb.append("Type `ouirm off` to turn me off\r\n");
                     sb.append("\r\n");
-                    sb.append("Currently I only work for work, tips, overtime, daily, clean and vote\r\n");
+                    sb.append("I can do reminders for work, tips, overtime, daily, clean, vote, boosts and gifts\r\n");
                     sb.append("When you do one of these, i will tell you if im missing any cooldowns by reacting with the first letter\r\n");
 
                     sb.append("Type `ouirm list` to view your current reminders\r\n");
@@ -59,7 +59,7 @@ public class Help extends Action {
                     sb.append("Type `ouimsg delete`, to reset to the default` \r\n");
 
                     sb.append("\r\n");
-                    sb.append("If you see any bugs just let us know in <#840395542394568707>\r\n");
+                    sb.append("If you see any bugs just let us know in <#1008163269485281361>\r\n");
                     message.getChannel().block().createMessage(sb.toString()).block();
                 }
 

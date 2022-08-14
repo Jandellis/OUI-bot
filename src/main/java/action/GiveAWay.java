@@ -87,8 +87,8 @@ public class GiveAWay extends Action {
         message.addReaction(ReactionEmoji.unicode(react)).block();
 
 
-//        LocalDateTime endTime = now.plusDays(1);
-        LocalDateTime endTime = now.plusMinutes(2);
+        LocalDateTime endTime = now.plusDays(1);
+//        LocalDateTime endTime = now.plusMinutes(2);
         Utils.addReminder(SystemReminderType.giveaway, Timestamp.valueOf(endTime), msg.id().toString());
 
         runGiveAWay(ChronoUnit.MINUTES.between(now, endTime));

@@ -70,7 +70,7 @@ public class SpeedJar extends Action {
         //
         try {
             if (message.getChannelId().asString().equals(speedJarChannel)) {
-                if (message.getAuthor().isPresent() && message.getAuthor().get().getId().asString().equals(customerBot)) {
+                if (message.getData().author().id().asString().equals(customerBot)) {
                     if (message.getContent().contains(param)) {
 
                         return message.getChannel().flatMap(channel -> {
