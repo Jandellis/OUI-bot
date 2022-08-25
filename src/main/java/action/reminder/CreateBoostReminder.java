@@ -1,6 +1,9 @@
 package action.reminder;
 
 import action.Action;
+import action.reminder.model.Boost;
+import action.reminder.model.Profile;
+import action.reminder.model.Reminder;
 import discord4j.common.util.Snowflake;
 import discord4j.core.object.Embed;
 import discord4j.core.object.entity.Message;
@@ -11,14 +14,12 @@ import reactor.core.publisher.Mono;
 
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -55,6 +56,13 @@ public class CreateBoostReminder extends Action {
         boosts.add(new Boost("Beach Chairs", 8));
         boosts.add(new Boost("Helicopter Tours", 24));
 
+        //mall
+        boosts.add(new Boost("Lunch Discount", 4));
+        boosts.add(new Boost("Sponsorship", 4));
+        boosts.add(new Boost("Gift Cards", 6));
+        boosts.add(new Boost("Takeout", 8));
+        boosts.add(new Boost("Special", 24));
+
         watchChannels = Arrays.asList(config.get("watchChannels").split(","));
     }
 
@@ -81,44 +89,45 @@ public class CreateBoostReminder extends Action {
                     //for some reason the embeds will be empty from slash, but if i load it again it will have data
                     if (checkAge(message)) {
                         checkMessageAgain(message);
-                    }
-                    for (Embed embed : message.getEmbeds()) {
+                    } else {
+                        for (Embed embed : message.getEmbeds()) {
 
 
-                        if (embed.getDescription().isPresent()) {
-                            String desc = embed.getDescription().get();
-                            //boosts
-                            if (desc.startsWith("\u2705") && desc.contains("You have purchased:")) {
+                            if (embed.getDescription().isPresent()) {
+                                String desc = embed.getDescription().get();
+                                //boosts
+                                if (desc.startsWith("\u2705") && desc.contains("You have purchased:")) {
 
 
-                                AtomicReference<String> userId = new AtomicReference<>("");
-                                userId.set(getId(message));
+                                    AtomicReference<String> userId = new AtomicReference<>("");
+                                    userId.set(getId(message));
 
-                                if (userId.get().equals("")) {
-                                    List<MessageData> historic = getMessagesOfChannel(message.getRestChannel());
-                                    historic.forEach(messageData -> {
+                                    if (userId.get().equals("")) {
+                                        List<MessageData> historic = getMessagesOfChannel(message.getRestChannel());
+                                        historic.forEach(messageData -> {
 
-                                        String noSpace = messageData.content().toLowerCase().replace(" ", "");
-                                        if (noSpace.contains("!buy")) {
-                                            userId.set(messageData.author().id().toString());
-                                        }
-                                    });
-                                }
-                                Profile profile = Utils.loadProfileById(userId.get());
-                                if (profile != null) {
+                                            String noSpace = messageData.content().toLowerCase().replace(" ", "");
+                                            if (noSpace.contains("!buy")) {
+                                                userId.set(messageData.author().id().toString());
+                                            }
+                                        });
+                                    }
+                                    Profile profile = Utils.loadProfileById(userId.get());
+                                    if (profile != null) {
 
-                                    for (Boost boost : boosts) {
-                                        if (desc.contains(boost.name)) {
+                                        for (Boost boost : boosts) {
+                                            if (desc.contains(boost.getName())) {
 
-                                            createReminder(boost, message, profile);
+                                                createReminder(boost, message, profile);
+                                            }
                                         }
                                     }
+
                                 }
 
                             }
 
                         }
-
                     }
                 } catch (Exception e) {
                     printException(e);
@@ -138,7 +147,7 @@ public class CreateBoostReminder extends Action {
 
     private void createReminder(Boost boost, Message message, Profile profile) {
 
-        Instant reminderTime = message.getTimestamp().plus(boost.duration, ChronoUnit.HOURS);
+        Instant reminderTime = message.getTimestamp().plus(boost.getDuration(), ChronoUnit.HOURS);
         react(message, profile);
         ReminderType type = ReminderType.getReminderType(boost.getName());
 

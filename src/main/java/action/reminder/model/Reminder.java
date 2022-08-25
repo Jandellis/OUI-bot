@@ -1,4 +1,6 @@
-package action.reminder;
+package action.reminder.model;
+
+import action.reminder.ReminderType;
 
 import java.sql.Timestamp;
 

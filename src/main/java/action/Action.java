@@ -161,9 +161,9 @@ public abstract class Action {
 //            checkMessageAgain(message);
             return true;
         }
-        if (!notTooOld) {
-            logger.info("message is too old " + message.getId());
-        }
+//        if (!notTooOld) {
+//            logger.info("message is too old " + message.getId());
+//        }
         return false;
     }
 }

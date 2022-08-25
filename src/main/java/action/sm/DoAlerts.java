@@ -1,8 +1,9 @@
 package action.sm;
 
 import action.Action;
+import action.sm.model.Alert;
+import action.sm.model.AlertType;
 import bot.Sauce;
-import bot.SauceObject;
 import discord4j.common.util.Snowflake;
 import discord4j.core.object.Embed;
 import discord4j.core.object.entity.Message;
@@ -57,15 +58,15 @@ public class DoAlerts extends Action {
 
                             for (Alert alert : Utils.loadAlerts()) {
                                 logger.info(alert);
-                                if (alert.type == AlertType.drop) {
+                                if (alert.getType() == AlertType.drop) {
                                     HashMap<Integer, Integer> saucePrices = Utils.loadLast3(Sauce.getSauce(alert.getTrigger()));
                                     printDrop(saucePrices, Sauce.getSauce(alert.getTrigger()), alert.getName());
                                 }
-                                if (alert.type == AlertType.high) {
+                                if (alert.getType() == AlertType.high) {
                                     int price = alert.getPrice();
                                     printHigh(prices, price, alert.getName(), alert.getTrigger());
                                 }
-                                if (alert.type == AlertType.low) {
+                                if (alert.getType() == AlertType.low) {
                                     int price = alert.getPrice();
                                     printLow(prices, price, alert.getName(), alert.getTrigger());
                                 }

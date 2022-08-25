@@ -1,6 +1,4 @@
-package action.reminder;
-
-import bot.Sauce;
+package action.reminder.model;
 
 public enum Status {
     gordon(6,2, "gordon"),

@@ -1,5 +1,7 @@
-package action.sm;
+package action.sm.model;
 
+
+import action.sm.model.SystemReminderType;
 
 import java.sql.Timestamp;
 
@@ -8,11 +10,13 @@ public class SystemReminder {
     SystemReminderType type;
     Timestamp time;
     String messageId;
+    String name;
 
-    public SystemReminder(SystemReminderType type, Timestamp time, String messageId) {
+    public SystemReminder(SystemReminderType type, Timestamp time, String messageId, String name) {
         this.type = type;
         this.time = time;
         this.messageId = messageId;
+        this.name = name;
     }
 
 
@@ -27,5 +31,9 @@ public class SystemReminder {
 
     public String getMessageId() {
         return messageId;
+    }
+
+    public String getName() {
+        return name;
     }
 }

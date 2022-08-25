@@ -1,4 +1,4 @@
-package action.sm;
+package action.sm.model;
 
 public enum AlertType {
     high("high"),

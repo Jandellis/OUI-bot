@@ -1,18 +1,16 @@
 package action.reminder;
 
 import action.Action;
-import discord4j.common.util.Snowflake;
+import action.reminder.model.Status;
 import discord4j.core.object.Embed;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.reaction.ReactionEmoji;
 import reactor.core.publisher.Mono;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class CreateProfile extends Action {

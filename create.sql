@@ -110,3 +110,13 @@ CREATE TABLE IF NOT EXISTS system_reminder (
 
 
 ALTER TABLE system_reminder add message_id VARCHAR(255);
+
+ALTER TABLE system_reminder add name VARCHAR(255);
+
+CREATE TABLE IF NOT EXISTS user_upgrades (
+    id serial PRIMARY KEY,
+    name VARCHAR(25),
+    location  VARCHAR(25),
+    upgrade  VARCHAR(150),
+    progress int
+);

@@ -1,5 +1,8 @@
 package action.reminder;
 
+import action.reminder.model.Profile;
+import action.reminder.model.Reminder;
+import action.reminder.model.Status;
 import bot.Config;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -36,18 +39,18 @@ public class Utils {
             while (rs.next()) {
                 id = rs.getInt(1);
             }
+            //maybe make this delete and then add reminder?
+            //also do it in a transaction
             if (id != -1) {
-                st.executeUpdate("UPDATE reminder SET reminder_time = '" + time + "' WHERE id = " + id);
-                reminder.setId(-2);
+                st.execute("DELETE from reminder where id = " + id);
                 st.executeBatch();
-            } else {
+            }
 
-                PreparedStatement pst2 = con.prepareStatement("insert into reminder (name, type, reminder_time, channel) " +
-                        "VALUES ('" + name + "', '" + type.getName() + "', '" + time + "', '" + channel + "') RETURNING id");
-                ResultSet rs2 = pst2.executeQuery();
-                while (rs2.next()) {
-                    reminder.setId(rs2.getInt(1));
-                }
+            PreparedStatement pst2 = con.prepareStatement("insert into reminder (name, type, reminder_time, channel) " +
+                    "VALUES ('" + name + "', '" + type.getName() + "', '" + time + "', '" + channel + "') RETURNING id");
+            ResultSet rs2 = pst2.executeQuery();
+            while (rs2.next()) {
+                reminder.setId(rs2.getInt(1));
             }
         } catch (SQLException ex) {
             logger.error("Exception", ex);
@@ -145,6 +148,7 @@ public class Utils {
         }
         return reminders;
     }
+
     public static List<Reminder> loadReminder(long id) {
         List<Reminder> reminders = new ArrayList<>();
         try (Connection con = DriverManager.getConnection(url, user, password);
@@ -191,10 +195,11 @@ public class Utils {
             int id = -1;
             while (rs.next()) {
                 id = rs.getInt(1);
-                String sql = "UPDATE profile SET shack_name = ? WHERE id = ?";
+                String sql = "UPDATE profile SET shack_name = ?, status = ? WHERE id = ?";
                 PreparedStatement p = con.prepareStatement(sql);
                 p.setString(1, shack);
-                p.setInt(2, id);
+                p.setString(2, status.name());
+                p.setInt(3, id);
                 p.executeUpdate();
 //                st.executeUpdate("UPDATE profile SET shack_name = '" + shack + "' WHERE id = " + id);
             }

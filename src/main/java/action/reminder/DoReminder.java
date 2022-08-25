@@ -2,6 +2,8 @@ package action.reminder;
 
 import action.Action;
 import action.GiveawayAdd;
+import action.reminder.model.Profile;
+import action.reminder.model.Reminder;
 import discord4j.common.util.Snowflake;
 import discord4j.core.DiscordClient;
 import discord4j.core.GatewayDiscordClient;
@@ -35,7 +37,7 @@ public class DoReminder extends Action {
         giveawayChannel = config.get("giveawayChannel");
     }
 
-    ScheduledExecutorService executorService = Executors.newScheduledThreadPool(2);
+    ScheduledExecutorService executorService = Executors.newScheduledThreadPool(20);
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
 
@@ -77,14 +79,14 @@ public class DoReminder extends Action {
             // this means we have an id, make sure its still in the db otherwise do nothing
             List<Reminder> idReminder = Utils.loadReminder(reminder.getId());
             if (idReminder.size() == 0) {
-                logger.info("Reminder already deleted");
+                logger.info("Reminder id already deleted");
                 return;
             }
         }
 
         boolean inDB = false;
         for (Reminder rem : dbReminder) {
-            if (rem.time.equals(reminder.getTime())) {
+            if (rem.getTime().equals(reminder.getTime())) {
                 inDB = true;
             }
         }

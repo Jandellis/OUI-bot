@@ -7,7 +7,7 @@ public enum ReminderType {
     vote("vote"),
     daily("daily"),
     clean("clean"),
-    gift("gift"),
+    gift("gifts"),
     importData("importData"),
 
     //city
@@ -30,7 +30,14 @@ public enum ReminderType {
     Hammock("Hammock"),
     Parasailing("Parasailing "),
     Chairs("Beach Chairs"),
-    Helicopter("Helicopter Tours");
+    Helicopter("Helicopter Tours"),
+
+    //mall
+    Lunch("Lunch Discount"),
+    special("Special"),
+    sponsor("Sponsorship"),
+    cards("Gift Cards"),
+    takeout("Takeout");
 
 
     String name;

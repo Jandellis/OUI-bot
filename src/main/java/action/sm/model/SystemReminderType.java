@@ -1,4 +1,4 @@
-package action.sm;
+package action.sm.model;
 
 public enum SystemReminderType {
     sauce("sauce"),

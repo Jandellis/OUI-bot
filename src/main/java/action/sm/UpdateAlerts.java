@@ -68,6 +68,7 @@ public class UpdateAlerts extends Action {
                                             sauces.add(sauce);
                                         }
                                     }
+                                    logger.info("Updating alerts for "+ id + " for " + line);
 
                                     Utils.addAlerts(id, sauces);
                                     if (sauces.isEmpty()) {

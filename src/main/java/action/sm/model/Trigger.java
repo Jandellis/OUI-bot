@@ -1,4 +1,7 @@
-package action.sm;
+package action.sm.model;
+
+import action.sm.model.AlertType;
+import action.sm.model.Drop;
 
 public class Trigger {
 

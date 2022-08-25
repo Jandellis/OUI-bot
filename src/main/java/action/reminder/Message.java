@@ -35,7 +35,7 @@ public class Message extends Action {
                 String action = getAction(message);
 
                 if (action != null) {
-                    action = message.getContent().replace(param + " ", "");
+                    action = message.getContent().substring(param.length() + 1);
                     if (action.length() > 256) {
 
                         message.getChannel().block().createMessage("Sorry, too long. Max length is 255").block();

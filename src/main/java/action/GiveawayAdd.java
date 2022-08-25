@@ -1,8 +1,8 @@
 package action;
 
 import action.reminder.DoReminder;
-import action.reminder.Profile;
-import action.reminder.Reminder;
+import action.reminder.model.Profile;
+import action.reminder.model.Reminder;
 import action.reminder.ReminderType;
 import action.reminder.Utils;
 import bot.Clean;

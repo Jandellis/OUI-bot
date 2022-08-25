@@ -1,25 +1,18 @@
 package action;
 
-import action.reminder.CreateReminder;
-import action.sm.SystemReminder;
-import action.sm.SystemReminderType;
+import action.sm.model.SystemReminder;
+import action.sm.model.SystemReminderType;
 import action.sm.Utils;
 import discord4j.common.util.Snowflake;
 import discord4j.core.object.PermissionOverwrite;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.channel.TopLevelGuildChannel;
 import discord4j.discordjson.json.MessageData;
-import discord4j.discordjson.json.ReactionData;
 import discord4j.rest.entity.RestChannel;
 import discord4j.rest.util.Permission;
 import discord4j.rest.util.PermissionSet;
 import reactor.core.publisher.Mono;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -106,10 +99,10 @@ public class SpeedJar extends Action {
 
 
         LocalDateTime unlockTime = Timestamp.from(messageTime).toLocalDateTime().plusMinutes(690);
-        Utils.addReminder(SystemReminderType.speedJarUnlock, Timestamp.valueOf(unlockTime), "");
+        Utils.addReminder(SystemReminderType.speedJarUnlock, Timestamp.valueOf(unlockTime), "", "");
 
         LocalDateTime lockTime = Timestamp.from(messageTime).toLocalDateTime().plusMinutes(12);
-        Utils.addReminder(SystemReminderType.speedJarLock, Timestamp.valueOf(lockTime), "");
+        Utils.addReminder(SystemReminderType.speedJarLock, Timestamp.valueOf(lockTime), "", "");
 
 
         LocalDateTime localNow = LocalDateTime.now();

@@ -1,4 +1,4 @@
-package action.export;
+package action.export.model;
 
 public class Donations {
 

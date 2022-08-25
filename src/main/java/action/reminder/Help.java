@@ -1,9 +1,7 @@
 package action.reminder;
 
 import action.Action;
-import action.sm.Drop;
 import discord4j.core.object.entity.Message;
-import discord4j.core.object.reaction.ReactionEmoji;
 import reactor.core.publisher.Mono;
 
 import java.util.Arrays;

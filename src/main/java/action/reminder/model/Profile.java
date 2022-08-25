@@ -1,4 +1,4 @@
-package action.reminder;
+package action.reminder.model;
 
 public class Profile {
 

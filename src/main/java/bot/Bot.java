@@ -24,6 +24,7 @@ import action.sm.AddAlert;
 import action.sm.CleanUp;
 import action.sm.PriceCheck;
 import action.sm.UpdateAlerts;
+import action.upgrades.BuyUpgrade;
 import discord4j.common.util.Snowflake;
 import discord4j.core.DiscordClient;
 import discord4j.core.GatewayDiscordClient;
@@ -120,6 +121,7 @@ public class Bot {
 
                                         client.getChannelById(Snowflake.of("1002115224876359680")).createMessage("Logged in").block();
                                         gateway.updatePresence(ClientPresence.online(ClientActivity.watching("ouiHelp"))).subscribe();
+
                                     }))
                             .then();
 
@@ -204,6 +206,7 @@ public class Bot {
                             .and(new CreateBoostReminder().action(gateway, client))
                             .and(new Heartbeat().action(gateway, client))
                             .and(new GiveAWay().action(gateway, client))
+                            .and(new BuyUpgrade().action(gateway, client))
                             .and(new UpdateAlerts().action(gateway, client));
 
                 });

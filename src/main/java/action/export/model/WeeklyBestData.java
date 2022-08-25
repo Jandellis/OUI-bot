@@ -1,4 +1,4 @@
-package action.export;
+package action.export.model;
 
 import java.util.List;
 

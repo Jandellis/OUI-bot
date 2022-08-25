@@ -1,7 +1,7 @@
 package action;
 
-import action.sm.SystemReminder;
-import action.sm.SystemReminderType;
+import action.sm.model.SystemReminder;
+import action.sm.model.SystemReminderType;
 import action.sm.Utils;
 import bot.Clean;
 import discord4j.common.util.Snowflake;
@@ -25,6 +25,7 @@ import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
 public class GiveAWay extends Action {
 
@@ -44,7 +45,7 @@ public class GiveAWay extends Action {
     public GiveAWay() {
         param = "ouistartgift";
         guildId = config.get("guildId");
-        giveawayChannel = config.get("giveawayChannel");
+        giveawayChannel = config.get("giveawayChannelEvent");
         giveawayRole = config.get("giveawayRole");
         react = "\uD83C\uDF89";
         recruiter = Long.parseLong(config.get("recruiter"));
@@ -60,7 +61,7 @@ public class GiveAWay extends Action {
             if (action == null || !hasPermission(message, recruiter)) {
                 return Mono.empty();
             }
-            create();
+            create("");
 
         } catch (Exception e) {
             printException(e);
@@ -69,7 +70,7 @@ public class GiveAWay extends Action {
         return Mono.empty();
     }
 
-    private void create() {
+    private void create(String winner) {
 
 
         Utils.deleteReminder(SystemReminderType.giveaway);
@@ -89,7 +90,7 @@ public class GiveAWay extends Action {
 
         LocalDateTime endTime = now.plusDays(1);
 //        LocalDateTime endTime = now.plusMinutes(2);
-        Utils.addReminder(SystemReminderType.giveaway, Timestamp.valueOf(endTime), msg.id().toString());
+        Utils.addReminder(SystemReminderType.giveaway, Timestamp.valueOf(endTime), msg.id().toString(), winner);
 
         runGiveAWay(ChronoUnit.MINUTES.between(now, endTime));
 
@@ -106,9 +107,9 @@ public class GiveAWay extends Action {
         //print out total for the last day
         //create new giveaway
 
-        printTotal();
 
         List<SystemReminder> rem = Utils.loadReminder(SystemReminderType.giveaway);
+        printTotal(rem.get(0).getName());
 
         Message message = gateway.getMessageById(Snowflake.of(giveawayChannel), Snowflake.of(rem.get(0).getMessageId())).block();
 
@@ -131,7 +132,7 @@ public class GiveAWay extends Action {
         String winnerMessage = "Congratulations to <@" + winner+">" +
                 "\r\n <@&875881574409859163>\n" +
                 "\n" +
-                "<@&875880362482491422> to go <#875882488680034326> and you your gift";
+                "<@&875880362482491422> to go <#875882488680034326> and use your gift";
 
         client.getChannelById(Snowflake.of(giveawayChannel)).createMessage(winnerMessage).block();
         client.getChannelById(Snowflake.of(giveawayChannel)).createMessage("`!gift <@"+winner+">`").block();
@@ -139,7 +140,7 @@ public class GiveAWay extends Action {
 
 
 
-        create();
+        create(winner);
 
     }
 
@@ -184,7 +185,7 @@ public class GiveAWay extends Action {
 
     }
 
-    private void printTotal(){
+    private void printTotal(String winner){
         int total = 0;
         try {
             total = Clean.getGift();
@@ -192,11 +193,11 @@ public class GiveAWay extends Action {
             e.printStackTrace();
         }
         int finalTotal = total;
-        String responseMessage = "The total of the last giveaway was $" + String.format("%,d", finalTotal) +
+        String responseMessage = "<@"+winner+"> was gifted $" + String.format("%,d", finalTotal) + " in yesterdays last giveaway"+
                 "\r\nIf you would like to help increase this ask a recruiter to become a gifter today!";
 
         //write message to chat
-//        client.getChannelById(Snowflake.of("840395542394568707")).createMessage(responseMessage).block();
+        client.getChannelById(Snowflake.of("840395542394568707")).createMessage(responseMessage).block();
 
         //write message to giveaways
         client.getChannelById(Snowflake.of(giveawayChannel)).createMessage(responseMessage).block();

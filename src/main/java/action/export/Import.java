@@ -1,8 +1,10 @@
 package action.export;
 
 import action.Action;
+import action.export.model.Donations;
+import action.export.model.WeeklyBestData;
 import action.reminder.DoReminder;
-import action.reminder.Reminder;
+import action.reminder.model.Reminder;
 import action.reminder.ReminderType;
 import bot.Clean;
 import bot.KickList;

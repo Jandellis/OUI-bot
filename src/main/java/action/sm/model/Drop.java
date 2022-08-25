@@ -1,6 +1,4 @@
-package action.sm;
-
-import bot.Sauce;
+package action.sm.model;
 
 public enum Drop {
     both(-1, "both"),
