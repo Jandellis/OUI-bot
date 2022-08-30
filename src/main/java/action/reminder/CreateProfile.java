@@ -63,7 +63,7 @@ public class CreateProfile extends Action {
                                     Status status = Status.getStatus(embed.getFooter().get().getData().text());
                                     String id = embed.getThumbnail().get().getUrl().replace("https://cdn.discordapp.com/avatars/", "").split("/")[0];
 
-                                    boolean newProfile = Utils.addProfile(id, shackName, status);
+                                    boolean newProfile = ReminderUtils.addProfile(id, shackName, status);
 
                                     message.addReaction(ReactionEmoji.unicode("\uD83D\uDC4B")).block();
                                     if (newProfile) {

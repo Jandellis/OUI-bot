@@ -112,7 +112,7 @@ public class CreateBoostReminder extends Action {
                                             }
                                         });
                                     }
-                                    Profile profile = Utils.loadProfileById(userId.get());
+                                    Profile profile = ReminderUtils.loadProfileById(userId.get());
                                     if (profile != null) {
 
                                         for (Boost boost : boosts) {
@@ -151,7 +151,7 @@ public class CreateBoostReminder extends Action {
         react(message, profile);
         ReminderType type = ReminderType.getReminderType(boost.getName());
 
-        Reminder reminder = Utils.addReminder(profile.getName(), type, Timestamp.from(reminderTime), message.getChannelId().asString());
+        Reminder reminder = ReminderUtils.addReminder(profile.getName(), type, Timestamp.from(reminderTime), message.getChannelId().asString());
 
 
         DoReminder doReminder = new DoReminder(gateway, client);

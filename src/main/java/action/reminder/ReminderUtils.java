@@ -14,10 +14,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Utils {
+public class ReminderUtils {
 
     protected static final Logger logger = LogManager.getLogger("ouiBot");
 
@@ -56,6 +57,39 @@ public class Utils {
             logger.error("Exception", ex);
         }
         return reminder;
+    }
+
+    public static boolean lockReminder(Reminder reminder) {
+        try {
+            Connection con = DriverManager.getConnection(url, user, password);
+            Statement st = con.createStatement();
+
+            PreparedStatement pst = con.prepareStatement("UPDATE reminder SET locked = true WHERE id = ?");
+            pst.setLong(1, reminder.getId());
+            int rs = pst.executeUpdate();
+            if (rs == 1) {
+                return true;
+            }
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
+        return false;
+    }
+    public static boolean unlockReminder(Reminder reminder) {
+        try {
+            Connection con = DriverManager.getConnection(url, user, password);
+            Statement st = con.createStatement();
+
+            PreparedStatement pst = con.prepareStatement("UPDATE reminder SET locked = false WHERE id = ?");
+            pst.setLong(1, reminder.getId());
+            int rs = pst.executeUpdate();
+            if (rs == 1) {
+                return true;
+            }
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
+        return false;
     }
 
     public static Reminder addMultipleReminder(String name, ReminderType type, Timestamp time, String channel) {
@@ -169,13 +203,39 @@ public class Utils {
     public static List<Reminder> loadReminder() {
         List<Reminder> reminders = new ArrayList<>();
         try (Connection con = DriverManager.getConnection(url, user, password);
-             PreparedStatement pst = con.prepareStatement("SELECT name, type, reminder_time, channel FROM reminder ");
+             PreparedStatement pst = con.prepareStatement("SELECT name, type, reminder_time, channel, id FROM reminder ");
              ResultSet rs = pst.executeQuery()) {
 
             while (rs.next()) {
                 Reminder reminder = new Reminder(rs.getString(1), ReminderType.getReminderType(rs.getString(2)), rs.getTimestamp(3), rs.getString(4));
+                reminder.setId(rs.getLong(5));
                 reminders.add(reminder);
             }
+
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
+        return reminders;
+    }
+
+
+    public static List<Reminder> loadReminderWindow() {
+        List<Reminder> reminders = new ArrayList<>();
+        LocalDateTime now = LocalDateTime.now().plusSeconds(70);
+        Timestamp timestamp = Timestamp.valueOf(now);
+        try {
+            Connection con = DriverManager.getConnection(url, user, password);
+            PreparedStatement pst = con.prepareStatement("SELECT name, type, reminder_time, channel, id FROM reminder where reminder_time < ? and (locked = false or locked is null)");
+            pst.setTimestamp(1, timestamp);
+
+            ResultSet rs = pst.executeQuery();
+
+            while (rs.next()) {
+                Reminder reminder = new Reminder(rs.getString(1), ReminderType.getReminderType(rs.getString(2)), rs.getTimestamp(3), rs.getString(4));
+                reminder.setId(rs.getLong(5));
+                reminders.add(reminder);
+            }
+
 
         } catch (SQLException ex) {
             logger.error("Exception", ex);

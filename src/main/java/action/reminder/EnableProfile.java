@@ -61,7 +61,7 @@ public class EnableProfile extends Action {
                         embed.color(Color.SUMMER_SKY);
                         embed.title("Your Reminders");
 
-                        List<Reminder> reminders = Utils.loadReminder(message.getAuthor().get().getId().asString());
+                        List<Reminder> reminders = ReminderUtils.loadReminder(message.getAuthor().get().getId().asString());
                         if (reminders.isEmpty()) {
 
                             embed.addField("No Reminders", "", true);
@@ -93,7 +93,7 @@ public class EnableProfile extends Action {
                     }
 
                     if (onOff) {
-                        updated = Utils.enableProfile(message.getAuthor().get().getId().asString(), enable);
+                        updated = ReminderUtils.enableProfile(message.getAuthor().get().getId().asString(), enable);
                         if (!updated) {
                             message.getChannel().block().createMessage("Profile does not exists. Please type `!shack`").block();
                         } else {

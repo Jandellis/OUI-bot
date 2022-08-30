@@ -41,6 +41,12 @@ public abstract class Action {
         return gateway.on(MessageCreateEvent.class, event -> doAction(event.getMessage())).then();
     }
 
+    /**
+     * Change to return true, if true it means that action processed the message and to stop all others from processing it.
+     * Move gateway and client to constructor
+     * @param message
+     * @return
+     */
     protected abstract Mono<Object> doAction(Message message);
 
     protected String getAction(Message message) {
@@ -97,7 +103,7 @@ public abstract class Action {
         return false;
     }
 
-    protected void printException(Exception e) {
+    protected void printException(Throwable e) {
         try {
             logger.error("Exception", e);
 
@@ -123,15 +129,19 @@ public abstract class Action {
     }
 
     protected String getId(Message message) {
-        if (message.getData().interaction().isAbsent()) {
-            if (message.getReferencedMessage().isPresent()) {
-                return getId(message.getReferencedMessage().get());
+        try {
+            if (message.getData().interaction().isAbsent()) {
+                if (message.getReferencedMessage().isPresent()) {
+                    return getId(message.getReferencedMessage().get());
+                }
+                if (message.getMessageReference().isPresent()) {
+                    Message msg = gateway.getMessageById(Snowflake.of(message.getChannelId().asString()), Snowflake.of(message.getMessageReference().get().getMessageId().get().asLong())).block();
+                    return getId(msg);
+                }
+                return "";
             }
-            if (message.getMessageReference().isPresent()) {
-                Message msg = gateway.getMessageById(Snowflake.of(message.getChannelId().asString()), Snowflake.of(message.getMessageReference().get().getMessageId().get().asLong())).block();
-                return getId(msg);
-            }
-            return "";
+        } catch (StackOverflowError e) {
+            message.getChannel().block().createMessage("Sorry too many button presses in a row. I am unable to work out who did it. Please type a command").block();
         }
         return message.getData().interaction().get().user().id().toString();
 

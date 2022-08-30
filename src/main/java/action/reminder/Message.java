@@ -41,14 +41,14 @@ public class Message extends Action {
                         message.getChannel().block().createMessage("Sorry, too long. Max length is 255").block();
                     } else {
                         if (action.contains("{task}") && action.contains("{ping}")) {
-                            Utils.addMessage(message.getAuthor().get().getId().asString(), action);
+                            ReminderUtils.addMessage(message.getAuthor().get().getId().asString(), action);
                             action = action.replace("{ping}", "<@" + message.getAuthor().get().getId().asString() + ">");
                             action = action.replace("{task}", ReminderType.work.getName());
 
                             message.getChannel().block().createMessage("Message will be like \r\n " + action).block();
                         } else {
                             if (action.equalsIgnoreCase("delete")) {
-                                Utils.addMessage(message.getAuthor().get().getId().asString(), "");
+                                ReminderUtils.addMessage(message.getAuthor().get().getId().asString(), "");
                                 message.getChannel().block().createMessage("Deleted custom message").block();
                             } else {
                                 message.getChannel().block().createMessage("You need to have {task} and {ping} in your message").block();

@@ -1,10 +1,10 @@
 package action;
 
 import action.reminder.DoReminder;
+import action.reminder.ReminderUtils;
 import action.reminder.model.Profile;
 import action.reminder.model.Reminder;
 import action.reminder.ReminderType;
-import action.reminder.Utils;
 import bot.Clean;
 import discord4j.common.util.Snowflake;
 import discord4j.core.object.Embed;
@@ -97,10 +97,10 @@ public class GiveawayAdd extends Action {
                 }
             });
         }
-        Profile profile = Utils.loadProfileById(userId.get());
+        Profile profile = ReminderUtils.loadProfileById(userId.get());
         if (profile != null) {
             Instant reminderTime = message.getTimestamp().plus(60 * 24, ChronoUnit.MINUTES);
-            Reminder reminder = Utils.addMultipleReminder(profile.getName(), ReminderType.gift, Timestamp.from(reminderTime), message.getChannelId().asString());
+            Reminder reminder = ReminderUtils.addMultipleReminder(profile.getName(), ReminderType.gift, Timestamp.from(reminderTime), message.getChannelId().asString());
 
             DoReminder doReminder = new DoReminder(gateway, client);
             doReminder.runReminder(reminder);

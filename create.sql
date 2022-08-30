@@ -120,3 +120,6 @@ CREATE TABLE IF NOT EXISTS user_upgrades (
     upgrade  VARCHAR(150),
     progress int
 );
+
+
+ALTER TABLE reminder add locked BOOLEAN;

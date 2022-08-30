@@ -89,10 +89,13 @@ public class PriceCheck extends Action {
             Object obj = jsonParser.parse(data);
             HashMap<Sauce, Integer> prices = new HashMap<>();
             HashMap<Sauce, SauceObject> SauceObjectPrices = new HashMap<>();
+            HashMap<Sauce, Integer> oldPrices =Utils.loadPrices();
 
             for (Sauce sauce : Sauce.values()) {
                 int price = Integer.parseInt(((JSONObject) ((JSONObject) obj).get(sauce.getName())).get("price").toString());
-                int price2 = Integer.parseInt(((JSONArray) ((JSONObject) ((JSONObject) obj).get(sauce.getName())).get("history")).get(0).toString());
+                int price2 = oldPrices.get(sauce);
+                //Integer.parseInt(((JSONArray) ((JSONObject) ((JSONObject) obj).get(sauce.getName())).get("history")).get(0).toString());
+
 
                 logger.info(sauce + " at $" + price);
                 prices.put(sauce, price);

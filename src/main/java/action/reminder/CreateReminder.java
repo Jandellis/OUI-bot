@@ -116,7 +116,7 @@ public class CreateReminder extends Action {
                                             }
                                         });
                                     }
-                                    Profile profile = Utils.loadProfileById(userId.get());
+                                    Profile profile = ReminderUtils.loadProfileById(userId.get());
                                     if (profile != null) {
                                         createReminder(ReminderType.vote, message, profile);
                                     }
@@ -144,7 +144,7 @@ public class CreateReminder extends Action {
                                             }
                                         });
                                     }
-                                    Profile profile = Utils.loadProfileById(userId.get());
+                                    Profile profile = ReminderUtils.loadProfileById(userId.get());
                                     if (profile != null) {
                                         createReminder(ReminderType.daily, message, profile);
                                     }
@@ -166,7 +166,7 @@ public class CreateReminder extends Action {
                                             }
                                         });
                                     }
-                                    Profile profile = Utils.loadProfileById(userId.get());
+                                    Profile profile = ReminderUtils.loadProfileById(userId.get());
                                     if (profile != null) {
                                         createReminder(ReminderType.clean, message, profile);
                                     }
@@ -196,11 +196,11 @@ public class CreateReminder extends Action {
                                             }
                                         });
                                     }
-                                    Profile profile = Utils.loadProfileById(userId.get());
+                                    Profile profile = ReminderUtils.loadProfileById(userId.get());
 
 
                                     if (profile != null) {
-                                        List<Reminder> reminders = Utils.loadReminder(profile.getName());
+                                        List<Reminder> reminders = ReminderUtils.loadReminder(profile.getName());
                                         //if already got reminder dont add
                                         boolean tips = false;
                                         boolean work = false;
@@ -312,12 +312,12 @@ public class CreateReminder extends Action {
     private void createReminder(ReminderType type, Message message, String desc) {
 
         String userId = getId(message);
-        Profile profile = Utils.loadProfileById(userId);
+        Profile profile = ReminderUtils.loadProfileById(userId);
 
         if (profile == null) {
 
             String name = desc.split("\\*\\*")[1];
-            profile = Utils.loadProfileByName(name);
+            profile = ReminderUtils.loadProfileByName(name);
             if (profile == null) {
                 logger.info("No profile found for " + name);
                 return;
@@ -354,9 +354,9 @@ public class CreateReminder extends Action {
         Instant reminderTime = message.getTimestamp().plus(sleep, ChronoUnit.MINUTES);
         react(message, profile);
 
-        Reminder reminder = Utils.addReminder(profile.getName(), type, Timestamp.from(reminderTime), message.getChannelId().asString());
+        Reminder reminder = ReminderUtils.addReminder(profile.getName(), type, Timestamp.from(reminderTime), message.getChannelId().asString());
 
-        List<Reminder> reminders = Utils.loadReminder(profile.getName());
+        List<Reminder> reminders = ReminderUtils.loadReminder(profile.getName());
         boolean tips = false;
         boolean work = false;
         boolean ot = false;
@@ -428,7 +428,7 @@ public class CreateReminder extends Action {
 
             react(message, profile);
 
-            Reminder reminder = Utils.addReminder(profile.getName(), type, Timestamp.from(reminderTime), message.getChannelId().asString());
+            Reminder reminder = ReminderUtils.addReminder(profile.getName(), type, Timestamp.from(reminderTime), message.getChannelId().asString());
 
             DoReminder doReminder = new DoReminder(gateway, client);
             doReminder.runReminder(reminder);

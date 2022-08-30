@@ -1,8 +1,7 @@
 package action.upgrades;
 
 import action.Action;
-import action.reminder.Utils;
-import action.reminder.model.Boost;
+import action.reminder.ReminderUtils;
 import action.reminder.model.Profile;
 import action.upgrades.model.Location;
 import action.upgrades.model.LocationEnum;
@@ -18,8 +17,6 @@ import reactor.core.publisher.Mono;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class BuyUpgrade extends Action {
@@ -64,6 +61,8 @@ public class BuyUpgrade extends Action {
         mall.addUpgrade("furniture", "New Furniture", 20, 600,30);
         mall.addUpgrade("bathrooms", "Nicer Bathrooms", 25, 800,30);
         mall.addUpgrade("billboard", "Billboard", 35, 1000,25);
+        mall.addUpgrade("appliances", "Better Appliances", 90, 1200,30);
+        mall.addUpgrade("tipjar", "Cooler Tip Jar", 40, 500,35);
         //kiosk
         mall.addUpgrade("taco", "Taco Shop", 50, 7500,20, true);
         mall.addUpgrade("repair", "Phone Repair", 100, 15000, 15, true);
@@ -85,6 +84,8 @@ public class BuyUpgrade extends Action {
         city.addUpgrade("furniture", "New Furniture", 20, 600,40);
         city.addUpgrade("bathrooms", "Nicer Bathrooms", 25, 800,40);
         city.addUpgrade("billboard", "Billboard", 35, 1000,40);
+        city.addUpgrade("appliances", "Better Appliances", 90, 1200,30);
+        city.addUpgrade("tipjar", "Cooler Tip Jar", 40, 500,35);
         //hire
         city.addUpgrade("apprentice", "Apprentice Chef", 10,250, 45);
         city.addUpgrade("cook", "Cook", 20, 600,45);
@@ -122,6 +123,8 @@ public class BuyUpgrade extends Action {
         shack.addUpgrade("furniture", "New Furniture", 20, 600,30);
         shack.addUpgrade("bathrooms", "Nicer Bathrooms", 25, 800,30);
         shack.addUpgrade("billboard", "Billboard", 35, 1000,25);
+        shack.addUpgrade("appliances", "Better Appliances", 90, 1200,30);
+        shack.addUpgrade("tipjar", "Cooler Tip Jar", 40, 500,35);
         //hire
         shack.addUpgrade("apprentice", "Apprentice Chef", 10,250, 35);
         shack.addUpgrade("cook", "Cook", 20, 600,35);
@@ -159,6 +162,8 @@ public class BuyUpgrade extends Action {
         beach.addUpgrade("furniture", "New Furniture", 20, 600,35);
         beach.addUpgrade("bathrooms", "Nicer Bathrooms", 25, 800,35);
         beach.addUpgrade("billboard", "Billboard", 35, 1000,30);
+        beach.addUpgrade("appliances", "Better Appliances", 90, 1200,30);
+        beach.addUpgrade("tipjar", "Cooler Tip Jar", 40, 500,35);
         //hire
         beach.addUpgrade("apprentice", "Apprentice Chef", 10,250, 40);
         beach.addUpgrade("cook", "Cook", 20, 600,40);
@@ -241,7 +246,7 @@ public class BuyUpgrade extends Action {
                                             }
                                         }
 
-                                        Profile profile = Utils.loadProfileById(id);
+                                        Profile profile = ReminderUtils.loadProfileById(id);
                                         if (profile != null) {
                                             react(message, profile);
                                         }
@@ -339,6 +344,13 @@ public class BuyUpgrade extends Action {
                                 for (int i = 0; i < length; i++) {
                                     sb.append("-");
                                 }
+                                if (upgrade.getUpgrade().equals("tipjar")) {
+                                    boost = " more tips";
+                                }
+                                if (upgrade.getUpgrade().equals("appliances")) {
+                                    boost = " more work";
+                                }
+
                                 sb.append("*(+$"+boost+")*\r\n");
 
                                 count++;

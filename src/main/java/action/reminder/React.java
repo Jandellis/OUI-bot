@@ -47,7 +47,7 @@ public class React extends Action {
                     } else {
                         message.addReaction(ReactionEmoji.unicode(action)).block();
                     }
-                    Utils.addReact(message.getAuthor().get().getId().asString(), action);
+                    ReminderUtils.addReact(message.getAuthor().get().getId().asString(), action);
                 }
 
             }

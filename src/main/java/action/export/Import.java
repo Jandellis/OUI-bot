@@ -4,6 +4,7 @@ import action.Action;
 import action.export.model.Donations;
 import action.export.model.WeeklyBestData;
 import action.reminder.DoReminder;
+import action.reminder.ReminderUtils;
 import action.reminder.model.Reminder;
 import action.reminder.ReminderType;
 import bot.Clean;
@@ -113,7 +114,7 @@ public class Import extends Action {
 
                     Instant reminderTime = message.getTimestamp().plus(23, ChronoUnit.HOURS);
 
-                    Reminder reminder = action.reminder.Utils.addReminder(message.getAuthor().get().getId().asString(), ReminderType.importData, Timestamp.from(reminderTime), message.getChannelId().asString());
+                    Reminder reminder = ReminderUtils.addReminder(message.getAuthor().get().getId().asString(), ReminderType.importData, Timestamp.from(reminderTime), message.getChannelId().asString());
                     DoReminder doReminder = new DoReminder(gateway, client);
                     doReminder.runReminder(reminder);
 

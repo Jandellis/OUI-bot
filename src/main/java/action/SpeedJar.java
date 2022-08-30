@@ -157,7 +157,7 @@ public class SpeedJar extends Action {
                         }
                 ).block();
 
-        client.getChannelById(Snowflake.of(speedJarChannel)).createMessage("<@&" + recruiter + "> Speed Jar unlocked").block();
+        client.getChannelById(Snowflake.of(speedJarChannel)).createMessage("<@&" + recruiter + "> Speed Jar unlocked\n\nPlease ping @Recruiter if you want to play").block();
     }
 
 

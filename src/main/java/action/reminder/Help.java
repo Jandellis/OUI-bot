@@ -54,7 +54,16 @@ public class Help extends Action {
                     sb.append("\r\n");
                     sb.append("You can also add a custom reminder messages\r\n");
                     sb.append("Type `ouimsg <message>`, for example, type `ouimsg Hey {ping} get back to {task} now!` \r\n");
-                    sb.append("Type `ouimsg delete`, to reset to the default` \r\n");
+                    sb.append("Type `ouimsg delete`, to reset to the default \r\n");
+
+                    sb.append("\r\n");
+                    sb.append("I can give you suggestions on what order to buy upgrades\r\n");
+                    sb.append("Type `ouiup <location>`, location can be the first letter or the full name \r\n");
+                    sb.append(":small_orange_diamond: For shack, do `/hire`, `/advertisements`, `/upgrades`, `/decorations`, `/truck`, then  type ouiup s.\n" +
+                            ":small_orange_diamond: For mall, do `/hire`, `/advertisements`, `/upgrades`, `/decorations`, `/kiosk` and then type ouiup m.\n" +
+                            ":small_orange_diamond: For beach, do `/hire`, `/advertisements`, `/upgrades`, `/decorations`, `/stand` and then type ouiup b. \n" +
+                            ":small_orange_diamond: For city, do `/hire`, `/advertisements`, `/upgrades`, `/decorations`, `/cart` and then type ouiup c.\n");
+                    sb.append("You can also add the `cheap` flag to list the upgrades in order from cheapest to most expensive\r\n");
 
                     sb.append("\r\n");
                     sb.append("If you see any bugs just let us know in <#1008163269485281361>\r\n");
