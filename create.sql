@@ -123,3 +123,4 @@ CREATE TABLE IF NOT EXISTS user_upgrades (
 
 
 ALTER TABLE reminder add locked BOOLEAN;
+ALTER TABLE sm_alerts add channel  VARCHAR(25);

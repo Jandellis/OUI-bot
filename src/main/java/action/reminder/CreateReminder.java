@@ -26,7 +26,6 @@ public class CreateReminder extends Action {
 
     String tacoBot = "490707751832649738";
     List<String> watchChannels;
-    String defaultReact = "\uD83D\uDC4B";
     ScheduledExecutorService executorService = Executors.newScheduledThreadPool(5);
 
     public CreateReminder() {
@@ -43,13 +42,13 @@ public class CreateReminder extends Action {
 //        List<String> watchChannels = new ArrayList<>();
 //        watchChannels.add("841034380822577182");
 //        watchChannels.add("889662502324039690");
-        AtomicBoolean watched = new AtomicBoolean(false);
+        AtomicBoolean watched = new AtomicBoolean(true);
 
-        watchChannels.forEach(channel -> {
-            if (message.getChannelId().asString().equals(channel)) {
-                watched.set(true);
-            }
-        });
+//        watchChannels.forEach(channel -> {
+//            if (message.getChannelId().asString().equals(channel)) {
+//                watched.set(true);
+//            }
+//        });
         //if in watch channel
         if (watched.get()) {
 

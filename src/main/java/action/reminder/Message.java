@@ -13,7 +13,7 @@ public class Message extends Action {
     List<String> watchChannels;
 
     public Message() {
-        param = "ouimsg";
+        param = "cymsg";
         watchChannels = Arrays.asList(config.get("watchChannels").split(","));
     }
 
@@ -22,13 +22,13 @@ public class Message extends Action {
     public Mono<Object> doAction(discord4j.core.object.entity.Message message) {
         try {
 
-            AtomicBoolean watched = new AtomicBoolean(false);
+            AtomicBoolean watched = new AtomicBoolean(true);
 
-            watchChannels.forEach(channel -> {
-                if (message.getChannelId().asString().equals(channel)) {
-                    watched.set(true);
-                }
-            });
+//            watchChannels.forEach(channel -> {
+//                if (message.getChannelId().asString().equals(channel)) {
+//                    watched.set(true);
+//                }
+//            });
             //if in watch channel
             if (watched.get()) {
 
@@ -40,10 +40,11 @@ public class Message extends Action {
 
                         message.getChannel().block().createMessage("Sorry, too long. Max length is 255").block();
                     } else {
-                        if (action.contains("{task}") && action.contains("{ping}")) {
+                        if ((action.contains("{task}") || action.contains("{cmd}")) && action.contains("{ping}")) {
                             ReminderUtils.addMessage(message.getAuthor().get().getId().asString(), action);
                             action = action.replace("{ping}", "<@" + message.getAuthor().get().getId().asString() + ">");
                             action = action.replace("{task}", ReminderType.work.getName());
+                            action = action.replace("{cmd}", "</work:1006354978274820109>");
 
                             message.getChannel().block().createMessage("Message will be like \r\n " + action).block();
                         } else {
@@ -51,7 +52,7 @@ public class Message extends Action {
                                 ReminderUtils.addMessage(message.getAuthor().get().getId().asString(), "");
                                 message.getChannel().block().createMessage("Deleted custom message").block();
                             } else {
-                                message.getChannel().block().createMessage("You need to have {task} and {ping} in your message").block();
+                                message.getChannel().block().createMessage("You need to have {task} or {cmd} and {ping} in your message").block();
                             }
                         }
                     }

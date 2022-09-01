@@ -120,7 +120,7 @@ public class Bot {
                                         logger.info("Logged in as " + self.getUsername() + " " + self.getDiscriminator());
 
                                         client.getChannelById(Snowflake.of("1002115224876359680")).createMessage("Logged in").block();
-                                        gateway.updatePresence(ClientPresence.online(ClientActivity.watching("ouiHelp"))).subscribe();
+                                        gateway.updatePresence(ClientPresence.online(ClientActivity.watching("cyHelp"))).subscribe();
 
                                     }))
                             .then();

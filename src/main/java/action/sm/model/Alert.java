@@ -7,13 +7,15 @@ public class Alert {
     String trigger;
     int price;
     Drop drop;
+    String channel;
 
-    public Alert(String name, AlertType type, String trigger, int price) {
+    public Alert(String name, AlertType type, String trigger, int price, String channel) {
         this.name = name;
         this.type = type;
         this.trigger = trigger;
         this.price = price;
         this.drop = Drop.getDrop(price);
+        this.channel = channel;
     }
 
     public int getPrice() {
@@ -50,6 +52,10 @@ public class Alert {
 
     public Drop getDrop() {
         return drop;
+    }
+
+    public String getChannel() {
+        return channel;
     }
 
     @Override

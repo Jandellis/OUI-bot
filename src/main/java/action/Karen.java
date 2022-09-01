@@ -1,5 +1,6 @@
 package action;
 
+import discord4j.core.object.Embed;
 import discord4j.core.object.entity.Message;
 import reactor.core.publisher.Mono;
 
@@ -13,11 +14,17 @@ public class Karen extends Action {
 
     String param2;
     String param3;
+    String param4;
+    String param5;
+    String param6;
 
     public Karen() {
         param = "Someone left a tip for";
         param2 = "feeling a little extra hungry today";
         param3 = "I want to buy";
+        param4 = "Sell Game";
+        param5 = "Math Game";
+        param6 = "Unscramble Game";
         customerChannel = "840942880775471114";
         customerPing = "931599227824517151";
 
@@ -40,6 +47,28 @@ public class Karen extends Action {
                         return message.getChannel().flatMap(channel -> {
                             return channel.createMessage("<@&" + customerPing + "> Karen is here, with unscramble :speaking_head:");
                         });
+                    }
+                    for (Embed embed: message.getEmbeds()){
+                        if (embed.getTitle().isPresent()) {
+                            if (embed.getTitle().get().contains(param4)){
+                                logger.info("got sell");
+                                return message.getChannel().flatMap(channel -> {
+                                    return channel.createMessage("<@&" + customerPing + "> Karen is here, with sell :speaking_head:");
+                                });
+                            }
+                            if (embed.getTitle().get().contains(param5)){
+                                logger.info("got math");
+                                return message.getChannel().flatMap(channel -> {
+                                    return channel.createMessage("<@&" + customerPing + "> Karen is here, with math :speaking_head:");
+                                });
+                            }
+                            if (embed.getTitle().get().contains(param6)){
+                                logger.info("got unscramble");
+                                return message.getChannel().flatMap(channel -> {
+                                    return channel.createMessage("<@&" + customerPing + "> Karen is here, with unscramble :speaking_head:");
+                                });
+                            }
+                        }
                     }
                 }
             }

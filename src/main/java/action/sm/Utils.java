@@ -107,11 +107,11 @@ public class Utils {
     public static List<Alert> loadAlerts() {
         List<Alert> alerts = new ArrayList<>();
         try (Connection con = DriverManager.getConnection(url, user, password);
-             PreparedStatement pst = con.prepareStatement("SELECT name, alert_type, trigger, price FROM sm_alerts");
+             PreparedStatement pst = con.prepareStatement("SELECT name, alert_type, trigger, price, channel FROM sm_alerts");
              ResultSet rs = pst.executeQuery()) {
 
             while (rs.next()) {
-                Alert alert = new Alert(rs.getString(1), AlertType.getAlertType(rs.getString(2)), rs.getString(3), rs.getInt(4));
+                Alert alert = new Alert(rs.getString(1), AlertType.getAlertType(rs.getString(2)), rs.getString(3), rs.getInt(4), rs.getString(5));
                 alerts.add(alert);
             }
 
@@ -124,11 +124,11 @@ public class Utils {
     public static List<Alert> loadAlerts(String id) {
         List<Alert> alerts = new ArrayList<>();
         try (Connection con = DriverManager.getConnection(url, user, password);
-             PreparedStatement pst = con.prepareStatement("SELECT name, alert_type, trigger, price FROM sm_alerts  WHERE name = '" + id + "'");
+             PreparedStatement pst = con.prepareStatement("SELECT name, alert_type, trigger, price, channel FROM sm_alerts  WHERE name = '" + id + "'");
              ResultSet rs = pst.executeQuery()) {
 
             while (rs.next()) {
-                Alert alert = new Alert(rs.getString(1), AlertType.getAlertType(rs.getString(2)), rs.getString(3), rs.getInt(4));
+                Alert alert = new Alert(rs.getString(1), AlertType.getAlertType(rs.getString(2)), rs.getString(3), rs.getInt(4), rs.getString(5));
                 alerts.add(alert);
             }
 
@@ -138,7 +138,7 @@ public class Utils {
         return alerts;
     }
 
-    public static void addAlert(String name, AlertType type, String trigger, int price) {
+    public static void addAlert(String name, AlertType type, String trigger, int price, String channel) {
 //        deleteAlert(name);
         //delete alert if same one already exists
         try {
@@ -148,8 +148,8 @@ public class Utils {
 
 //            con.setAutoCommit(false);
 
-            st.addBatch("insert into sm_alerts (name, alert_type, trigger, price) " +
-                    "VALUES ('" + name + "', '" + type.getName() + "', '" + trigger + "', " + price + ")");
+            st.addBatch("insert into sm_alerts (name, alert_type, trigger, price, channel) " +
+                    "VALUES ('" + name + "', '" + type.getName() + "', '" + trigger + "', " + price + ", '"+channel+"')");
             st.executeBatch();
 //            con.commit();
         } catch (SQLException ex) {
@@ -175,7 +175,7 @@ public class Utils {
     }
 
 
-    public static List<Sauce> addAlerts(String name, List<Sauce> sauces) {
+    public static List<Sauce> addAlerts(String name, List<Sauce> sauces, String channel) {
         deleteAlert(name);
         //delete all old alerts before adding new ones
         try {
@@ -209,8 +209,8 @@ public class Utils {
                         if (trigger.getType() == AlertType.drop) {
                             dropAlerts.add(sauce);
                         }
-                        st.addBatch("insert into sm_alerts (name, alert_type, trigger, price) " +
-                                "VALUES ('" + name + "', '" + trigger.getType() + "', '" + sauce + "', " + trigger.getPrice() + ")");
+                        st.addBatch("insert into sm_alerts (name, alert_type, trigger, price, channel) " +
+                                "VALUES ('" + name + "', '" + trigger.getType() + "', '" + sauce + "', " + trigger.getPrice() + ", '"+channel+"')");
                     }
                 }
             }
@@ -228,8 +228,8 @@ public class Utils {
                                 sauces.add(watch.getSauce());
                             }
 
-                            st.addBatch("insert into sm_alerts (name, alert_type, trigger, price) " +
-                                    "VALUES ('" + name + "', '" + trigger.getType() + "', '" + watch.getSauce().getName() + "', " + trigger.getPrice() + ")");
+                            st.addBatch("insert into sm_alerts (name, alert_type, trigger, price, channel) " +
+                                    "VALUES ('" + name + "', '" + trigger.getType() + "', '" + watch.getSauce().getName() + "', " + trigger.getPrice() + ", '"+channel+"')");
                         }
                     }
                 }
@@ -244,7 +244,7 @@ public class Utils {
 
     }
 
-    public static void addWatchAlerts(String name) {
+    public static void addWatchAlerts(String name, String channel) {
 
         //delete all old alerts before adding new ones
         try {
@@ -272,8 +272,8 @@ public class Utils {
                             )
                     )) {
 
-                        st.addBatch("insert into sm_alerts (name, alert_type, trigger, price) " +
-                                "VALUES ('" + name + "', '" + trigger.getType() + "', '" + watch.getSauce().getName() + "', " + trigger.getPrice() + ")");
+                        st.addBatch("insert into sm_alerts (name, alert_type, trigger, price, channel) " +
+                                "VALUES ('" + name + "', '" + trigger.getType() + "', '" + watch.getSauce().getName() + "', " + trigger.getPrice() + ", '"+channel+"')");
                     }
                 }
             }

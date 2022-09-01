@@ -29,6 +29,7 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -39,6 +40,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -57,6 +59,7 @@ public class PriceCheck extends Action {
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
     static long chefRole;
     int cheapPrice = 45;
+    List<String> smUpdateChannels;
 
 
     ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
@@ -69,6 +72,7 @@ public class PriceCheck extends Action {
         startMin = Integer.parseInt(config.get("priceCheck"));
         chefRole = Long.parseLong(config.get("chefRole"));
         cheapPrice = Integer.parseInt(config.get("cheapPrice"));
+        smUpdateChannels = Arrays.asList(config.get("smUpdateChannels").split(","));
     }
 
     public void loadPrices() {
@@ -136,19 +140,20 @@ public class PriceCheck extends Action {
             }
 
             alerts.forEach((person, sb) -> {
-                if (hasPermission(person, chefRole)) {
+//                if (hasPermission(person, chefRole)) {
+
                     if (sb.toString().equals("__Your alerts <@" + person + "> __\r\n")) {
 
                         logger.info("No alerts for " + person);
                     } else {
                         sb.append("\r\n-----------------------------------\r\n");
-
-                        client.getChannelById(Snowflake.of(smChannel)).createMessage(sb.toString()).block();
+                        String channel = Utils.loadAlerts(person).get(0).getChannel();
+                        client.getChannelById(Snowflake.of(channel)).createMessage(sb.toString()).block();
                     }
-                } else {
-                    logger.info("User does not have chef role " + person);
-
-                }
+//                } else {
+//                    logger.info("User does not have chef role " + person);
+//
+//                }
             });
 
 
@@ -163,18 +168,25 @@ public class PriceCheck extends Action {
             addSauce(SauceObjectPrices.get(Sauce.pico), embed);
             addSauce(SauceObjectPrices.get(Sauce.chipotle), embed);
 
-            client.getChannelById(Snowflake.of(smUpdate)).createMessage(embed.build().asRequest()).block();
-
             printCheap(SauceObjectPrices);
+
             logger.info("creating chart");
             createChart(data);
             logger.info("got chart");
-            InputStream inputStream = new BufferedInputStream(new FileInputStream("line_chart.png"));
-            MessageCreateSpec msg = MessageCreateSpec.builder()
-                    .addFile("line_chart.png", inputStream)
-                    .build();
+            smUpdateChannels.forEach(channel -> {
+                client.getChannelById(Snowflake.of(channel)).createMessage(embed.build().asRequest()).block();
+                InputStream inputStream = null;
+                try {
+                    inputStream = new BufferedInputStream(new FileInputStream("line_chart.png"));
+                } catch (FileNotFoundException e) {
+                    printException(e);
+                }
+                MessageCreateSpec msg = MessageCreateSpec.builder()
+                        .addFile("line_chart.png", inputStream)
+                        .build();
 
-            client.getChannelById(Snowflake.of(smUpdate)).createMessage(msg.asRequest()).block();
+                client.getChannelById(Snowflake.of(channel)).createMessage(msg.asRequest()).block();
+            });
 
 
             logger.info("Finished");

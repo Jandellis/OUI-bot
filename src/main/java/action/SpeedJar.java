@@ -4,6 +4,7 @@ import action.sm.model.SystemReminder;
 import action.sm.model.SystemReminderType;
 import action.sm.Utils;
 import discord4j.common.util.Snowflake;
+import discord4j.core.object.Embed;
 import discord4j.core.object.PermissionOverwrite;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.channel.TopLevelGuildChannel;
@@ -64,22 +65,19 @@ public class SpeedJar extends Action {
         try {
             if (message.getChannelId().asString().equals(speedJarChannel)) {
                 if (message.getData().author().id().asString().equals(customerBot)) {
+                    for (Embed embed: message.getEmbeds()){
+                        if (embed.getDescription().isPresent()) {
+                            if (embed.getDescription().get().contains("Speed Jar has begun")){
+                                return message.getChannel().flatMap(channel -> {
+                                    create(message.getTimestamp());
+                                    return channel.createMessage("<@&" + speedJarPing + "> starting now!");
+                                });
+                            }
+                        }
+                    }
                     if (message.getContent().contains(param)) {
-
                         return message.getChannel().flatMap(channel -> {
-
-//                            runLock(12);
-//                            runUnlock(690);
-//
-//
-//                            LocalDateTime unlockTime = Timestamp.from(message.getTimestamp()).toLocalDateTime().plusMinutes(690);
-//                            Utils.addReminder(SystemReminderType.speedJarUnlock, Timestamp.valueOf(unlockTime));
-//
-//                            LocalDateTime lockTime = Timestamp.from(message.getTimestamp()).toLocalDateTime().plusMinutes(12);
-//                            Utils.addReminder(SystemReminderType.speedJarLock, Timestamp.valueOf(lockTime));
-
                             create(message.getTimestamp());
-
                             return channel.createMessage("<@&" + speedJarPing + "> starting now!");
                         });
                     }
@@ -101,7 +99,7 @@ public class SpeedJar extends Action {
         LocalDateTime unlockTime = Timestamp.from(messageTime).toLocalDateTime().plusMinutes(690);
         Utils.addReminder(SystemReminderType.speedJarUnlock, Timestamp.valueOf(unlockTime), "", "");
 
-        LocalDateTime lockTime = Timestamp.from(messageTime).toLocalDateTime().plusMinutes(12);
+        LocalDateTime lockTime = Timestamp.from(messageTime).toLocalDateTime().plusMinutes(15);
         Utils.addReminder(SystemReminderType.speedJarLock, Timestamp.valueOf(lockTime), "", "");
 
 

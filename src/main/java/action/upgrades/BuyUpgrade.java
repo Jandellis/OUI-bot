@@ -23,7 +23,7 @@ public class BuyUpgrade extends Action {
 
     String tacoBot = "490707751832649738";
     List<String> watchChannels;
-    String defaultReact = "\uD83D\uDC4B";
+//    String defaultReact = "\uD83D\uDC4B";
     Location mall = new Location(LocationEnum.mall);
     Location city = new Location(LocationEnum.city);
     Location shack = new Location(LocationEnum.shack);
@@ -33,7 +33,7 @@ public class BuyUpgrade extends Action {
     String paramUp;
 
     public BuyUpgrade() {
-        paramUp = "ouiUp";
+        paramUp = "cyUp";
 
         //hire
         mall.addUpgrade("cashier", "Cashier", 10,250, 35);
@@ -199,13 +199,13 @@ public class BuyUpgrade extends Action {
 //        List<String> watchChannels = new ArrayList<>();
 //        watchChannels.add("841034380822577182");
 //        watchChannels.add("889662502324039690");
-        AtomicBoolean watched = new AtomicBoolean(false);
+        AtomicBoolean watched = new AtomicBoolean(true);
 
-        watchChannels.forEach(channel -> {
-            if (message.getChannelId().asString().equals(channel)) {
-                watched.set(true);
-            }
-        });
+//        watchChannels.forEach(channel -> {
+//            if (message.getChannelId().asString().equals(channel)) {
+//                watched.set(true);
+//            }
+//        });
         //if in watch channel
         if (watched.get()) {
             try {
@@ -282,7 +282,24 @@ public class BuyUpgrade extends Action {
                             EmbedCreateSpec.Builder embed = EmbedCreateSpec.builder();
                             embed.color(Color.SUMMER_SKY);
                             embed.title("Your upgrades");
-                            embed.addField("Error", "I have no data, make sure you list the item buy pages", false);
+                            String commands = "</hire:1006354977847001159>, </advertisements:1006354977721176137>, </upgrades:1006354978274820107>, </decorations:1006354977788268620>, ";
+                            switch (locationEnum) {
+                                case shack:
+                                    commands = commands + "</truck:1006354978153169014>";
+                                    break;
+                                case mall:
+                                    commands = commands + "</kiosk:1010956257588428840>";
+                                    break;
+                                case beach:
+                                    commands = commands + "</stand:1006354978153169010>";
+                                    break;
+                                case city:
+                                    commands = commands + "</cart:1006354977721176142>";
+                                    break;
+
+                            }
+
+                            embed.addField("Error", "I have no data, please run the following command "+ commands, false);
 
 
                             message.getChannel().block().createMessage(embed.build()).block();
@@ -417,11 +434,12 @@ public class BuyUpgrade extends Action {
 
         for (Location location : locations) {
 
-            if (name.toLowerCase().contains(location.getName().getName())) {
-                return location;
-            }
             if (LocationEnum.shack.getName().equals(location.getName().getName())) {
                 defaultLocation = location;
+            } else {
+                if (name.toLowerCase().contains(location.getName().getName())) {
+                    return location;
+                }
             }
 
         }

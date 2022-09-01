@@ -15,7 +15,7 @@ public class React extends Action {
     List<String> watchChannels;
 
     public React() {
-        param = "ouireact";
+        param = "cyreact";
         watchChannels = Arrays.asList(config.get("watchChannels").split(","));
     }
 
@@ -24,13 +24,13 @@ public class React extends Action {
     public Mono<Object> doAction(Message message) {
         try {
 
-            AtomicBoolean watched = new AtomicBoolean(false);
+            AtomicBoolean watched = new AtomicBoolean(true);
 
-            watchChannels.forEach(channel -> {
-                if (message.getChannelId().asString().equals(channel)) {
-                    watched.set(true);
-                }
-            });
+//            watchChannels.forEach(channel -> {
+//                if (message.getChannelId().asString().equals(channel)) {
+//                    watched.set(true);
+//                }
+//            });
             //if in watch channel
             if (watched.get()) {
 

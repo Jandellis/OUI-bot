@@ -29,6 +29,8 @@ public abstract class Action {
     protected GatewayDiscordClient gateway;
     protected DiscordClient client;
     protected String guildId;
+    //    String defaultReact = "\uD83D\uDC4B";
+    protected String defaultReact = "<a:cylon:1014777339114168340>";
 
     protected static final Logger logger = LogManager.getLogger("ouiBot");
     protected ScheduledExecutorService executorService = Executors.newScheduledThreadPool(5);
@@ -44,6 +46,7 @@ public abstract class Action {
     /**
      * Change to return true, if true it means that action processed the message and to stop all others from processing it.
      * Move gateway and client to constructor
+     *
      * @param message
      * @return
      */
@@ -54,6 +57,7 @@ public abstract class Action {
     }
 
     protected String getAction(Message message, String paramInput) {
+
         try {
             if (message.getContent().toLowerCase().startsWith(paramInput)) {
                 logger.info(message.getContent());
@@ -62,6 +66,19 @@ public abstract class Action {
                 String action = temp.split(" ")[0];
                 logger.info("action " + action);
                 return action;
+            } else {
+                if (paramInput.startsWith("cy")) {
+                    //enable old commands to still work
+                    paramInput = paramInput.replaceFirst("cy", "oui");
+                    if (message.getContent().toLowerCase().startsWith(paramInput)) {
+                        logger.info(message.getContent());
+
+                        String temp = message.getContent().toLowerCase().replaceAll(paramInput + " ", "");
+                        String action = temp.split(" ")[0];
+                        logger.info("action " + action);
+                        return action;
+                    }
+                }
             }
         } catch (Exception e) {
             printException(e);

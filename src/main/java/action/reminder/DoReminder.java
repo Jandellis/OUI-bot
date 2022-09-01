@@ -116,13 +116,47 @@ public class DoReminder extends Action {
 //        }
 
         Profile profile = ReminderUtils.loadProfileById(reminder.getName());
-        String msg = "Boo {ping} go do `{task}`!";
+        String msg = "Boo {ping} go do `{task}`! {cmd}";
 
         if (profile.getMessage() != null && profile.getMessage().length() > 5) {
             msg = profile.getMessage();
         }
         msg = msg.replace("{ping}", "<@" + reminder.getName() + ">");
         msg = msg.replace("{task}", reminder.getType().getName());
+
+        String command = "";
+
+        switch (reminder.getType()) {
+            case work:
+                command = "</work:1006354978274820109>";
+                break;
+            case ot:
+                command = "</overtime:1006354977981210646>";
+                break;
+            case tips:
+                command = "</tips:1006354978153169013>";
+                break;
+            case vote:
+                command = "</vote link:1006354978274820108>";
+                break;
+            case clean:
+                command = "</clean:1006354977721176143>";
+                break;
+            case daily:
+                command = "</daily:1006354977788268621>";
+                break;
+            case gift:
+                command = "</gift:1006354977847001160>";
+                break;
+            case importData:
+                command = reminder.getType().getName();
+                break;
+            default:
+                //boosts off cooldown
+                command =  "</shop:1006354978153169007>";
+        }
+
+        msg = msg.replace("{cmd}", command);
 
 
         client.getChannelById(Snowflake.of(reminder.getChannel())).createMessage(msg).block();

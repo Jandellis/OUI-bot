@@ -33,13 +33,13 @@ public class CreateProfile extends Action {
     public Mono<Object> doAction(Message message, boolean checkEmbeds) {
         //work out how much people got in
 
-        AtomicBoolean watched = new AtomicBoolean(false);
-
-        watchChannels.forEach(channel -> {
-            if (message.getChannelId().asString().equals(channel)) {
-                watched.set(true);
-            }
-        });
+        AtomicBoolean watched = new AtomicBoolean(true);
+//
+//        watchChannels.forEach(channel -> {
+//            if (message.getChannelId().asString().equals(channel)) {
+//                watched.set(true);
+//            }
+//        });
         //if in watch channel
         if (watched.get()) {
             if (message.getData().author().id().asString().equals(tacoBot)) {
@@ -67,7 +67,7 @@ public class CreateProfile extends Action {
 
                                     message.addReaction(ReactionEmoji.unicode("\uD83D\uDC4B")).block();
                                     if (newProfile) {
-                                        message.getChannel().block().createMessage("Your profile has been created. Would you like to turn on reminders? Type `ouirm on` \r\nFor more details, type `ouihelp`").block();
+                                        message.getChannel().block().createMessage("Your profile has been created. Would you like to turn on reminders? Type `cyrm on` \r\nFor more details, type `cyhelp`").block();
                                     }
                                 }
                             }

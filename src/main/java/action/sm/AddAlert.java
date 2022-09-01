@@ -29,17 +29,17 @@ public class AddAlert extends Action {
     public AddAlert() {
         smUpdate = config.get("smUpdate");
         cheapPing = config.get("cheapPing");
-        paramDrop = "ouiSmDrop";
-        paramDelete = "ouiSmDelete";
-        paramHigh = "ouiSmHigh";
-        parmaAlert = "ouiSmAlert";
-        paramTrigger = "ouiSmTrigger";
-        paramHelp = "ouiSm";
+        paramDrop = "cySmDrop";
+        paramDelete = "cySmDelete";
+        paramHigh = "cySmHigh";
+        parmaAlert = "cySmAlert";
+        paramTrigger = "cySmTrigger";
+        paramHelp = "cySm";
 
-        paramLow = "ouiSmLow";
-        paramWatch = "ouiSmWatch";
-        paramWatchDelete = "ouiSmWatchDelete";
-        paramWatchView = "ouiSmWatchView";
+        paramLow = "cySmLow";
+        paramWatch = "cySmWatch";
+        paramWatchDelete = "cySmWatchDelete";
+        paramWatchView = "cySmWatchView";
         smChannel = config.get("smChannel");
     }
 
@@ -183,7 +183,7 @@ public class AddAlert extends Action {
 
                 sb.append("\r\nYou can set up some sauces to watch. (only works for " + paramDrop + " and " + paramLow + ")\r\n");
                 sb.append(" :small_blue_diamond: **" + paramWatch + " <sauce>** - add sauce to watch. Example `" + paramWatch + " pico`\r\n");
-                sb.append("\r\nNow that you have set up your triggers and watchlist everytime you type `!sm list` in <#" + smChannel + "> I will automatically create or delete alerts for the sauces you own and on your watchlist\r\n");
+                sb.append("\r\nNow that you have set up your triggers and watchlist everytime you type `/saucemarket list` in the sauce market channel I will automatically create or delete alerts for the sauces you own and on your watchlist\r\n");
                 sb.append("\r\nExamples:\r\n");
                 sb.append(" :small_orange_diamond: you have 10K of pico and you have a high alert of $150. If the price is $155 I will ping you.\r\n");
                 sb.append(" :small_orange_diamond: you have 10K of pico and you have a dropping alert for owned. If the price drops from $155 to $145 I will ping you again saying the price is dropping.\r\n");

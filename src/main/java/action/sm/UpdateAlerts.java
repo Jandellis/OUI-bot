@@ -14,20 +14,22 @@ import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class UpdateAlerts extends Action {
 
     String tacoBot = "490707751832649738";
-    String smChannel;
+    List<String> smChannelList;
     ScheduledExecutorService executorService = Executors.newScheduledThreadPool(5);
 
     public UpdateAlerts() {
-        param = "ouiSmDrop";
-        smChannel = config.get("smChannel");
+        param = "cySmDrop";
+        smChannelList = Arrays.asList(config.get("smChannelList").split(","));
     }
 
 
@@ -38,9 +40,14 @@ public class UpdateAlerts extends Action {
 
 
     public Mono<Object> doAction(Message message, boolean checkEmbeds) {
+        AtomicBoolean watched = new AtomicBoolean(false);
         try {
-
-            if (message.getChannelId().asString().equals(smChannel)) {
+            smChannelList.forEach(channel -> {
+                if (message.getChannelId().asString().equals(channel)) {
+                    watched.set(true);
+                }
+            });
+            if (watched.get()) {
                 if (message.getData().author().id().asString().equals(tacoBot)) {
                     //for some reason the embeds will be empty from slash, but if i load it again it will have data
                     if (checkAge(message)) {
@@ -68,9 +75,9 @@ public class UpdateAlerts extends Action {
                                             sauces.add(sauce);
                                         }
                                     }
-                                    logger.info("Updating alerts for "+ id + " for " + line);
+                                    logger.info("Updating alerts for " + id + " for " + line);
 
-                                    Utils.addAlerts(id, sauces);
+                                    Utils.addAlerts(id, sauces, message.getChannelId().asLong()+"");
                                     if (sauces.isEmpty()) {
                                         message.getChannel().block().createMessage("Alerts cleared").block();
                                     } else {
@@ -118,7 +125,7 @@ public class UpdateAlerts extends Action {
             });
         }
         List<Sauce> sauces = new ArrayList<>();
-        Utils.addAlerts(userId.get(), sauces);
+        Utils.addAlerts(userId.get(), sauces, message.getChannelId().asString());
         message.getChannel().block().createMessage("Alerts cleared").block();
 
     }
