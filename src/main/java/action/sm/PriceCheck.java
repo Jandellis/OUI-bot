@@ -29,7 +29,6 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -93,7 +92,7 @@ public class PriceCheck extends Action {
             Object obj = jsonParser.parse(data);
             HashMap<Sauce, Integer> prices = new HashMap<>();
             HashMap<Sauce, SauceObject> SauceObjectPrices = new HashMap<>();
-            HashMap<Sauce, Integer> oldPrices =Utils.loadPrices();
+            HashMap<Sauce, Integer> oldPrices = Utils.loadPrices();
 
             for (Sauce sauce : Sauce.values()) {
                 int price = Integer.parseInt(((JSONObject) ((JSONObject) obj).get(sauce.getName())).get("price").toString());
@@ -142,14 +141,18 @@ public class PriceCheck extends Action {
             alerts.forEach((person, sb) -> {
 //                if (hasPermission(person, chefRole)) {
 
-                    if (sb.toString().equals("__Your alerts <@" + person + "> __\r\n")) {
+                if (sb.toString().equals("__Your alerts <@" + person + "> __\r\n")) {
 
-                        logger.info("No alerts for " + person);
-                    } else {
-                        sb.append("\r\n-----------------------------------\r\n");
-                        String channel = Utils.loadAlerts(person).get(0).getChannel();
+                    logger.info("No alerts for " + person);
+                } else {
+                    sb.append("\r\n-----------------------------------\r\n");
+                    String channel = Utils.loadAlerts(person).get(0).getChannel();
+                    try {
                         client.getChannelById(Snowflake.of(channel)).createMessage(sb.toString()).block();
+                    } catch (Exception e) {
+                        printException(e);
                     }
+                }
 //                } else {
 //                    logger.info("User does not have chef role " + person);
 //
@@ -174,18 +177,18 @@ public class PriceCheck extends Action {
             createChart(data);
             logger.info("got chart");
             smUpdateChannels.forEach(channel -> {
-                client.getChannelById(Snowflake.of(channel)).createMessage(embed.build().asRequest()).block();
-                InputStream inputStream = null;
                 try {
+                    client.getChannelById(Snowflake.of(channel)).createMessage(embed.build().asRequest()).block();
+                    InputStream inputStream = null;
                     inputStream = new BufferedInputStream(new FileInputStream("line_chart.png"));
-                } catch (FileNotFoundException e) {
+                    MessageCreateSpec msg = MessageCreateSpec.builder()
+                            .addFile("line_chart.png", inputStream)
+                            .build();
+
+                    client.getChannelById(Snowflake.of(channel)).createMessage(msg.asRequest()).block();
+                } catch (Exception e) {
                     printException(e);
                 }
-                MessageCreateSpec msg = MessageCreateSpec.builder()
-                        .addFile("line_chart.png", inputStream)
-                        .build();
-
-                client.getChannelById(Snowflake.of(channel)).createMessage(msg.asRequest()).block();
             });
 
 
@@ -203,13 +206,13 @@ public class PriceCheck extends Action {
 
 
         int change = sauce.getPrice() - sauce.getOldPrice();
-        String direction = " | :white_check_mark: +$" + change;
+        String direction = " | <a:up:1015020767244714004> +$" + change;
         if (change < 0) {
             change = change * -1;
-            direction = " | :small_red_triangle_down: -$" + change;
+            direction = " | <a:down:1015020716929851453> -$" + change;
         }
         if (change == 0) {
-            direction = " | :black_small_square: No Change";
+            direction = " | <a:orange_dots:1015118419047235585> No Change";
         }
 
         String line = "\r\n------------------";
@@ -355,7 +358,7 @@ public class PriceCheck extends Action {
             if (priceTrigger > price && price != -1 && sauce.getName().equals(sauceName)) {
                 logger.info("price is " + price);
 
-                sb.append(" :small_blue_diamond:  " + sauce.getName() + " is low $" + price + "\r\n");
+                sb.append(" <a:bluedown:1015028942358454353>  " + sauce.getName() + " is low $" + price + "\r\n");
                 cheap.set(true);
             }
         });
@@ -378,7 +381,7 @@ public class PriceCheck extends Action {
         prices.forEach((sauce, price) -> {
             if (priceTrigger < price && price != -1 && sauce.getName().equals(sauceName)) {
                 logger.info("price is " + price);
-                sb.append(" :small_orange_diamond:  " + sauce.getName() + " is high $" + price + "\r\n");
+                sb.append(" <a:greenup:1015028862368878723>  " + sauce.getName() + " is high $" + price + "\r\n");
                 cheap.set(true);
             }
         });
@@ -396,7 +399,7 @@ public class PriceCheck extends Action {
 
         StringBuilder sb = new StringBuilder();
         AtomicBoolean dropping = new AtomicBoolean(false);
-        sb.append(" :small_blue_diamond:  " + sauce + " is dropping");
+        sb.append(" <a:reddown:1015028786292592701>  " + sauce + " is dropping");
 
         Integer now = prices.get(0);
         Integer hour1 = prices.get(1);

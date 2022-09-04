@@ -99,7 +99,7 @@ public class SpeedJar extends Action {
         LocalDateTime unlockTime = Timestamp.from(messageTime).toLocalDateTime().plusMinutes(690);
         Utils.addReminder(SystemReminderType.speedJarUnlock, Timestamp.valueOf(unlockTime), "", "");
 
-        LocalDateTime lockTime = Timestamp.from(messageTime).toLocalDateTime().plusMinutes(15);
+        LocalDateTime lockTime = Timestamp.from(messageTime).toLocalDateTime().plusMinutes(20);
         Utils.addReminder(SystemReminderType.speedJarLock, Timestamp.valueOf(lockTime), "", "");
 
 
@@ -155,7 +155,7 @@ public class SpeedJar extends Action {
                         }
                 ).block();
 
-        client.getChannelById(Snowflake.of(speedJarChannel)).createMessage("<@&" + recruiter + "> Speed Jar unlocked\n\nPlease ping @Recruiter if you want to play").block();
+        client.getChannelById(Snowflake.of(speedJarChannel)).createMessage("<@&" + recruiter + "> </speedjar:1014290086881398810> unlocked\n\nPlease ping @Recruiter if you want to play").block();
     }
 
 

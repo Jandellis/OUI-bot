@@ -127,7 +127,7 @@ public class CreateReminder extends Action {
                                         && desc.contains("__**Daily Streak Progress**__")
 //                                        && embed.getFooter().isPresent()
 //                                        && embed.getFooter().get().getText().contains("daily")
-                                        ) {
+                                ) {
 
                                     AtomicReference<String> userId = new AtomicReference<>("");
                                     userId.set(getId(message));
@@ -351,7 +351,16 @@ public class CreateReminder extends Action {
 
 
         Instant reminderTime = message.getTimestamp().plus(sleep, ChronoUnit.MINUTES);
-        react(message, profile);
+        AtomicBoolean alreadyProcessed = new AtomicBoolean(false);
+        message.getReactions().forEach(reaction -> {
+            if (reaction.selfReacted()) {
+                alreadyProcessed.set(true);
+            }
+        });
+        if (alreadyProcessed.get()) {
+            return;
+        }
+
 
         Reminder reminder = ReminderUtils.addReminder(profile.getName(), type, Timestamp.from(reminderTime), message.getChannelId().asString());
 
@@ -383,8 +392,32 @@ public class CreateReminder extends Action {
             if (dbReminder.getType() == ReminderType.daily) {
                 daily = true;
             }
-
         }
+
+        StringBuilder missingReminders = new StringBuilder();
+        if (!work) {
+            missingReminders.append("</work:1006354978274820109>\n");
+        }
+        if (!tips) {
+            missingReminders.append("</tips:1006354978153169013>\n");
+        }
+        if (!ot) {
+            missingReminders.append("</overtime:1006354977981210646>\n");
+        }
+        if (!vote) {
+            missingReminders.append("</vote link:1006354978274820108>\n");
+        }
+        if (!daily) {
+            missingReminders.append("</daily:1006354977788268621>\n");
+        }
+        if (!clean) {
+            missingReminders.append("</clean:1006354977721176143>\n");
+        }
+        if (missingReminders.toString().length() > 1) {
+            message.getChannel().block().createMessage(missingReminders.toString()).block();
+        }
+        react(message, profile);
+
         if (!work) {
             message.addReaction(ReactionEmoji.unicode("\uD83C\uDDFC")).block();
         }
@@ -403,6 +436,8 @@ public class CreateReminder extends Action {
         if (!clean) {
             message.addReaction(ReactionEmoji.unicode("\uD83C\uDDE8")).block();
         }
+
+
         DoReminder doReminder = new DoReminder(gateway, client);
 //        if (reminder.getId() == -2) {
 //            logger.info("got double");

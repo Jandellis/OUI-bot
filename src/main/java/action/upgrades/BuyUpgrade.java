@@ -18,6 +18,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class BuyUpgrade extends Action {
 
@@ -31,9 +33,11 @@ public class BuyUpgrade extends Action {
     List<Location> locations = new ArrayList<>();
 
     String paramUp;
+    String paramStats;
 
     public BuyUpgrade() {
         paramUp = "cyUp";
+        paramStats = "cyStats";
 
         //hire
         mall.addUpgrade("cashier", "Cashier", 10,250, 35);
@@ -183,7 +187,7 @@ public class BuyUpgrade extends Action {
         beach.addUpgrade("wheels", "Wheels", 100, 8500, 15, true);
         beach.addUpgrade("mixers", "Mixers", 250, 25000,15, true);
         beach.addUpgrade("server", "Server", 400, 150000,5, true);
-        beach.addUpgrade("freezer", "Freezer", 7500, 750000,10, true);
+        beach.addUpgrade("freezer", "Freezer", 750, 750000,10, true);
         locations.add(beach);
 
 
@@ -389,6 +393,112 @@ public class BuyUpgrade extends Action {
                         embed.addField("Total Cost", "$" +String.format("%,d",totalCost), false);
 
 
+                        message.getChannel().block().createMessage(embed.build()).block();
+
+                    }
+                    action = getAction(message, paramStats.toLowerCase());
+                    if (action != null) {
+                        String userId = message.getAuthor().get().getId().asString();
+
+                        LocationEnum locationEnum = LocationEnum.getLocation(action);
+                        if (locationEnum == null) {
+                            return Mono.empty();
+                        }
+
+                        Location location = getLocation(locationEnum.getName());
+
+                        if (location == null) {
+                            return Mono.empty();
+                        }
+
+                        List<UserUpgrades> list = UpgradeUtils.loadUserUpgrades(userId, location.getName().getName());
+
+                        if (list.isEmpty()) {
+
+                            EmbedCreateSpec.Builder embed = EmbedCreateSpec.builder();
+                            embed.color(Color.SUMMER_SKY);
+                            embed.title("Your upgrades");
+                            String commands = "</hire:1006354977847001159>, </advertisements:1006354977721176137>, </upgrades:1006354978274820107>, </decorations:1006354977788268620>, ";
+                            switch (locationEnum) {
+                                case shack:
+                                    commands = commands + "</truck:1006354978153169014>";
+                                    break;
+                                case mall:
+                                    commands = commands + "</kiosk:1010956257588428840>";
+                                    break;
+                                case beach:
+                                    commands = commands + "</stand:1006354978153169010>";
+                                    break;
+                                case city:
+                                    commands = commands + "</cart:1006354977721176142>";
+                                    break;
+
+                            }
+
+                            embed.addField("Error", "I have no data, please run the following command "+ commands, false);
+
+
+                            message.getChannel().block().createMessage(embed.build()).block();
+                            return Mono.empty();
+                        }
+                        List<UserUpgrades> total = new ArrayList<>();
+                        list.forEach(userUpgrades -> {
+                            Upgrade up = location.getUpgrades().get(userUpgrades.getUpgrade());
+                            int max = up.getMax();
+                            int current = userUpgrades.getProgress();
+                            for (int i = current; i < max; i++) {
+                                UserUpgrades newUp = new UserUpgrades(userUpgrades.getName(), userUpgrades.getLocation(), userUpgrades.getUpgrade(), i + 1);
+                                newUp.setCurrentCost(location.getCost(userUpgrades.getUpgrade(), i + 1));
+                                newUp.setValue(newUp.getCurrentCost()/up.getBoost());
+                                newUp.setBoost(up.getBoost());
+                                total.add(newUp);
+                            }
+                        });
+
+                        AtomicInteger totalUpgrades = new AtomicInteger();
+                        AtomicLong totalCost = new AtomicLong();
+                        AtomicLong totalBoost = new AtomicLong();
+                        location.getUpgrades().forEach((name, upgrade) -> {
+                            int max = upgrade.getMax();
+                            for (int i = 0; i < max; i++) {
+                                totalUpgrades.getAndIncrement();
+                                totalCost.addAndGet(location.getCost(upgrade.getName(), i + 1));
+                                int boost = upgrade.getBoost();
+                                if (upgrade.getName().equals("appliances") || upgrade.getName().equals("tipjar")) {
+                                    boost = 0;
+                                }
+                                totalBoost.addAndGet(boost);
+                            }
+                        });
+
+
+                        int countLeft = 0;
+                        Long costLeft = 0L;
+                        Long boostLeft = 0L;
+                        for (UserUpgrades upgrade : total) {
+                            if (upgrade.getCurrentCost() > 0) {
+                                countLeft++;
+                                costLeft = costLeft + upgrade.getCurrentCost();
+                                boostLeft = boostLeft + upgrade.getBoost();
+                            }
+                        }
+
+
+                        EmbedCreateSpec.Builder embed = EmbedCreateSpec.builder();
+                        embed.color(Color.SUMMER_SKY);
+                        embed.title("Upgrade stats for " + location.getName().getName());
+                        StringBuilder sb = new StringBuilder("```");
+                        sb.append("Total Spent            $" + String.format("%,d",(totalCost.get() - costLeft))  + " \n");
+                        sb.append("Total Remaining        $" + String.format("%,d",costLeft) + " \n");
+                        sb.append("Percentage Remaining   " + String.format("%.02f",((costLeft * 1.0/ totalCost.get()) * 100))  + "% \n");
+                        sb.append("Upgrades Purchased     " + (totalUpgrades.get() - countLeft) + " \n");
+                        sb.append("Upgrades Remaining     " + countLeft + " \n");
+                        sb.append("Income Purchased       $" + String.format("%,d",(totalBoost.get() -  boostLeft)) + " \n");
+                        sb.append("Income Remaining       $" + String.format("%,d",boostLeft) + " \n");
+                        sb.append("```");
+
+
+                        embed.description(sb.toString());
                         message.getChannel().block().createMessage(embed.build()).block();
 
                     }

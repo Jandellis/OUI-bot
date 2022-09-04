@@ -320,6 +320,23 @@ public class ReminderUtils {
             logger.error("Exception", ex);
         }
     }
+    public static void deleteReact(String name) {
+        try {
+            Connection con = DriverManager.getConnection(url, user, password);
+            Statement st = con.createStatement();
+
+            PreparedStatement pst = con.prepareStatement("SELECT id FROM profile  WHERE name = '" + name + "'");
+            ResultSet rs = pst.executeQuery();
+            int id = -1;
+            while (rs.next()) {
+                id = rs.getInt(1);
+                st.executeUpdate("UPDATE profile SET react = null WHERE id = " + id);
+            }
+            st.executeBatch();
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
+    }
 
     public static void addMessage(String name, String message) {
         try {

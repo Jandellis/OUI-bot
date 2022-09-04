@@ -116,11 +116,16 @@ public class DoReminder extends Action {
 //        }
 
         Profile profile = ReminderUtils.loadProfileById(reminder.getName());
-        String msg = "Boo {ping} go do `{task}`! {cmd}";
+        String msg = defaultReact + " Boo {ping} go do {cmd}!";
 
         if (profile.getMessage() != null && profile.getMessage().length() > 5) {
             msg = profile.getMessage();
         }
+        boolean hasTask = false;
+        if (msg.contains("{task}")) {
+            hasTask = true;
+        }
+
         msg = msg.replace("{ping}", "<@" + reminder.getName() + ">");
         msg = msg.replace("{task}", reminder.getType().getName());
 
@@ -154,6 +159,9 @@ public class DoReminder extends Action {
             default:
                 //boosts off cooldown
                 command =  "</shop:1006354978153169007>";
+                if (!hasTask) {
+                    command = command + " **"+reminder.getType().getName()+"**";
+                }
         }
 
         msg = msg.replace("{cmd}", command);

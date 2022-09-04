@@ -37,17 +37,23 @@ public class React extends Action {
                 String action = getAction(message);
 
                 if (action != null) {
-                    if (action.startsWith("<")) {
+                    if (action.equalsIgnoreCase("delete")) {
 
-                        String[] emote = action.split(":");
-                        Long id = Long.parseLong(emote[2].replace(">", ""));
-                        String name = emote[1];
-                        boolean animated = true;
-                        message.addReaction(ReactionEmoji.of(id, name, animated)).block();
+                        ReminderUtils.deleteReact(message.getAuthor().get().getId().asString());
+                        message.getChannel().block().createMessage("Reaction deleted").block();
                     } else {
-                        message.addReaction(ReactionEmoji.unicode(action)).block();
+                        if (action.startsWith("<")) {
+
+                            String[] emote = action.split(":");
+                            Long id = Long.parseLong(emote[2].replace(">", ""));
+                            String name = emote[1];
+                            boolean animated = true;
+                            message.addReaction(ReactionEmoji.of(id, name, animated)).block();
+                        } else {
+                            message.addReaction(ReactionEmoji.unicode(action)).block();
+                        }
+                        ReminderUtils.addReact(message.getAuthor().get().getId().asString(), action);
                     }
-                    ReminderUtils.addReact(message.getAuthor().get().getId().asString(), action);
                 }
 
             }

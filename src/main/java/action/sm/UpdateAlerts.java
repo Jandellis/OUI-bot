@@ -5,8 +5,10 @@ import bot.Sauce;
 import discord4j.common.util.Snowflake;
 import discord4j.core.object.Embed;
 import discord4j.core.object.entity.Message;
+import discord4j.core.spec.EmbedCreateSpec;
 import discord4j.discordjson.json.EmbedAuthorData;
 import discord4j.discordjson.json.MessageData;
+import discord4j.rest.util.Color;
 import reactor.core.publisher.Mono;
 
 import java.sql.Timestamp;
@@ -15,6 +17,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -28,7 +31,7 @@ public class UpdateAlerts extends Action {
     ScheduledExecutorService executorService = Executors.newScheduledThreadPool(5);
 
     public UpdateAlerts() {
-        param = "cySmDrop";
+//        param = "cySmDrop";
         smChannelList = Arrays.asList(config.get("smChannelList").split(","));
     }
 
@@ -67,15 +70,64 @@ public class UpdateAlerts extends Action {
                                             id = authorData.iconUrl().get().replace("https://cdn.discordapp.com/avatars/", "").split("/")[0];
                                         }
                                     }
-                                    String line = embed.getDescription().get();
+                                    String desc = embed.getDescription().get();
                                     List<Sauce> sauces = new ArrayList<>();
 
                                     for (Sauce sauce : Sauce.values()) {
-                                        if (line.toLowerCase().contains(sauce.getName())) {
+                                        if (desc.toLowerCase().contains(sauce.getName())) {
                                             sauces.add(sauce);
                                         }
                                     }
-                                    logger.info("Updating alerts for " + id + " for " + line);
+
+                                    try {
+                                        HashMap<Sauce, Integer> totalProfit = new HashMap<>();
+                                        HashMap<Sauce, Integer> totalSauces = new HashMap<>();
+                                        String[] lines = desc.split("\n");
+                                        for (String line : lines) {
+                                            if (!line.startsWith("---") && !line.startsWith("```ID")) {
+                                                line = line.replace("     ", "  ");
+                                                line = line.replace("    ", "  ");
+                                                line = line.replace("   ", "  ");
+//                                                line = line.replace("   ", "  ");
+//                                                line = line.replace("   ", "  ");
+
+
+                                                String[] entries = line.split("  ");
+                                                if (entries.length >= 5) {
+                                                    Sauce sauce = Sauce.getSauce(entries[1]);
+                                                    int count = Integer.parseInt(entries[2]);
+                                                    int price = Integer.parseInt(entries[3].replace("$", "").split(" ")[0]);
+                                                    int totalCost = count * price;
+                                                    if (!totalProfit.containsKey(sauce)) {
+                                                        totalProfit.put(sauce, totalCost);
+                                                        totalSauces.put(sauce, count);
+                                                    } else {
+                                                        totalProfit.put(sauce, totalProfit.get(sauce) + totalCost);
+                                                        totalSauces.put(sauce, totalSauces.get(sauce) + count);
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        EmbedCreateSpec.Builder embedBuilder = EmbedCreateSpec.builder();
+                                        embedBuilder.color(Color.SUMMER_SKY);
+                                        embedBuilder.title("Your Sauce Portfolio");
+
+                                        HashMap<Sauce, Integer> prices = Utils.loadPrices();
+                                        totalProfit.forEach((sauce, payedPrice) -> {
+                                            int currentPrice = prices.get(sauce);
+                                            int totalSauce = totalSauces.get(sauce);
+                                            int totalSell = currentPrice * totalSauce;
+                                            int profit = totalSell - payedPrice;
+                                            embedBuilder.addField(sauce.getUppercaseName(), " - Profit if you sell now **$" +String.format("%,d",profit)+ "**\n - Total if you sell now **$" + String.format("%,d",totalSell) +"**", false);
+                                        });
+
+                                        message.getChannel().block().createMessage(embedBuilder.build()).block();
+
+                                    } catch (Exception e) {
+                                        printException(e);
+                                    }
+                                    logger.info("Updating alerts for " + id + " for " + desc);
 
                                     Utils.addAlerts(id, sauces, message.getChannelId().asLong()+"");
                                     if (sauces.isEmpty()) {
