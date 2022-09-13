@@ -1,5 +1,6 @@
 package bot;
 
+import action.FranchiseStat;
 import action.GiveAWay;
 import action.GiveawayAdd;
 import action.GiveawayMembers;
@@ -147,6 +148,11 @@ public class Bot {
                     GiveAWay giveAWay = new GiveAWay();
                     giveAWay.action(gateway, client);
                     giveAWay.startUp();
+
+
+                    FranchiseStat franchiseStat = new FranchiseStat();
+                    franchiseStat.action(gateway, client);
+                    franchiseStat.startUp();
 
                     Mono<Void> handlePingCommand = gateway.on(MessageCreateEvent.class, event -> {
                         Message message = event.getMessage();

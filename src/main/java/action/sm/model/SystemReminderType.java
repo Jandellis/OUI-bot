@@ -4,6 +4,7 @@ public enum SystemReminderType {
     sauce("sauce"),
     speedJarUnlock("speedJarUnlock"),
     speedJarLock("speedJarLock"),
+    updateStats("updateStats"),
     giveaway("giveaway");
 
 
