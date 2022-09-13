@@ -111,11 +111,11 @@ public class Welcome extends Action {
                 "welcome").block();
 
         StringBuilder sb = new StringBuilder();
-        sb.append("Welcome to OUI you now have access to the command `!ot` and an extra daily task in `!g`. You also should have some free menu slots.\r\n");
+        sb.append("Welcome to OUI you now have access to the command `/overtime` and an extra daily task in `/tasks view `. You also should have some free menu slots.\r\n");
         sb.append("Please follow our rules <#840895366287065099> and look at <#887022305581092904> to see what each channel is for.\r\n");
-        sb.append("If you have any questions reach out to one of our recruiters <@708173299351420979> | <@762526280435367986> | <@819389319030636565> | <@292839877563908097> | <@849571699723730964> | <@697784435214516278> | <@844458414586724362> and they can help you out.\n\n");
-        sb.append("I can also remind you when your work/tips and others are ready. Type ouihelp in <#841087049129656320> or one of the other play channel to find out how to set this up\n");
-        sb.append("I can also help you make lots of money on the sauce market by buying sauce when its low and selling when sauce high, type ouism in <#865115506813960222> to find out how");
+        sb.append("If you have any questions reach out to one of our recruiters <@708173299351420979> | <@762526280435367986> | <@695518297168281640> | <@292839877563908097> | <@849571699723730964> | <@697784435214516278> | <@844458414586724362> and they can help you out.\n\n");
+        sb.append("I can also remind you when your work/tips and others are ready. Type cyhelp in <#841087049129656320> or one of the other play channel to find out how to set this up\n");
+        sb.append("I can also help you make lots of money on the sauce market by buying sauce when its low and selling when sauce high, type cysm in <#865115506813960222> to find out how");
         gateway.getUserById(Snowflake.of(memberId)).block().getPrivateChannel().flatMap(channel -> {
             channel.createMessage(sb.toString()).block();
             logger.info("sent DM");

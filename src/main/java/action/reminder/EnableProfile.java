@@ -92,6 +92,26 @@ public class EnableProfile extends Action {
                         return Mono.empty();
                     }
 
+                    if (action.equalsIgnoreCase("history")) {
+
+                        String[] inputs =  message.getContent().split(" ");
+                        if (inputs.length < 3) {
+                            message.getChannel().block().createMessage("missing number").block();
+                            return Mono.empty();
+                        }
+                        int number;
+                        try {
+                            number = Integer.parseInt(inputs[2]);
+                        } catch (NumberFormatException e) {
+                            message.getChannel().block().createMessage("missing number").block();
+                            return Mono.empty();
+                        }
+
+                        ReminderUtils.setDepth(message.getAuthor().get().getId().asString(), number);
+                        message.getChannel().block().createMessage("History updated to " + number).block();
+                        return Mono.empty();
+                    }
+
                     if (onOff) {
                         updated = ReminderUtils.enableProfile(message.getAuthor().get().getId().asString(), enable);
                         if (!updated) {

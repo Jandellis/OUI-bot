@@ -49,13 +49,13 @@ public class GiveawayAdd extends Action {
 
                             String line = embed.getDescription().get();
 
-                            if (line.contains(" You have sent a gift of `$")) {
+                            if (line.contains(" You have received a gift of `$")) {
 
-                                String amount = line.replace(" You have sent a gift of `", "");
+                                String amount = line.replace(" You have received a gift of `", "");
                                 int index = amount.indexOf("$");
                                 amount = amount.substring(index + 1);
                                 amount = amount.replace(",", "");
-                                String[] split = amount.split("` to ");
+                                String[] split = amount.split("` from ");
                                 amount = split[0];
                                 try {
                                     Clean.addGift(Integer.parseInt(amount));

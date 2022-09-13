@@ -8,6 +8,7 @@ public class Profile {
     Boolean enabled;
     String emote;
     String message;
+    int depth;
 
     public Profile(String name, String shackName, Status status) {
         this.name = name;
@@ -15,7 +16,7 @@ public class Profile {
         this.status = status;
     }
 
-    public Profile(String name, String shackName, Status status, Boolean enabled, String emote, String message) {
+    public Profile(String name, String shackName, Status status, Boolean enabled, String emote, String message, int depth) {
         this.name = name;
         this.shackName = shackName;
         this.status = status;
@@ -24,6 +25,7 @@ public class Profile {
         this.enabled = enabled;
         this.emote = emote;
         this.message = message;
+        this.depth = depth;
     }
 
     public String getName() {
@@ -48,6 +50,14 @@ public class Profile {
 
     public String getMessage() {
         return message;
+    }
+
+    public int getDepth() {
+        return depth;
+    }
+
+    public void setDepth(int depth) {
+        this.depth = depth;
     }
 
     // emabled

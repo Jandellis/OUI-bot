@@ -1,5 +1,8 @@
 package action;
 
+import action.reminder.ReminderUtils;
+import action.reminder.model.DepthId;
+import action.reminder.model.Profile;
 import bot.Config;
 import discord4j.common.util.Snowflake;
 import discord4j.core.DiscordClient;
@@ -146,22 +149,43 @@ public abstract class Action {
     }
 
     protected String getId(Message message) {
-        try {
+        int count = 0;
+        while (true) {
+            count++;
+            if (count == 150) {
+                logger.info("hit 150 limit - message " + message.getId().asLong() + " channel " + message.getChannelId().asLong());
+                return "";
+            }
             if (message.getData().interaction().isAbsent()) {
                 if (message.getReferencedMessage().isPresent()) {
-                    return getId(message.getReferencedMessage().get());
+                    message = message.getReferencedMessage().get();
+                    continue;
                 }
                 if (message.getMessageReference().isPresent()) {
                     Message msg = gateway.getMessageById(Snowflake.of(message.getChannelId().asString()), Snowflake.of(message.getMessageReference().get().getMessageId().get().asLong())).block();
-                    return getId(msg);
+                    message = msg;
+                    continue;
                 }
                 return "";
             }
-        } catch (StackOverflowError e) {
-            message.getChannel().block().createMessage("Sorry too many button presses in a row. I am unable to work out who did it. Please type a command").block();
-        }
-        return message.getData().interaction().get().user().id().toString();
+            String userId = message.getData().interaction().get().user().id().toString();
+            Profile profile = ReminderUtils.loadProfileById(userId);
 
+            if (profile == null) {
+                return "";
+            }
+
+            if (profile.getDepth() >= count -1) {
+                return userId;
+            } else {
+                logger.info("hit history limit"); //<a:lights:1017394940789145610>
+                count--;
+                message.getChannel().block().createMessage("You have exceeded your history limit. This reminder will not be created.\n" +
+                        "To stop seeing this message increase your history limit with `cyrm history <limit>`, or stop clicking on other peoples buttons!\n" +
+                        "The higher the history, the more message I will go back and check who was the owner. For me to read this message your history would need to be more than " + count).block();
+                return "";
+            }
+        }
     }
 
 

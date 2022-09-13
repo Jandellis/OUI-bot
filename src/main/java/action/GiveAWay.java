@@ -25,7 +25,6 @@ import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Pattern;
 
 public class GiveAWay extends Action {
 
@@ -33,6 +32,7 @@ public class GiveAWay extends Action {
     String guildId;
 
     String giveawayChannel;
+    String giveawayShower;
     String giveawayRole;
 
     ScheduledExecutorService executorService = Executors.newScheduledThreadPool(2);
@@ -46,6 +46,7 @@ public class GiveAWay extends Action {
         param = "ouistartgift";
         guildId = config.get("guildId");
         giveawayChannel = config.get("giveawayChannelEvent");
+        giveawayShower = config.get("giveawayChannel");
         giveawayRole = config.get("giveawayRole");
         react = "\uD83C\uDF89";
         recruiter = Long.parseLong(config.get("recruiter"));
@@ -107,40 +108,47 @@ public class GiveAWay extends Action {
         //print out total for the last day
         //create new giveaway
 
+        try {
 
-        List<SystemReminder> rem = Utils.loadReminder(SystemReminderType.giveaway);
-        printTotal(rem.get(0).getName());
+            List<SystemReminder> rem = Utils.loadReminder(SystemReminderType.giveaway);
+            printTotal(rem.get(0).getName());
 
-        Message message = gateway.getMessageById(Snowflake.of(giveawayChannel), Snowflake.of(rem.get(0).getMessageId())).block();
+            Message message = gateway.getMessageById(Snowflake.of(giveawayChannel), Snowflake.of(rem.get(0).getMessageId())).block();
 
-        List<String> enteredList = new ArrayList<>();
+            List<String> enteredList = new ArrayList<>();
 
-        List<User> users = message.getReactors(ReactionEmoji.unicode(react)).collectList().block();
+            List<User> users = message.getReactors(ReactionEmoji.unicode(react)).collectList().block();
 
-        users.forEach(user -> {
-            List<Id> roles = client.getGuildById(Snowflake.of(guildId)).getMember(Snowflake.of( user.getId().asString())).block().roles();
-                roles.forEach((roleId) -> {
-                    if (roleId.asLong() == Long.parseLong(giveawayRole)) {
-                        enteredList.add(user.getId().asString());
-                    }
-                });
-        });
+            users.forEach(user -> {
+                try {
+                    List<Id> roles = client.getGuildById(Snowflake.of(guildId)).getMember(Snowflake.of(user.getId().asString())).block().roles();
+                    roles.forEach((roleId) -> {
+                        if (roleId.asLong() == Long.parseLong(giveawayRole)) {
+                            enteredList.add(user.getId().asString());
+                        }
+                    });
+                } catch (Exception e) {
+                    logger.info("assuming user has left the server " + user.getId().asString() + ", " + user.getUsername());
+                }
+            });
 
-        Random rand = new Random();
-        String winner = enteredList.get(rand.nextInt(enteredList.size()));
+            Random rand = new Random();
+            String winner = enteredList.get(rand.nextInt(enteredList.size()));
 
-        String winnerMessage = "Congratulations to <@" + winner+">" +
-                "\r\n <@&875881574409859163>\n" +
-                "\n" +
-                "<@&875880362482491422> to go <#875882488680034326> and use your gift";
+            String winnerMessage = "Congratulations to <@" + winner + ">" +
+                    "\r\n <@&875881574409859163>\n" +
+                    "\n" +
+                    "<@&875880362482491422> to go <#875882488680034326> and use your gift";
 
-        client.getChannelById(Snowflake.of(giveawayChannel)).createMessage(winnerMessage).block();
-        client.getChannelById(Snowflake.of(giveawayChannel)).createMessage("`!gift <@"+winner+">`").block();
-        client.getChannelById(Snowflake.of(giveawayChannel)).createMessage("`/gift member: <@"+winner+">`").block();
+            client.getChannelById(Snowflake.of(giveawayChannel)).createMessage(winnerMessage).block();
+            client.getChannelById(Snowflake.of(giveawayShower)).createMessage("New giveaway winner is <@" + winner + ">").block();
+            client.getChannelById(Snowflake.of(giveawayChannel)).createMessage("`/gift member: <@" + winner + ">`").block();
 
 
-
-        create(winner);
+            create(winner);
+        } catch (Exception e) {
+            printException(e);
+        }
 
     }
 

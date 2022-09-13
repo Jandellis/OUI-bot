@@ -9,6 +9,7 @@ public enum ReminderType {
     clean("clean"),
     gift("gifts"),
     importData("importData"),
+    postAd("postAd"),
 
     //city
     happy("Happy Hour"),

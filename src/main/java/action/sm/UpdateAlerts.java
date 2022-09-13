@@ -62,13 +62,15 @@ public class UpdateAlerts extends Action {
                                 EmbedAuthorData authorData = embed.getAuthor().get().getData();
 
                                 if (authorData.name().get().startsWith("Your Sauces")) {
-                                    String id = getId(message);
+                                    String id = null;
+                                    if (authorData.iconUrl().isAbsent()) {
+                                        //message.getChannel().block().createMessage("Sorry unable to update your sauces. If you add an avatar i will be able to update them").block();
+                                    } else {
+                                        id = authorData.iconUrl().get().replace("https://cdn.discordapp.com/avatars/", "").split("/")[0];
+                                    }
+
                                     if (id == null) {
-                                        if (authorData.iconUrl().isAbsent()) {
-                                            message.getChannel().block().createMessage("Sorry unable to update your sauces. If you add an avatar i will be able to update them").block();
-                                        } else {
-                                            id = authorData.iconUrl().get().replace("https://cdn.discordapp.com/avatars/", "").split("/")[0];
-                                        }
+                                        id = getId(message);
                                     }
                                     String desc = embed.getDescription().get();
                                     List<Sauce> sauces = new ArrayList<>();

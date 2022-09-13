@@ -42,6 +42,14 @@ public class Hit extends Action {
         String action = getAction(message);
         if (action != null && hasPermission(message, recruiter)) {
             return message.getChannel().flatMap(channel -> {
+                int hitListSize = 10;
+                try {
+                    hitListSize = Integer.parseInt(action);
+                } catch (NumberFormatException e) {
+
+                }
+
+
                 channel.createMessage("creating hitlist...").block();
                 try {
                     deleteOldMessages();
@@ -114,7 +122,7 @@ public class Hit extends Action {
                     HashMap<Long, String> hitMessages = new HashMap<>();
 
                     for (KickMember kickMember : nonServerMembers) {
-                        if (count < 10) {
+                        if (count < hitListSize) {
                             if (kickMember.getDaysNoWork() > 4 || kickMember.getDaysNoWork() > 4) {
 //                                            channel.createMessage(kickMember.id.toString()).block();
                                 String messageId = client.getChannelById(Snowflake.of(hitThread)).createMessage(kickMember.getId().toString()).block().id().asString();
@@ -124,7 +132,7 @@ public class Hit extends Action {
                         }
                     }
                     for (KickMember kickMember : serverMembers) {
-                        if (count < 10) {
+                        if (count < hitListSize) {
                             String messageId = client.getChannelById(Snowflake.of(hitThread)).createMessage("<@" + kickMember.getId().toString() + ">").block().id().asString();
                             hitMessages.put(kickMember.getId(), messageId);
                             count++;

@@ -303,6 +303,28 @@ public class ReminderUtils {
         return updated;
     }
 
+
+    public static boolean setDepth(String name, int depth) {
+        boolean updated = false;
+        try {
+            Connection con = DriverManager.getConnection(url, user, password);
+            Statement st = con.createStatement();
+
+            PreparedStatement pst = con.prepareStatement("SELECT id FROM profile  WHERE name = '" + name + "'");
+            ResultSet rs = pst.executeQuery();
+            int id = -1;
+            while (rs.next()) {
+                id = rs.getInt(1);
+                st.executeUpdate("UPDATE profile SET depth = " + depth + " WHERE id = " + id);
+                updated = true;
+            }
+            st.executeBatch();
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
+        return updated;
+    }
+
     public static void addReact(String name, String react) {
         try {
             Connection con = DriverManager.getConnection(url, user, password);
@@ -370,11 +392,11 @@ public class ReminderUtils {
             Connection con = DriverManager.getConnection(url, user, password);
             Statement st = con.createStatement();
 
-            PreparedStatement pst = con.prepareStatement("SELECT name, shack_name, status, enabled, react, message FROM profile  WHERE shack_name = ? and enabled = true");
+            PreparedStatement pst = con.prepareStatement("SELECT name, shack_name, status, enabled, react, message, depth FROM profile  WHERE shack_name = ? and enabled = true");
             pst.setString(1, shack);
             ResultSet rs = pst.executeQuery();
             while (rs.next()) {
-                profile = new Profile(rs.getString(1), rs.getString(2), Status.getStatus(rs.getString(3)), rs.getBoolean(4), rs.getString(5), rs.getString(6));
+                profile = new Profile(rs.getString(1), rs.getString(2), Status.getStatus(rs.getString(3)), rs.getBoolean(4), rs.getString(5), rs.getString(6), rs.getInt(7));
 
             }
             st.executeBatch();
@@ -404,11 +426,11 @@ public class ReminderUtils {
     public static Profile loadProfileById(String id) {
         Profile profile = null;
         try (Connection con = DriverManager.getConnection(url, user, password);
-             PreparedStatement pst = con.prepareStatement("SELECT name, shack_name, status, enabled, react, message FROM profile  WHERE name = '" + id + "' and enabled = true");
+             PreparedStatement pst = con.prepareStatement("SELECT name, shack_name, status, enabled, react, message, depth FROM profile  WHERE name = '" + id + "' and enabled = true");
              ResultSet rs = pst.executeQuery()) {
 
             while (rs.next()) {
-                profile = new Profile(rs.getString(1), rs.getString(2), Status.getStatus(rs.getString(3)), rs.getBoolean(4), rs.getString(5), rs.getString(6));
+                profile = new Profile(rs.getString(1), rs.getString(2), Status.getStatus(rs.getString(3)), rs.getBoolean(4), rs.getString(5), rs.getString(6), rs.getInt(7));
             }
 
         } catch (SQLException ex) {

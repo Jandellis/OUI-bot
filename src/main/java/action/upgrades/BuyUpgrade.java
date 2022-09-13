@@ -30,6 +30,7 @@ public class BuyUpgrade extends Action {
     Location city = new Location(LocationEnum.city);
     Location shack = new Location(LocationEnum.shack);
     Location beach = new Location(LocationEnum.beach);
+    Location hq = new Location(LocationEnum.hq);
     List<Location> locations = new ArrayList<>();
 
     String paramUp;
@@ -191,6 +192,21 @@ public class BuyUpgrade extends Action {
         locations.add(beach);
 
 
+        //Upgrades
+        hq.addUpgrade("Customer Service Department", "Customer Service Department", 150, 750000,20);
+        hq.addUpgrade("Food Services Department", "Food Services Department", 150, 750000, 20);
+        hq.addUpgrade("Overtime Management", "Overtime Management", 750, 3000000,5);
+        hq.addUpgrade("Lunch Rush Initiative", "Lunch Rush Initiative", 250, 2500000,6);
+        hq.addUpgrade("Task Booster", "Task Booster", 150, 10000000,4);
+
+        //Employees
+        hq.addUpgrade("Secretary", "Secretary", 100, 1000000,20);
+        hq.addUpgrade("Treasurer", "Treasurer", 200, 1750000, 20);
+        hq.addUpgrade("Chief Financial Officer", "Chief Financial Officer", 300, 2500000,10);
+        hq.addUpgrade("Chief Executive Officer", "Chief Executive Officer", 500, 5000000,10);
+        locations.add(hq);
+
+
         watchChannels = Arrays.asList(config.get("watchChannels").split(","));
     }
 
@@ -219,7 +235,7 @@ public class BuyUpgrade extends Action {
                         checkMessageAgain(message);
                     } else {
                         for (Embed embed : message.getEmbeds()) {
-                            if (embed.getTitle().isPresent()) {
+                            if (embed.getTitle().isPresent() && embed.getDescription().isPresent()) {
                                 String title = embed.getTitle().get();
 
                                 if (title.contains("Decorations") ||
@@ -231,7 +247,7 @@ public class BuyUpgrade extends Action {
                                         title.contains("Hotdog Cart")||
                                         title.contains("Ice Cream Stand")) {
                                     String id = getId(message);
-                                    Location location = getLocation(title);
+                                    Location location = getLocation(title, embed.getDescription().get());
 
                                     if (location == null) {
                                         return Mono.empty();
@@ -273,7 +289,7 @@ public class BuyUpgrade extends Action {
                             return Mono.empty();
                         }
 
-                        Location location = getLocation(locationEnum.getName());
+                        Location location = getLocation(locationEnum.getName(), "");
 
                         if (location == null) {
                             return Mono.empty();
@@ -299,6 +315,9 @@ public class BuyUpgrade extends Action {
                                     break;
                                 case city:
                                     commands = commands + "</cart:1006354977721176142>";
+                                    break;
+                                case hq:
+                                    commands = "</hq upgrades:1018564197602295859>, </hq hire:1018564197602295859> ";
                                     break;
 
                             }
@@ -351,7 +370,8 @@ public class BuyUpgrade extends Action {
 
                         StringBuilder sb = new StringBuilder();
                         int count = 1;
-                        int totalCost = 0;
+                        long totalCost = 0;
+                        int totalBoost = 0;
                         for (UserUpgrades upgrade : total) {
                             if (upgrade.getCurrentCost() > 0) {
                                 String value = "";
@@ -359,23 +379,53 @@ public class BuyUpgrade extends Action {
                                 String boost = "";
                                 boost =  String.format("%,d", upgrade.getBoost());
                                 String line = count + " - `" + upgrade.getUpgrade() + "` - **$" + value + "**";
-                                int length = 35 - line.length();
+                                int space = 35;
+                                if (location.getName() == LocationEnum.hq) {
+                                    space = 60;
+                                }
+                                int length = space - line.length();
                                 sb.append(line);
                                 sb.append(" ");
                                 for (int i = 0; i < length; i++) {
                                     sb.append("-");
                                 }
+                                Boolean fakeBoost = false;
                                 if (upgrade.getUpgrade().equals("tipjar")) {
                                     boost = " more tips";
+                                    fakeBoost = true;
                                 }
                                 if (upgrade.getUpgrade().equals("appliances")) {
                                     boost = " more work";
+                                    fakeBoost = true;
+                                }
+                                if (upgrade.getUpgrade().equals("Customer Service Department")) {
+                                    boost = " 4% tip";
+                                    fakeBoost = true;
+                                }
+                                if (upgrade.getUpgrade().equals("Food Services Department")) {
+                                    boost = " 4% work";
+                                    fakeBoost = true;
+                                }
+                                if (upgrade.getUpgrade().equals("Overtime Management")) {
+                                    boost = " 100% overtime";
+                                    fakeBoost = true;
+                                }
+                                if (upgrade.getUpgrade().equals("Lunch Rush Initiative")) {
+                                    boost = " 1 Hour lunch rush";
+                                    fakeBoost = true;
+                                }
+                                if (upgrade.getUpgrade().equals("Task Booster")) {
+                                    boost = " 100% Daily task";
+                                    fakeBoost = true;
                                 }
 
                                 sb.append("*(+$"+boost+")*\r\n");
 
                                 count++;
                                 totalCost = totalCost + upgrade.getCurrentCost();
+                                if (!fakeBoost) {
+                                    totalBoost = totalBoost + upgrade.getBoost();
+                                }
                             }
                             if (count == 31) {
                                 break;
@@ -390,7 +440,9 @@ public class BuyUpgrade extends Action {
                         embed.title("Your upgrades" + title);
 //                        embed.addField(title, sb.toString(), false);
                         embed.description(sb.toString());
-                        embed.addField("Total Cost", "$" +String.format("%,d",totalCost), false);
+                        embed.addField("Total Cost", "$" +String.format("%,d",totalCost), true);
+                        embed.addField("Total Boost", "$" +String.format("%,d",totalBoost), true);
+
 
 
                         message.getChannel().block().createMessage(embed.build()).block();
@@ -405,7 +457,7 @@ public class BuyUpgrade extends Action {
                             return Mono.empty();
                         }
 
-                        Location location = getLocation(locationEnum.getName());
+                        Location location = getLocation(locationEnum.getName(), "");
 
                         if (location == null) {
                             return Mono.empty();
@@ -431,6 +483,9 @@ public class BuyUpgrade extends Action {
                                     break;
                                 case city:
                                     commands = commands + "</cart:1006354977721176142>";
+                                    break;
+                                case hq:
+                                    commands = "</hq upgrades:1018564197602295859>, </hq hire:1018564197602295859> ";
                                     break;
 
                             }
@@ -464,7 +519,13 @@ public class BuyUpgrade extends Action {
                                 totalUpgrades.getAndIncrement();
                                 totalCost.addAndGet(location.getCost(upgrade.getName(), i + 1));
                                 int boost = upgrade.getBoost();
-                                if (upgrade.getName().equals("appliances") || upgrade.getName().equals("tipjar")) {
+                                if (upgrade.getName().equals("appliances") ||
+                                        upgrade.getName().equals("tipjar")||
+                                        upgrade.getName().equals("Customer Service Department")||
+                                        upgrade.getName().equals("Food Services Department")||
+                                        upgrade.getName().equals("Overtime Management")||
+                                        upgrade.getName().equals("Lunch Rush Initiative")||
+                                        upgrade.getName().equals("Task Booster")) {
                                     boost = 0;
                                 }
                                 totalBoost.addAndGet(boost);
@@ -529,7 +590,7 @@ public class BuyUpgrade extends Action {
         }
     }
 
-    private Location getLocation(String name) {
+    private Location getLocation(String name, String desc) {
 
         if (name.contains("Taco Truck")) {
             name = "shack";
@@ -548,6 +609,9 @@ public class BuyUpgrade extends Action {
                 defaultLocation = location;
             } else {
                 if (name.toLowerCase().contains(location.getName().getName())) {
+                    return location;
+                }
+                if (desc.contains("**HQ Balance:**") && LocationEnum.hq.getName().equals(location.getName().getName())) {
                     return location;
                 }
             }

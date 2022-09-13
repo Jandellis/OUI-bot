@@ -7,7 +7,8 @@ public enum LocationEnum {
     mall("mall"),
     city("city"),
     shack("shack"),
-    beach("beach");
+    beach("beach"),
+    hq("hq");
 
     private String name;
 

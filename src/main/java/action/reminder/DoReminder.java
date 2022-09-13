@@ -154,7 +154,8 @@ public class DoReminder extends Action {
                 command = "</gift:1006354977847001160>";
                 break;
             case importData:
-                command = reminder.getType().getName();
+            case postAd:
+                command = reminder.getType().getName() + " <#663937997313540128>";
                 break;
             default:
                 //boosts off cooldown

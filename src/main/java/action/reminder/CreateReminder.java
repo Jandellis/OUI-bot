@@ -27,9 +27,11 @@ public class CreateReminder extends Action {
     String tacoBot = "490707751832649738";
     List<String> watchChannels;
     ScheduledExecutorService executorService = Executors.newScheduledThreadPool(5);
+    Long recruiter;
 
     public CreateReminder() {
         watchChannels = Arrays.asList(config.get("watchChannels").split(","));
+        recruiter = Long.parseLong(config.get("recruiter"));
     }
 
 
@@ -272,6 +274,23 @@ public class CreateReminder extends Action {
 
             }
         }
+
+        String actionData = getAction(message, "ouiposted");
+        if (actionData != null ) {
+            if (hasPermission(message, recruiter)) {
+
+                Instant reminderTime = message.getTimestamp().plus(6, ChronoUnit.HOURS);
+
+                Reminder reminder = ReminderUtils.addReminder(message.getAuthor().get().getId().asString(), ReminderType.postAd, Timestamp.from(reminderTime), message.getChannelId().asString());
+                DoReminder doReminder = new DoReminder(gateway, client);
+                doReminder.runReminder(reminder);
+                Profile profile = ReminderUtils.loadProfileById(message.getAuthor().get().getId().asString());
+                react(message, profile);
+            } else {
+                logger.info(message.getAuthor().get().getId().asString() + " is not a recruiter");
+            }
+        }
+
         return Mono.empty();
     }
 
@@ -310,18 +329,15 @@ public class CreateReminder extends Action {
 
     private void createReminder(ReminderType type, Message message, String desc) {
 
-        String userId = getId(message);
-        Profile profile = ReminderUtils.loadProfileById(userId);
-
+        String name = desc.split("\\*\\*")[1];
+        Profile profile = ReminderUtils.loadProfileByName(name);
         if (profile == null) {
-
-            String name = desc.split("\\*\\*")[1];
-            profile = ReminderUtils.loadProfileByName(name);
-            if (profile == null) {
-                logger.info("No profile found for " + name);
-                return;
-            }
-
+            String userId = getId(message);
+            profile = ReminderUtils.loadProfileById(userId);
+        }
+        if (profile == null) {
+            logger.info("No profile found for " + name);
+            return;
         }
         createReminder(type, message, profile);
     }
@@ -471,9 +487,14 @@ public class CreateReminder extends Action {
     }
 
     private void react(Message message, Profile profile) {
-        String react = profile.getEmote();
-        if (react == null || react.equals("")) {
+        String react;
+        if (profile == null) {
             react = defaultReact;
+        } else {
+            react = profile.getEmote();
+            if (react == null || react.equals("")) {
+                react = defaultReact;
+            }
         }
 
         if (react.startsWith("<")) {
