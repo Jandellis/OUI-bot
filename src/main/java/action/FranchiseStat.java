@@ -75,19 +75,19 @@ public class FranchiseStat extends Action {
     private void update() {
 
         try {
-            Long tacos = request("https://tacoshack.online/api/franchise/tacos?quantity=25");
-            Long members = request("https://tacoshack.online/api/franchise/members?quantity=25");
-            Long boost = request("https://tacoshack.online/api/franchise/incomes?quantity=25");
-            Long balance = request("https://tacoshack.online/api/franchise/richest?quantity=100");
-            Long shifts = request("https://tacoshack.online/api/franchise/shifts?quantity=25");
+            String tacos = request("https://tacoshack.online/api/franchise/tacos?quantity=25", false);
+            String members = request("https://tacoshack.online/api/franchise/members?quantity=25", false);
+            String boost = request("https://tacoshack.online/api/franchise/incomes?quantity=25", false);
+            String balance = request("https://tacoshack.online/api/franchise/richest?quantity=100", true);
+            String shifts = request("https://tacoshack.online/api/franchise/shifts?quantity=25", false);
 
-            ChannelModifyRequest change = ChannelModifyRequest.builder().name("update stats").build();
+//            ChannelModifyRequest change = ChannelModifyRequest.builder().name("update stats").build();
 
-            updateChannel(tacosChannel, "Tacos Sold: " + String.format("%,d", tacos));
-            updateChannel(membersChannel, "Franchise Members: " + String.format("%,d", members));
-            updateChannel(boostChannel, "Income Boost: " + String.format("%,d", boost));
-            updateChannel(balanceChannel, "Balance: " + String.format("%,d", balance));
-            updateChannel(shiftsChannel, "Shifts Worked: " + String.format("%,d", shifts));
+            updateChannel(tacosChannel, "Tacos Sold: " + tacos);
+            updateChannel(membersChannel, "Franchise Members: " + members);
+            updateChannel(boostChannel, "Income Boost: " + boost);
+            updateChannel(balanceChannel, "Balance: " + balance);
+            updateChannel(shiftsChannel, "Shifts Worked: " + shifts);
 
         } catch (Throwable e) {
             printException(e);
@@ -102,7 +102,38 @@ public class FranchiseStat extends Action {
 
     }
 
-    private Long request(String url) throws IOException, ParseException {
+    private String format(Long value) {
+        return getHumanReadablePriceFromNumber(value);
+    }
+
+    public static String getHumanReadablePriceFromNumber(long number){
+
+        if(number >= 1000000000000L){
+            return String.format("%.2f Trillion", number/ 1000000000000.0);
+        }
+        if(number >= 1000000000){
+            return String.format("%.2f Billion", number/ 1000000000.0);
+        }
+
+        if(number >= 1000000){
+            return String.format("%.2f Million", number/ 1000000.0);
+        }
+
+        if(number >= 100000){
+//            return String.format("%.2fL", number/ 100000.0);
+            return String.format("%,d", number);
+        }
+
+        if(number >=1000){
+//            return String.format("%.2fK", number/ 1000.0);
+            return String.format("%,d", number);
+        }
+        return String.valueOf(number);
+
+    }
+
+
+    private String request(String url, boolean money) throws IOException, ParseException {
         WebClient webClient = new WebClient();
         webClient.getOptions().setCssEnabled(false);
         webClient.getOptions().setJavaScriptEnabled(false);
@@ -113,16 +144,23 @@ public class FranchiseStat extends Action {
         JSONParser jsonParser = new JSONParser();
 
         Object obj = jsonParser.parse(data);
-        AtomicLong value = new AtomicLong();
+        AtomicLong value = new AtomicLong(0);
         ((JSONArray) obj).forEach(o -> {
             JSONObject franchise = (JSONObject)o;
             if (franchise.get("tag").toString().equals("OUI")) {
                 value.set(Long.parseLong(franchise.get("value").toString()));
             }
         });
+        if (money && value.get() == 0) {
+            value.set(Long.parseLong(((JSONObject)((JSONArray) obj).get(99)).get("value").toString()));
+            String formatted = format(value.get());
+            return "< " + formatted;
+        }
+        //if money and value = 0, look at last element and use < 123
+        //if money format 123.2 M, or 12.43 B
 
 
-        return value.get();
+        return format(value.get());
     }
 
 

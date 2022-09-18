@@ -58,8 +58,8 @@ public class CreateProfile extends Action {
                                 if (embed.getFooter().isPresent()) {
 
                                     String line = embed.getFields().get(0).getValue().split("\n")[0];
-                                    //replace up, replace taco, replace ()
-                                    String shackName = line.replace("\uD83D\uDD3A ", "").replace("\uD83C\uDF2E", "").replace(" ()", "");
+                                    //replace up, replace taco, replace (), hq building
+                                    String shackName = line.replace("\uD83D\uDD3A ", "").replace("\uD83C\uDF2E", "").replace(" ()", "").replace(" \uD83C\uDFDB", "");
                                     Status status = Status.getStatus(embed.getFooter().get().getData().text());
                                     String id = embed.getThumbnail().get().getUrl().replace("https://cdn.discordapp.com/avatars/", "").split("/")[0];
 
