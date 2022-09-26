@@ -128,7 +128,7 @@ public class CreateBoostReminder extends Action {
                             }
 
                             if (embed.getTitle().isPresent()) {
-                                if (embed.getTitle().get().equals("\uD83D\uDCC8 Active Boosts")) {
+                                if (embed.getTitle().get().startsWith("\uD83D\uDCC8 Active Boosts")) {
                                     AtomicReference<String> userId = new AtomicReference<>("");
                                     userId.set(getId(message));
 

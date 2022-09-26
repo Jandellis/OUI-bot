@@ -339,6 +339,22 @@ public class CreateReminder extends Action {
             logger.info("No profile found for " + name);
             return;
         }
+
+        if (type == ReminderType.work) {
+            if (!ReminderUtils.updateStatsWork(profile.getName())) {
+                ReminderUtils.createStats(profile.getName(), 1,0,0);
+            }
+        }
+        if (type == ReminderType.tips) {
+            if (!ReminderUtils.updateStatsTips(profile.getName())) {
+                ReminderUtils.createStats(profile.getName(), 0,1,0);
+            }
+        }
+        if (type == ReminderType.ot) {
+            if (!ReminderUtils.updateStatsOvertime(profile.getName())) {
+                ReminderUtils.createStats(profile.getName(), 0,0,1);
+            }
+        }
         createReminder(type, message, profile);
     }
 

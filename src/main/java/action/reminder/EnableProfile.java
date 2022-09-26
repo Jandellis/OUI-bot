@@ -84,8 +84,10 @@ public class EnableProfile extends Action {
                                 if (seconds > 0) {
                                     display += seconds + " seconds";
                                 }
+                                if (!display.equals("")) {
+                                    embed.addField(reminder.getType().getName(), display, true);
+                                }
 
-                                embed.addField(reminder.getType().getName(), display, true);
                             });
                         }
                         message.getChannel().block().createMessage(embed.build()).block();

@@ -128,3 +128,25 @@ ALTER TABLE sm_alerts add channel  VARCHAR(25);
 
 alter table profile add depth int ;
 update profile set depth = 1;
+
+CREATE TABLE IF NOT EXISTS user_stats (
+    id serial PRIMARY KEY,
+    name VARCHAR(25),
+    work  int,
+    tips  int,
+    overtime int
+);
+
+
+ALTER TABLE user_stats alter column work set default 0;
+ALTER TABLE user_stats alter column tips set default 0;
+ALTER TABLE user_stats alter column overtime set default 0;
+ALTER TABLE profile alter column depth set default 1;
+
+CREATE TABLE IF NOT EXISTS team_stats (
+    id serial PRIMARY KEY,
+    name VARCHAR(25),
+    team  VARCHAR(50),
+    owner BOOLEAN,
+    joined BOOLEAN
+);

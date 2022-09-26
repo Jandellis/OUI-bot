@@ -20,6 +20,7 @@ import action.reminder.CreateReminder;
 import action.reminder.DoReminder;
 import action.reminder.EnableProfile;
 import action.reminder.Help;
+import action.reminder.Olympics;
 import action.reminder.React;
 import action.sm.AddAlert;
 import action.sm.CleanUp;
@@ -213,6 +214,7 @@ public class Bot {
                             .and(new Heartbeat().action(gateway, client))
                             .and(new GiveAWay().action(gateway, client))
                             .and(new BuyUpgrade().action(gateway, client))
+                            .and(new Olympics().action(gateway, client))
                             .and(new UpdateAlerts().action(gateway, client));
 
                 });

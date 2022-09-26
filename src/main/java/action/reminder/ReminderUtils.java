@@ -2,7 +2,9 @@ package action.reminder;
 
 import action.reminder.model.Profile;
 import action.reminder.model.Reminder;
+import action.reminder.model.Stats;
 import action.reminder.model.Status;
+import action.reminder.model.Team;
 import bot.Config;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -75,6 +77,7 @@ public class ReminderUtils {
         }
         return false;
     }
+
     public static boolean unlockReminder(Reminder reminder) {
         try {
             Connection con = DriverManager.getConnection(url, user, password);
@@ -342,6 +345,7 @@ public class ReminderUtils {
             logger.error("Exception", ex);
         }
     }
+
     public static void deleteReact(String name) {
         try {
             Connection con = DriverManager.getConnection(url, user, password);
@@ -438,4 +442,201 @@ public class ReminderUtils {
         }
         return profile;
     }
+
+
+    public static boolean updateStatsWork(String id) {
+        try {
+            Connection con = DriverManager.getConnection(url, user, password);
+            PreparedStatement pst = con.prepareStatement("UPDATE user_stats SET work = work + 1 WHERE name = ?");
+            pst.setString(1, id);
+            int rs = pst.executeUpdate();
+            if (rs == 1) {
+                return true;
+            }
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
+        return false;
+    }
+
+    public static boolean updateStatsTips(String id) {
+        try {
+            Connection con = DriverManager.getConnection(url, user, password);
+            PreparedStatement pst = con.prepareStatement("UPDATE user_stats SET tips = tips + 1 WHERE name = ?");
+            pst.setString(1, id);
+            int rs = pst.executeUpdate();
+            if (rs == 1) {
+                return true;
+            }
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
+        return false;
+    }
+
+    public static boolean updateStatsOvertime(String id) {
+        try {
+            Connection con = DriverManager.getConnection(url, user, password);
+            PreparedStatement pst = con.prepareStatement("UPDATE user_stats SET overtime = overtime + 1 WHERE name = ?");
+            pst.setString(1, id);
+            int rs = pst.executeUpdate();
+            if (rs == 1) {
+                return true;
+            }
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
+        return false;
+    }
+
+    public static void createStats(String id, int work, int tips, int ot) {
+        try {
+            Connection con = DriverManager.getConnection(url, user, password);
+            Statement st = con.createStatement();
+
+            st.addBatch("insert into user_stats (name, work, tips, overtime) " +
+                    "VALUES ('" + id + "', " + work + ", " + tips + ", " + ot + ")");
+            st.executeBatch();
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
+    }
+
+    public static List<Stats> loadStats() {
+        List<Stats> statsList = new ArrayList<>();
+        try {
+            Connection con = DriverManager.getConnection(url, user, password);
+
+
+            PreparedStatement pst = con.prepareStatement("select name, work, tips, overtime from user_stats");
+            ResultSet rs = pst.executeQuery();
+
+            while (rs.next()) {
+                Stats stats = new Stats(rs.getString(1), rs.getInt(2), rs.getInt(3), rs.getInt(4));
+//                    reminders.add(reminder);
+                statsList.add(stats);
+            }
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
+
+        return statsList;
+    }
+
+    public static List<Stats> loadTeamStats() {
+        List<Stats> statsList = new ArrayList<>();
+        try {
+            Connection con = DriverManager.getConnection(url, user, password);
+
+
+            PreparedStatement pst = con.prepareStatement("select t.team, sum(u.work), sum(u.tips), sum(u.overtime) " +
+                    "from team_stats t, user_stats u " +
+                    "where t.joined = true and t.name = u.name " +
+                    "group by t.team");
+            ResultSet rs = pst.executeQuery();
+
+            while (rs.next()) {
+                Stats stats = new Stats(rs.getString(1), rs.getInt(2), rs.getInt(3), rs.getInt(4));
+//                    reminders.add(reminder);
+                statsList.add(stats);
+            }
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
+
+        return statsList;
+    }
+    public static void resetStats() {
+        try {
+            Connection con = DriverManager.getConnection(url, user, password);
+            Statement st = con.createStatement();
+
+            st.addBatch("update user_stats set work = 0, tips = 0, overtime = 0");
+            st.executeBatch();
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
+    }
+
+
+    public static List<Team> loadTeam(String id) {
+        List<Team> teams = new ArrayList<>();
+        try {
+            Connection con = DriverManager.getConnection(url, user, password);
+
+
+            PreparedStatement pst = con.prepareStatement("select name, team, owner, joined from team_stats where name = ?");
+            pst.setString(1, id);
+            ResultSet rs = pst.executeQuery();
+
+            while (rs.next()) {
+                Team team = new Team(rs.getString(1), rs.getString(2), rs.getBoolean(3), rs.getBoolean(4));
+                teams.add(team);
+            }
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
+
+        return teams;
+    }
+
+
+    public static List<Team> loadTeamMembers(String teamName) {
+        List<Team> teams = new ArrayList<>();
+        try {
+            Connection con = DriverManager.getConnection(url, user, password);
+
+
+
+
+            PreparedStatement pst = con.prepareStatement("select name, team, owner, joined from team_stats where team = ?");
+            pst.setString(1, teamName);
+            ResultSet rs = pst.executeQuery();
+
+            while (rs.next()) {
+                Team team = new Team(rs.getString(1), rs.getString(2), rs.getBoolean(3), rs.getBoolean(4));
+                teams.add(team);
+            }
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
+
+        return teams;
+    }
+    public static void createTeam(Team team) {
+        List<Team> teams = new ArrayList<>();
+        try {
+            Connection con = DriverManager.getConnection(url, user, password);
+
+            String sql = "insert into team_stats (name, team, owner, joined) " +
+                    "VALUES (?, ?, ?, ?)";
+            PreparedStatement p = con.prepareStatement(sql);
+            p.setString(1, team.getName());
+            p.setString(2, team.getTeam());
+            p.setBoolean(3, team.isOwner());
+            p.setBoolean(4, team.isJoined());
+            p.execute();
+
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
+    }
+
+
+    public static void deleteTeam(String name, String teamName) {
+        List<Team> teams = new ArrayList<>();
+        try {
+            Connection con = DriverManager.getConnection(url, user, password);
+
+            String sql = "delete from  team_stats where name = ? and team = ?";
+            PreparedStatement p = con.prepareStatement(sql);
+            p.setString(1, name);
+            p.setString(2, teamName);
+            p.execute();
+
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
+    }
+
 }
