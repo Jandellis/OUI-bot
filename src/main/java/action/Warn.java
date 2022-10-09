@@ -57,6 +57,14 @@ public class Warn extends Action {
                     }
 
                     int level = Integer.parseInt(action);
+                    String maxString = getAction(message, param, 1);
+                    int max;
+                    if (maxString.equals("")) {
+                        max = 300;
+                    } else {
+                        max = Integer.parseInt(getAction(message, param, 1));;//Integer.parseInt(action);
+
+                    }
 
 
                     StringBuilder workList = new StringBuilder();
@@ -90,13 +98,13 @@ public class Warn extends Action {
 
                         }
                         boolean warnMember = false;
-                        if (kickMember.getDaysNoWork() >= level && !imunity.get()) {
+                        if (kickMember.getDaysNoWork() >= level && kickMember.getDaysNoWork() <= max && !imunity.get()) {
                             workList.append("<@" + kickMember.getId() + "> \r\n");
                             warnMember = true;
 
                         }
 
-                        if (kickMember.getDaysUnhappy() >= level && !imunity.get()) {
+                        if (kickMember.getDaysUnhappy() >= level && kickMember.getDaysUnhappy() <= max && !imunity.get()) {
                             uncleanList.append("<@" + kickMember.getId() + "> \r\n");
                             warnMember = true;
                         }
@@ -148,5 +156,34 @@ public class Warn extends Action {
         }
 
         return Mono.empty();
+    }
+
+
+    private double cos(double value) {
+        double result = 1 - ((value * value) / (1*2)) +
+                ((value * value* value * value) / (1*2*3*4)) -
+                ((value * value* value * value* value * value) / (1*2*3*4*5*6));
+
+        return  result;
+    }
+
+    private double cos2(double value) {
+        double result = 1;
+        boolean subtract = true;
+        for (int i = 0; i < 10; i++) {
+            double partTop = 1;
+            double partBottom = 1;
+            for (int j = 0; j <= i * 2 ; j++) {
+                partTop = partTop * value;
+                partBottom = partBottom * j;
+            }
+            if (subtract) {
+                result = result - (partTop/partBottom);
+            } else {
+                result = result + (partTop/partBottom);
+            }
+            subtract = !subtract;
+        }
+        return  result;
     }
 }

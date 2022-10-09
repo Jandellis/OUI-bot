@@ -215,6 +215,7 @@ public class Bot {
                             .and(new GiveAWay().action(gateway, client))
                             .and(new BuyUpgrade().action(gateway, client))
                             .and(new Olympics().action(gateway, client))
+                            .and(new FranchiseStat().action(gateway, client))
                             .and(new UpdateAlerts().action(gateway, client));
 
                 });

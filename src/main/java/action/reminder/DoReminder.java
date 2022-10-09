@@ -154,6 +154,8 @@ public class DoReminder extends Action {
                 command = "</gift:1006354977847001160>";
                 break;
             case importData:
+                command = "</franchise memberdata export:1006354977788268626>";
+                break;
             case postAd:
                 command = reminder.getType().getName() + " <#663937997313540128>";
                 break;

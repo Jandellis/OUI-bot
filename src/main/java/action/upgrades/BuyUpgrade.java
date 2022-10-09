@@ -35,10 +35,13 @@ public class BuyUpgrade extends Action {
 
     String paramUp;
     String paramStats;
+    String paramUpLimit;
 
     public BuyUpgrade() {
         paramUp = "cyUp";
         paramStats = "cyStats";
+        paramUpLimit = "cyLimitUp";
+
 
         //hire
         mall.addUpgrade("cashier", "Cashier", 10, 250, 35);
@@ -293,6 +296,7 @@ public class BuyUpgrade extends Action {
                         }
 
                         List<UserUpgrades> list = UpgradeUtils.loadUserUpgrades(userId, location.getName().getName());
+                        Profile profile = ReminderUtils.loadProfileById(userId);
 
                         if (list.isEmpty()) {
 
@@ -364,6 +368,12 @@ public class BuyUpgrade extends Action {
                                     return 1;
                             });
                         }
+                        int upgradeLimit;
+                        if (profile.getUpgrade() == 0) {
+                            upgradeLimit = 30;
+                        } else {
+                            upgradeLimit = profile.getUpgrade();
+                        }
 
                         StringBuilder sb = new StringBuilder();
                         int count = 1;
@@ -424,7 +434,7 @@ public class BuyUpgrade extends Action {
                                     totalBoost = totalBoost + upgrade.getBoost();
                                 }
                             }
-                            if (count == 31) {
+                            if (count == upgradeLimit + 1) {
                                 break;
                             }
                         }
@@ -569,6 +579,30 @@ public class BuyUpgrade extends Action {
                         embed.description(sb.toString());
                         message.getChannel().block().createMessage(embed.build()).block();
 
+                    }
+
+
+                    action = getAction(message, paramUpLimit.toLowerCase());
+                    if (action != null) {
+                        String userId = message.getAuthor().get().getId().asString();
+
+
+                            int number;
+                            try {
+                                number = Integer.parseInt(action);
+                            } catch (NumberFormatException e) {
+                                message.getChannel().block().createMessage("missing number").block();
+                                return Mono.empty();
+                            }
+                            if (number > 30) {
+
+                                message.getChannel().block().createMessage("Max value is 30r").block();
+                                return Mono.empty();
+                            }
+
+                            ReminderUtils.setUpgrade(userId, number);
+                            message.getChannel().block().createMessage("Upgrade limit updated to " + number).block();
+                            return Mono.empty();
                     }
 
                 }

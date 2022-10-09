@@ -60,13 +60,17 @@ public abstract class Action {
     }
 
     protected String getAction(Message message, String paramInput) {
+        return getAction(message, paramInput, 0);
+    }
+
+    protected String getAction(Message message, String paramInput, int position) {
 
         try {
             if (message.getContent().toLowerCase().startsWith(paramInput)) {
                 logger.info(message.getContent());
 
                 String temp = message.getContent().toLowerCase().replaceAll(paramInput + " ", "");
-                String action = temp.split(" ")[0];
+                String action = temp.split(" ")[position];
                 logger.info("action " + action);
                 return action;
             } else {
@@ -77,12 +81,15 @@ public abstract class Action {
                         logger.info(message.getContent());
 
                         String temp = message.getContent().toLowerCase().replaceAll(paramInput + " ", "");
-                        String action = temp.split(" ")[0];
+                        String action = temp.split(" ")[position];
                         logger.info("action " + action);
                         return action;
                     }
                 }
             }
+        } catch (IndexOutOfBoundsException e) {
+            logger.info("no var at position " + position + ", message was " + message.getContent());
+            return "";
         } catch (Exception e) {
             printException(e);
         }

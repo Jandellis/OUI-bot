@@ -150,3 +150,8 @@ CREATE TABLE IF NOT EXISTS team_stats (
     owner BOOLEAN,
     joined BOOLEAN
 );
+
+
+alter table profile add upgrade int ;
+update profile set upgrade = 30;
+ALTER TABLE profile alter column upgrade set default 30;

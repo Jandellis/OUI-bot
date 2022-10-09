@@ -59,8 +59,9 @@ public class Help extends Action {
                     sb.append("You can also add a custom reminder messages\n");
                     sb.append("Type `cymsg <message>`, for example, type `cymsg Hey {ping} get back to {task} now! {cmd}` \n");
                     sb.append("Type `cymsg delete`, to reset to the default \n");
+                    message.getChannel().block().createMessage(sb.toString()).block();
 
-                    sb.append("\n");
+                    sb = new StringBuilder();
                     sb.append("I can give you suggestions on what order to buy upgrades\n");
                     sb.append("Type `cyup <location>`, location can be the first letter or the full name \n");
                     sb.append(":small_orange_diamond: For shack, do </hire:1006354977847001159>, </advertisements:1006354977721176137>, </upgrades:1006354978274820107>, </decorations:1006354977788268620>, </truck:1006354978153169014>, then  type cyup s.\n" +
@@ -68,6 +69,7 @@ public class Help extends Action {
                             ":small_orange_diamond: For beach, do </hire:1006354977847001159>, </advertisements:1006354977721176137>, </upgrades:1006354978274820107>, </decorations:1006354977788268620>, </stand:1006354978153169010> and then type cyup b. \n" +
                             ":small_orange_diamond: For city, do </hire:1006354977847001159>, </advertisements:1006354977721176137>, </upgrades:1006354978274820107>, </decorations:1006354977788268620>, </cart:1006354977721176142> and then type cyup c.\n");
                     sb.append("You can also add the `cheap` flag to list the upgrades in order from cheapest to most expensive\n");
+                    sb.append("Type `cyLimitUp <number>` to set how many upgrades listed\n");
                     sb.append("Type `cyStats <location>` to see stats about your upgrade status\n");
                     message.getChannel().block().createMessage(sb.toString()).block();
                 }

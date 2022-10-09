@@ -5,6 +5,7 @@ import action.sm.model.SystemReminder;
 import action.sm.model.SystemReminderType;
 import com.gargoylesoftware.htmlunit.WebClient;
 import discord4j.common.util.Snowflake;
+import discord4j.core.object.Embed;
 import discord4j.core.object.entity.Message;
 import discord4j.discordjson.json.ChannelModifyRequest;
 import org.json.simple.JSONArray;
@@ -15,6 +16,8 @@ import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 import java.sql.Timestamp;
+import java.text.DecimalFormat;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -22,7 +25,6 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class FranchiseStat extends Action {
@@ -35,6 +37,8 @@ public class FranchiseStat extends Action {
     String membersChannel;
     String boostChannel;
     String balanceChannel;
+    int tasksEndHour;
+    String tacoBot = "490707751832649738";
 
 
     ScheduledExecutorService executorService = Executors.newScheduledThreadPool(2);
@@ -50,6 +54,7 @@ public class FranchiseStat extends Action {
         membersChannel = config.get("membersChannel");
         boostChannel = config.get("boostChannel");
         balanceChannel = config.get("balanceChannel");
+        tasksEndHour = Integer.parseInt(config.get("tasksEndHour"));
 
     }
 
@@ -58,7 +63,85 @@ public class FranchiseStat extends Action {
 
     @Override
     public Mono<Object> doAction(Message message) {
+        try {
+            if (message.getData().author().id().asString().equals(tacoBot)) {
+                //for some reason the embeds will be empty from slash, but if i load it again it will have data
+                if (checkAge(message)) {
+                    checkMessageAgain(message);
+                } else {
+                    for (Embed embed : message.getEmbeds()) {
+                        if (embed.getTitle().isPresent() && embed.getDescription().isPresent()) {
+                            String title = embed.getTitle().get();
 
+                            if (title.contains("\uD83D\uDCC5 Weekly Tasks")) {
+                                String[] lines = embed.getDescription().get().split("\n");
+//                                lines[0];// Tasks will be reset in: `6 days`
+//                                lines[2];//<:bwemoji:666839150221197331><:bwemoji:666839150221197331><:bwemoji:666839150221197331> **Vote 170 Times** | `69/170`
+//                                lines[5];//<:bwemoji:666839150221197331><:bwemoji:666839150221197331><:bwemoji:666839150221197331> **Work 840 Overtime Shifts** | `357/840`
+
+                                LocalDateTime dateTime = LocalDateTime.now();
+                                dateTime = dateTime.plusSeconds(60 - dateTime.getSecond());
+                                dateTime = dateTime.plusMinutes(60 - dateTime.getMinute());
+                                int endHour = tasksEndHour; //18 my time // 6am server time
+                                if (dateTime.getHour() > endHour) {
+                                    dateTime = dateTime.minusHours(dateTime.getHour() - endHour);
+                                } else {
+                                    dateTime = dateTime.plusHours(endHour - dateTime.getHour());
+                                }
+
+                                dateTime = dateTime.plusDays(8 - dateTime.getDayOfWeek().getValue());
+
+
+                                String timeLeft = lines[0].split("`")[1]; //6 days
+                                double days = 6;
+                                double pecentage = 1;
+                                if (timeLeft.contains("day")) {
+                                    days = 7 - Integer.parseInt(timeLeft.split(" ")[0]);
+                                    Duration delay = Duration.between(LocalDateTime.now(), dateTime);
+                                    long totalSeconds = 60 * 60 * 24 * 7; // min * hour * day * week
+                                    pecentage = 1 - ( delay.getSeconds() * 1.0 / totalSeconds);
+                                }
+
+                                //2 hours
+                                if (timeLeft.contains("hour")) {
+                                    double hours = 24 - Integer.parseInt(timeLeft.split(" ")[0]);
+                                    days = days + hours / 24;
+                                    pecentage = days / 7;
+                                }
+
+                                //56 minutes
+                                if (timeLeft.contains("minute")) {
+                                    double minutes = 60 - Integer.parseInt(timeLeft.split(" ")[0]);
+                                    double hours = 23 / 24;
+                                    days = days + hours + minutes / 60;
+                                    pecentage = days / 7;
+                                }
+
+
+
+                                int votes = Integer.parseInt(lines[2].split("`")[1].split("/")[0].replace(",", ""));
+                                double voteAvg = votes / days;
+//                                double voteEstimate = voteAvg * 7;
+
+                                double voteEstimate = votes / pecentage;
+                                int ot = Integer.parseInt(lines[5].split("`")[1].split("/")[0].replace(",", ""));
+                                double otAvg = ot / days;
+//                                double otEstimate = otAvg * 7;
+                                double otEstimate = ot / pecentage;
+
+                                String msg = "I estimate you will get \n" +
+                                        ":small_blue_diamond: **Votes** : " + new DecimalFormat("#.0#").format(voteEstimate)  + "\n" +
+                                        ":small_blue_diamond: **Ot** : " + new DecimalFormat("#.0#").format(otEstimate);
+
+                                client.getChannelById(message.getChannelId()).createMessage(msg).block();
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            printException(e);
+        }
         return Mono.empty();
     }
 
@@ -106,25 +189,25 @@ public class FranchiseStat extends Action {
         return getHumanReadablePriceFromNumber(value);
     }
 
-    public static String getHumanReadablePriceFromNumber(long number){
+    public static String getHumanReadablePriceFromNumber(long number) {
 
-        if(number >= 1000000000000L){
-            return String.format("%.2f Trillion", number/ 1000000000000.0);
+        if (number >= 1000000000000L) {
+            return String.format("%.2f Trillion", number / 1000000000000.0);
         }
-        if(number >= 1000000000){
-            return String.format("%.2f Billion", number/ 1000000000.0);
-        }
-
-        if(number >= 1000000){
-            return String.format("%.2f Million", number/ 1000000.0);
+        if (number >= 1000000000) {
+            return String.format("%.2f Billion", number / 1000000000.0);
         }
 
-        if(number >= 100000){
+        if (number >= 1000000) {
+            return String.format("%.2f Million", number / 1000000.0);
+        }
+
+        if (number >= 100000) {
 //            return String.format("%.2fL", number/ 100000.0);
             return String.format("%,d", number);
         }
 
-        if(number >=1000){
+        if (number >= 1000) {
 //            return String.format("%.2fK", number/ 1000.0);
             return String.format("%,d", number);
         }
@@ -146,13 +229,13 @@ public class FranchiseStat extends Action {
         Object obj = jsonParser.parse(data);
         AtomicLong value = new AtomicLong(0);
         ((JSONArray) obj).forEach(o -> {
-            JSONObject franchise = (JSONObject)o;
+            JSONObject franchise = (JSONObject) o;
             if (franchise.get("tag").toString().equals("OUI")) {
                 value.set(Long.parseLong(franchise.get("value").toString()));
             }
         });
         if (money && value.get() == 0) {
-            value.set(Long.parseLong(((JSONObject)((JSONArray) obj).get(99)).get("value").toString()));
+            value.set(Long.parseLong(((JSONObject) ((JSONArray) obj).get(99)).get("value").toString()));
             String formatted = format(value.get());
             return "< " + formatted;
         }

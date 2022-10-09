@@ -275,9 +275,9 @@ public class CreateReminder extends Action {
             }
         }
 
-        String actionData = getAction(message, "ouiposted");
+        String actionData = getAction(message, "cyposted");
         if (actionData != null ) {
-            if (hasPermission(message, recruiter)) {
+//            if (hasPermission(message, recruiter)) {
 
                 Instant reminderTime = message.getTimestamp().plus(6, ChronoUnit.HOURS);
 
@@ -286,9 +286,9 @@ public class CreateReminder extends Action {
                 doReminder.runReminder(reminder);
                 Profile profile = ReminderUtils.loadProfileById(message.getAuthor().get().getId().asString());
                 react(message, profile);
-            } else {
-                logger.info(message.getAuthor().get().getId().asString() + " is not a recruiter");
-            }
+//            } else {
+//                logger.info(message.getAuthor().get().getId().asString() + " is not a recruiter");
+//            }
         }
 
         return Mono.empty();

@@ -9,6 +9,7 @@ public class Profile {
     String emote;
     String message;
     int depth;
+    int upgrade;
 
     public Profile(String name, String shackName, Status status) {
         this.name = name;
@@ -16,7 +17,7 @@ public class Profile {
         this.status = status;
     }
 
-    public Profile(String name, String shackName, Status status, Boolean enabled, String emote, String message, int depth) {
+    public Profile(String name, String shackName, Status status, Boolean enabled, String emote, String message, int depth, int upgrade) {
         this.name = name;
         this.shackName = shackName;
         this.status = status;
@@ -26,6 +27,7 @@ public class Profile {
         this.emote = emote;
         this.message = message;
         this.depth = depth;
+        this.upgrade = upgrade;
     }
 
     public String getName() {
@@ -54,6 +56,10 @@ public class Profile {
 
     public int getDepth() {
         return depth;
+    }
+
+    public int getUpgrade() {
+        return upgrade;
     }
 
     public void setDepth(int depth) {
