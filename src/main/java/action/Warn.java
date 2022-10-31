@@ -1,5 +1,6 @@
 package action;
 
+import action.export.ExportUtils;
 import bot.Clean;
 import bot.KickMember;
 import discord4j.common.util.Snowflake;
@@ -111,6 +112,8 @@ public class Warn extends Action {
 
                         if (inServer && warnMember) {
                             if (warning.get() == 0) {
+                                //set donations to 0
+                                ExportUtils.resetMemberDonations(kickMember.getId().toString());
                                 client.getGuildById(Snowflake.of(guildId)).addMemberRole(
                                         Snowflake.of(kickMember.getId()),
                                         Snowflake.of(firstWarning),

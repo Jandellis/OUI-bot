@@ -1,5 +1,7 @@
 package action.reminder.model;
 
+import java.sql.Time;
+
 public class Profile {
 
     String name;
@@ -10,6 +12,8 @@ public class Profile {
     String message;
     int depth;
     int upgrade;
+    Time sleepStart;
+    Time sleepEnd;
 
     public Profile(String name, String shackName, Status status) {
         this.name = name;
@@ -17,7 +21,7 @@ public class Profile {
         this.status = status;
     }
 
-    public Profile(String name, String shackName, Status status, Boolean enabled, String emote, String message, int depth, int upgrade) {
+    public Profile(String name, String shackName, Status status, Boolean enabled, String emote, String message, int depth, int upgrade, Time sleepStart, Time sleepEnd) {
         this.name = name;
         this.shackName = shackName;
         this.status = status;
@@ -28,6 +32,8 @@ public class Profile {
         this.message = message;
         this.depth = depth;
         this.upgrade = upgrade;
+        this.sleepEnd = sleepEnd;
+        this.sleepStart = sleepStart;
     }
 
     public String getName() {
@@ -60,6 +66,14 @@ public class Profile {
 
     public int getUpgrade() {
         return upgrade;
+    }
+
+    public Time getSleepStart() {
+        return sleepStart;
+    }
+
+    public Time getSleepEnd() {
+        return sleepEnd;
     }
 
     public void setDepth(int depth) {

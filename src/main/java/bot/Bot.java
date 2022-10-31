@@ -13,6 +13,7 @@ import action.SpeedJar;
 import action.Test;
 import action.Warn;
 import action.Welcome;
+import action.export.Donate;
 import action.export.Import;
 import action.reminder.CreateBoostReminder;
 import action.reminder.CreateProfile;
@@ -22,6 +23,7 @@ import action.reminder.EnableProfile;
 import action.reminder.Help;
 import action.reminder.Olympics;
 import action.reminder.React;
+import action.reminder.Sleep;
 import action.sm.AddAlert;
 import action.sm.CleanUp;
 import action.sm.PriceCheck;
@@ -216,6 +218,8 @@ public class Bot {
                             .and(new BuyUpgrade().action(gateway, client))
                             .and(new Olympics().action(gateway, client))
                             .and(new FranchiseStat().action(gateway, client))
+                            .and(new Sleep().action(gateway, client))
+                            .and(new Donate().action(gateway, client))
                             .and(new UpdateAlerts().action(gateway, client));
 
                 });

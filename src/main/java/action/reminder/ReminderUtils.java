@@ -15,6 +15,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Time;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -417,11 +418,21 @@ public class ReminderUtils {
             Connection con = DriverManager.getConnection(url, user, password);
             Statement st = con.createStatement();
 
-            PreparedStatement pst = con.prepareStatement("SELECT name, shack_name, status, enabled, react, message, depth, upgrade FROM profile  WHERE shack_name = ? and enabled = true");
+            PreparedStatement pst = con.prepareStatement("SELECT name, shack_name, status, enabled, react, message, depth, upgrade, sleep_Start, sleep_End " +
+                    "FROM profile  WHERE shack_name = ? and enabled = true");
             pst.setString(1, shack);
             ResultSet rs = pst.executeQuery();
             while (rs.next()) {
-                profile = new Profile(rs.getString(1), rs.getString(2), Status.getStatus(rs.getString(3)), rs.getBoolean(4), rs.getString(5), rs.getString(6), rs.getInt(7), rs.getInt(8));
+                profile = new Profile(rs.getString(1),
+                        rs.getString(2),
+                        Status.getStatus(rs.getString(3)),
+                        rs.getBoolean(4),
+                        rs.getString(5),
+                        rs.getString(6),
+                        rs.getInt(7),
+                        rs.getInt(8),
+                        rs.getTime(9),
+                        rs.getTime(10));
 
             }
             st.executeBatch();
@@ -451,11 +462,21 @@ public class ReminderUtils {
     public static Profile loadProfileById(String id) {
         Profile profile = null;
         try (Connection con = DriverManager.getConnection(url, user, password);
-             PreparedStatement pst = con.prepareStatement("SELECT name, shack_name, status, enabled, react, message, depth, upgrade FROM profile  WHERE name = '" + id + "' and enabled = true");
+             PreparedStatement pst = con.prepareStatement("SELECT name, shack_name, status, enabled, react, message, depth, upgrade, sleep_Start, sleep_End " +
+                     "FROM profile  WHERE name = '" + id + "' and enabled = true");
              ResultSet rs = pst.executeQuery()) {
 
             while (rs.next()) {
-                profile = new Profile(rs.getString(1), rs.getString(2), Status.getStatus(rs.getString(3)), rs.getBoolean(4), rs.getString(5), rs.getString(6), rs.getInt(7), rs.getInt(8));
+                profile = new Profile(rs.getString(1),
+                        rs.getString(2),
+                        Status.getStatus(rs.getString(3)),
+                        rs.getBoolean(4),
+                        rs.getString(5),
+                        rs.getString(6),
+                        rs.getInt(7),
+                        rs.getInt(8),
+                        rs.getTime(9),
+                        rs.getTime(10));
             }
 
         } catch (SQLException ex) {
@@ -658,6 +679,82 @@ public class ReminderUtils {
         } catch (SQLException ex) {
             logger.error("Exception", ex);
         }
+    }
+
+
+    public static boolean setSleepStart(String name, Time sleepStart) {
+        boolean updated = false;
+        try {
+            Connection con = DriverManager.getConnection(url, user, password);
+            Statement st = con.createStatement();
+
+            PreparedStatement pst = con.prepareStatement("SELECT id FROM profile  WHERE name = '" + name + "'");
+            ResultSet rs = pst.executeQuery();
+            int id = -1;
+            while (rs.next()) {
+                id = rs.getInt(1);
+                String sql = "UPDATE profile SET sleep_Start =? WHERE id = ?";
+                PreparedStatement p = con.prepareStatement(sql);
+                p.setTime(1, sleepStart);
+                p.setInt(2, id);
+                p.execute();
+                updated = true;
+            }
+            st.executeBatch();
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
+        return updated;
+    }
+
+    public static boolean setSleepEnd(String name, Time sleepEnd) {
+        boolean updated = false;
+        try {
+            Connection con = DriverManager.getConnection(url, user, password);
+            Statement st = con.createStatement();
+
+            PreparedStatement pst = con.prepareStatement("SELECT id FROM profile  WHERE name = '" + name + "'");
+            ResultSet rs = pst.executeQuery();
+            int id = -1;
+            while (rs.next()) {
+                id = rs.getInt(1);
+                String sql = "UPDATE profile SET sleep_end =? WHERE id = ?";
+                PreparedStatement p = con.prepareStatement(sql);
+                p.setTime(1, sleepEnd);
+                p.setInt(2, id);
+                p.execute();
+                updated = true;
+            }
+            st.executeBatch();
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
+        return updated;
+    }
+
+
+    public static boolean clearSleep(String name) {
+        boolean updated = false;
+        try {
+            Connection con = DriverManager.getConnection(url, user, password);
+            Statement st = con.createStatement();
+
+            PreparedStatement pst = con.prepareStatement("SELECT id FROM profile  WHERE name = '" + name + "'");
+            ResultSet rs = pst.executeQuery();
+            int id = -1;
+            while (rs.next()) {
+                id = rs.getInt(1);
+                String sql = "UPDATE profile SET sleep_end = null, sleep_start = null  WHERE id = ?";
+                PreparedStatement p = con.prepareStatement(sql);
+                p.setInt(1, id);
+                p.execute();
+                updated = true;
+            }
+            st.executeBatch();
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
+        return updated;
     }
 
 }

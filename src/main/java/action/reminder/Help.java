@@ -39,7 +39,7 @@ public class Help extends Action {
                 String action = getAction(message);
 
                 if (action != null) {
-                    StringBuilder sb = new StringBuilder("I can reminder you when things are off coolodwn and help you on the sauce market. ");
+                    StringBuilder sb = new StringBuilder("I can reminder you when things are off cooldown and help you on the sauce market. ");
 
                     sb.append("For sauce market help, type `cysm`\n\n");
                     sb.append("To set me up, first type `/shack`\n");
@@ -71,6 +71,14 @@ public class Help extends Action {
                     sb.append("You can also add the `cheap` flag to list the upgrades in order from cheapest to most expensive\n");
                     sb.append("Type `cyLimitUp <number>` to set how many upgrades listed\n");
                     sb.append("Type `cyStats <location>` to see stats about your upgrade status\n");
+                    sb.append("\nYou can also turn on sleep mode\n");
+                    sb.append("To do you you need to set how many minutes to start the sleep mode in and end. For example to start sleep mode in 90 minutes and to make it last for 8 hours\n");
+                    sb.append("Type `cySleepStart 1h 30m`\n");
+                    sb.append("Type `cySleepEnd 9h 30m`\n");
+                    sb.append("To remove sleep mode`\n");
+                    sb.append("Type `cySleepClear`\n");
+                    sb.append("To view sleep times`\n");
+                    sb.append("Type `cySleepList`\n");
                     message.getChannel().block().createMessage(sb.toString()).block();
                 }
 

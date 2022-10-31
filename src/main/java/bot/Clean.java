@@ -1,6 +1,6 @@
 package bot;
 
-import action.export.Utils;
+import action.export.ExportUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -14,7 +14,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.sql.Time;
 import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -221,7 +220,7 @@ public class Clean {
                 Member member = new Member(data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7]);
 
                 members.put(Long.parseLong(data[0]), member);
-                Utils.addMember(member, importTime);
+                ExportUtils.addMember(member, importTime);
             }
         }
         br.close();

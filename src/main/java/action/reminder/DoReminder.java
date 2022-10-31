@@ -13,9 +13,11 @@ import discord4j.discordjson.json.ReactionData;
 import discord4j.rest.entity.RestChannel;
 import reactor.core.publisher.Mono;
 
+import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
@@ -71,7 +73,7 @@ public class DoReminder extends Action {
             Duration delay = Duration.between(LocalDateTime.now(), reminderTime);
 
             if (delay.getSeconds() < 65) {
-                logger.info("reminder for " + reminder.getName() + " at " + formatter.format(reminderTime) + " of " + reminder.getType().getName() + " sleep for "+ delay.getSeconds());
+                logger.info("reminder for " + reminder.getName() + " at " + formatter.format(reminderTime) + " of " + reminder.getType().getName() + " sleep for " + delay.getSeconds());
 
                 ReminderUtils.lockReminder(reminder);
                 executorService.schedule(taskWrapper, delay.getSeconds(), TimeUnit.SECONDS);
@@ -118,6 +120,63 @@ public class DoReminder extends Action {
         Profile profile = ReminderUtils.loadProfileById(reminder.getName());
         String msg = defaultReact + " Boo {ping} go do {cmd}!";
 
+        //if shas sleep, check in sleep time
+        //if in sleep time move reminder to end of sleep time
+
+        if (profile.getSleepEnd() != null && profile.getSleepStart() != null) {
+            LocalTime start = profile.getSleepStart().toLocalTime();
+            LocalTime end = profile.getSleepEnd().toLocalTime();
+
+            LocalTime now = LocalTime.now();
+
+            if (start.isBefore(now)) {
+                if (start.isBefore(end)) {
+                    if (end.isAfter(now)) {
+                        // start at 20, end at 24, time 22
+                        //in range
+                        LocalDateTime newTime = LocalDateTime.now();
+                        long seconds = now.until(end, ChronoUnit.SECONDS);
+                        newTime = newTime.plusSeconds(seconds);
+
+                        ReminderUtils.addReminder(profile.getName(), reminder.getType(), Timestamp.valueOf(newTime), reminder.getChannel());
+                        return;
+
+                    }
+                } else {
+                    // start at 20, end at 4, time 22
+                    //in range
+
+                    //get time to 24h
+                    //get time from 0 to end
+                    LocalTime midnight = LocalTime.of(24, 0);
+                    LocalTime morning = LocalTime.of(0, 0);
+                    long seconds = now.until(midnight, ChronoUnit.SECONDS);
+                    //add time until midnight
+                    LocalDateTime newTime = LocalDateTime.now();
+                    newTime = newTime.plusSeconds(seconds);
+
+                    //add time from midnight until end of sleep
+                    seconds = morning.until(end, ChronoUnit.SECONDS);
+                    newTime = newTime.plusSeconds(seconds);
+
+                    ReminderUtils.addReminder(profile.getName(), reminder.getType(), Timestamp.valueOf(newTime), reminder.getChannel());
+                    return;
+                }
+            }
+            if (end.isAfter(now)) {
+                if (start.isAfter(end)) {
+                    // start at 20, end at 4, time 2
+                    //in range
+                    LocalDateTime newTime = LocalDateTime.now();
+                    long seconds = now.until(end, ChronoUnit.SECONDS);
+                    newTime = newTime.plusSeconds(seconds);
+
+                    ReminderUtils.addReminder(profile.getName(), reminder.getType(), Timestamp.valueOf(newTime), reminder.getChannel());
+                    return;
+                }
+            }
+        }
+
         if (profile.getMessage() != null && profile.getMessage().length() > 5) {
             msg = profile.getMessage();
         }
@@ -161,9 +220,9 @@ public class DoReminder extends Action {
                 break;
             default:
                 //boosts off cooldown
-                command =  "</shop:1006354978153169007>";
+                command = "</shop:1006354978153169007>";
                 if (!hasTask) {
-                    command = command + " **"+reminder.getType().getName()+"**";
+                    command = command + " **" + reminder.getType().getName() + "**";
                 }
         }
 

@@ -155,3 +155,14 @@ CREATE TABLE IF NOT EXISTS team_stats (
 alter table profile add upgrade int ;
 update profile set upgrade = 30;
 ALTER TABLE profile alter column upgrade set default 30;
+
+
+alter table profile add sleep_start time ;
+alter table profile add sleep_end time ;
+
+
+CREATE TABLE IF NOT EXISTS member_donations (
+    id serial PRIMARY KEY,
+    name VARCHAR(25),
+    donation  bigint
+);

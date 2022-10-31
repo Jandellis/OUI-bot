@@ -1,6 +1,8 @@
 package action.sm;
 
 import action.Action;
+import action.reminder.ReminderUtils;
+import action.reminder.model.Profile;
 import action.sm.model.Alert;
 import action.sm.model.AlertType;
 import action.sm.model.SystemReminderType;
@@ -35,6 +37,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -140,23 +143,56 @@ public class PriceCheck extends Action {
 
             alerts.forEach((person, sb) -> {
 //                if (hasPermission(person, chefRole)) {
+                Profile profile = ReminderUtils.loadProfileById(person);
+                boolean sleep = false;
 
-                if (sb.toString().equals("__Your alerts <@" + person + "> __\r\n")) {
+                if (profile != null && profile.getSleepEnd() != null && profile.getSleepStart() != null) {
+                    LocalTime start = profile.getSleepStart().toLocalTime();
+                    LocalTime end = profile.getSleepEnd().toLocalTime();
 
-                    logger.info("No alerts for " + person);
-                } else {
-                    sb.append("\r\n-----------------------------------\r\n");
-                    String channel = Utils.loadAlerts(person).get(0).getChannel();
-                    try {
-                        client.getChannelById(Snowflake.of(channel)).createMessage(sb.toString()).block();
-                    } catch (Exception e) {
-                        printException(e);
+                    LocalTime now = LocalTime.now();
+
+                    if (start.isBefore(now)) {
+                        if (start.isBefore(end)) {
+                            if (end.isAfter(now)) {
+                                // start at 20, end at 24, time 22
+                                //in range
+                                sleep = true;
+
+                            }
+                        } else {
+                            // start at 20, end at 4, time 22
+                            //in range
+                            sleep = true;
+                        }
+                    }
+                    if (end.isAfter(now)) {
+                        if (start.isAfter(end)) {
+                            // start at 20, end at 4, time 2
+                            //in range
+                            sleep = true;
+                        }
                     }
                 }
-//                } else {
-//                    logger.info("User does not have chef role " + person);
-//
-//                }
+
+
+                if (!sleep) {
+                    if (sb.toString().equals("__Your alerts <@" + person + "> __\r\n")) {
+
+                        logger.info("No alerts for " + person);
+                    } else {
+                        sb.append("\r\n-----------------------------------\r\n");
+                        String channel = Utils.loadAlerts(person).get(0).getChannel();
+                        try {
+                            client.getChannelById(Snowflake.of(channel)).createMessage(sb.toString()).block();
+                        } catch (Exception e) {
+                            printException(e);
+                        }
+                    }
+                } else {
+                    logger.info("User is in sleep mode " + person);
+
+                }
             });
 
 

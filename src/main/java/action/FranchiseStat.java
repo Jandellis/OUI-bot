@@ -112,8 +112,8 @@ public class FranchiseStat extends Action {
                                 //56 minutes
                                 if (timeLeft.contains("minute")) {
                                     double minutes = 60 - Integer.parseInt(timeLeft.split(" ")[0]);
-                                    double hours = 23 / 24;
-                                    days = days + hours + minutes / 60;
+                                    double hours = 23.0 / 24.0;
+                                    days = days + hours + (minutes / 60.0 / 24.0);
                                     pecentage = days / 7;
                                 }
 

@@ -36,23 +36,27 @@ public class Message extends Action {
 
                 if (action != null) {
                     action = message.getContent().substring(param.length() + 1);
-                    if (action.length() > 256) {
-
-                        message.getChannel().block().createMessage("Sorry, too long. Max length is 255").block();
+                    if (action.contains("<@")) {
+                        message.getChannel().block().createMessage("You can not try to ping other people or roles!").block();
                     } else {
-                        if ((action.contains("{task}") || action.contains("{cmd}")) && action.contains("{ping}")) {
-                            ReminderUtils.addMessage(message.getAuthor().get().getId().asString(), action);
-                            action = action.replace("{ping}", "<@" + message.getAuthor().get().getId().asString() + ">");
-                            action = action.replace("{task}", ReminderType.work.getName());
-                            action = action.replace("{cmd}", "</work:1006354978274820109>");
+                        if (action.length() > 256) {
 
-                            message.getChannel().block().createMessage("Message will be like \r\n " + action).block();
+                            message.getChannel().block().createMessage("Sorry, too long. Max length is 255").block();
                         } else {
-                            if (action.equalsIgnoreCase("delete")) {
-                                ReminderUtils.addMessage(message.getAuthor().get().getId().asString(), "");
-                                message.getChannel().block().createMessage("Deleted custom message").block();
+                            if ((action.contains("{task}") || action.contains("{cmd}")) && action.contains("{ping}")) {
+                                ReminderUtils.addMessage(message.getAuthor().get().getId().asString(), action);
+                                action = action.replace("{ping}", "<@" + message.getAuthor().get().getId().asString() + ">");
+                                action = action.replace("{task}", ReminderType.work.getName());
+                                action = action.replace("{cmd}", "</work:1006354978274820109>");
+
+                                message.getChannel().block().createMessage("Message will be like \r\n " + action).block();
                             } else {
-                                message.getChannel().block().createMessage("You need to have {task} or {cmd} and {ping} in your message").block();
+                                if (action.equalsIgnoreCase("delete")) {
+                                    ReminderUtils.addMessage(message.getAuthor().get().getId().asString(), "");
+                                    message.getChannel().block().createMessage("Deleted custom message").block();
+                                } else {
+                                    message.getChannel().block().createMessage("You need to have {task} or {cmd} and {ping} in your message").block();
+                                }
                             }
                         }
                     }

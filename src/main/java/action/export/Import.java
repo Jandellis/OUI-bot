@@ -71,7 +71,7 @@ public class Import extends Action {
                 try {
                     kickList = Clean.main(url, "historic.csv", worklimit, uncleanlimit, Timestamp.from(data.getTimestamp()));
                     logger.info("processed data");
-                    HashMap<Long, List<ExportData>> history = Utils.loadMemberHistory();
+                    HashMap<Long, List<ExportData>> history = ExportUtils.loadMemberHistory();
                     List<WeeklyBestData> work = new ArrayList<>();
                     List<WeeklyBestData> tips = new ArrayList<>();
                     List<WeeklyBestData> donations = new ArrayList<>();
@@ -131,7 +131,7 @@ public class Import extends Action {
     }
 
     private void checkRoles(HashMap<Long, List<ExportData>> history) {
-        List<Donations> donations = Utils.loadDonations();
+        List<Donations> donations = ExportUtils.loadDonations();
         history.forEach((id, dataList) -> {
             //get current donation amount
             long amount = dataList.get(dataList.size()-1).getMember().getDonations();
