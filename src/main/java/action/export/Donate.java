@@ -25,6 +25,7 @@ public class Donate extends Action {
     Long finalWarning;
     Long firstWarning;
     Long secondWarning;
+    String warnChannel;
 
     public Donate() {
         param = "has donated ";
@@ -33,6 +34,7 @@ public class Donate extends Action {
         firstWarning = Long.parseLong(config.get("firstWarning"));
         secondWarning = Long.parseLong(config.get("secondWarning"));
         finalWarning = Long.parseLong(config.get("finalWarning"));
+        warnChannel = config.get("warnChannel");
     }
 
     @Override
@@ -93,7 +95,7 @@ public class Donate extends Action {
      * @return
      */
     private boolean clearWarnings(String memberId, long donations, List<Id> roles) {
-        if (donations > 5000000) {
+        if (donations >= 5000000) {
             logger.info("user " + memberId + " has donated more than 5 mill, checking if warning should be removed");
             //if has warning, remove and apply the lower level
             for(Id roleId : roles) {
@@ -112,6 +114,8 @@ public class Donate extends Action {
                     roles.add(id);
                     roles.remove(roleId);
                     ExportUtils.clearWarning(memberId);
+                    String cleared = "Thank you for your donation, your Final Warning has been cleared <@"+memberId+">";
+                    client.getChannelById(Snowflake.of(warnChannel)).createMessage(cleared).block();
                     return true;
                 }
 
@@ -130,6 +134,8 @@ public class Donate extends Action {
                     roles.add(id);
                     roles.remove(roleId);
                     ExportUtils.clearWarning(memberId);
+                    String cleared = "Thank you for your donation, your Second Warning has been cleared <@"+memberId+">";
+                    client.getChannelById(Snowflake.of(warnChannel)).createMessage(cleared).block();
                     return true;
                 }
 
@@ -139,6 +145,8 @@ public class Donate extends Action {
                             Snowflake.of(memberId),
                             Snowflake.of(firstWarning),
                             "first warning clear").block();
+                    String cleared = "Thank you for your donation, your First Warning has been cleared <@"+memberId+">";
+                    client.getChannelById(Snowflake.of(warnChannel)).createMessage(cleared).block();
                     ExportUtils.clearWarning(memberId);
                     return false;
                 }
