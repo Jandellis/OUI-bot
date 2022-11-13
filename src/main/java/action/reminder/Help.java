@@ -71,6 +71,7 @@ public class Help extends Action {
                     sb.append("You can also add the `cheap` flag to list the upgrades in order from cheapest to most expensive\n");
                     sb.append("Type `cyLimitUp <number>` to set how many upgrades listed\n");
                     sb.append("Type `cyStats <location>` to see stats about your upgrade status\n");
+                    sb.append("Click on :arrows_counterclockwise: to get Cylon to recheck your upgrade list again\n");
                     sb.append("\nYou can also turn on sleep mode\n");
                     sb.append("To do you you need to set how many minutes to start the sleep mode in and end. For example to start sleep mode in 90 minutes and to make it last for 8 hours\n");
                     sb.append("Type `cySleepStart 1h 30m`\n");

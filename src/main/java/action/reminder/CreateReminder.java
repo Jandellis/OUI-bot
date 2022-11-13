@@ -28,9 +28,11 @@ public class CreateReminder extends Action {
     List<String> watchChannels;
     ScheduledExecutorService executorService = Executors.newScheduledThreadPool(5);
     Long recruiter;
+    List<String> patreonServers;
 
     public CreateReminder() {
         watchChannels = Arrays.asList(config.get("watchChannels").split(","));
+        patreonServers = Arrays.asList(config.get("patreonServers").split(","));
         recruiter = Long.parseLong(config.get("recruiter"));
     }
 
@@ -360,12 +362,26 @@ public class CreateReminder extends Action {
 
     private void createReminder(ReminderType type, Message message, Profile profile) {
         int sleep = 0;
+        AtomicBoolean isPatreonServer = new AtomicBoolean(false);
+        if (message.getGuildId().isPresent()) {
+            patreonServers.forEach(server -> {
+                if (message.getGuildId().get().asString().equals(server)) {
+                    isPatreonServer.set(true);
+                }
+            } );
+        }
         switch (type) {
             case work:
                 sleep = profile.getStatus().getWork();
+                if (!isPatreonServer.get()) {
+                    sleep = sleep + 1;
+                }
                 break;
             case tips:
                 sleep = profile.getStatus().getTips();
+                if (!isPatreonServer.get()) {
+                    sleep = sleep + 1;
+                }
                 break;
             case ot:
                 sleep = profile.getStatus().getOt();
