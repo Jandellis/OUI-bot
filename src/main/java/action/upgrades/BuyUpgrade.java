@@ -7,6 +7,7 @@ import action.upgrades.model.Location;
 import action.upgrades.model.LocationEnum;
 import action.upgrades.model.Upgrade;
 import action.upgrades.model.UserUpgrades;
+import discord4j.core.event.domain.message.ReactionAddEvent;
 import discord4j.core.object.Embed;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.reaction.ReactionEmoji;
@@ -36,6 +37,8 @@ public class BuyUpgrade extends Action {
     String paramUp;
     String paramStats;
     String paramUpLimit;
+
+    String reloadEmote = "\uD83D\uDD04";
 
     public BuyUpgrade() {
         paramUp = "cyUp";
@@ -268,7 +271,8 @@ public class BuyUpgrade extends Action {
 
                                         Profile profile = ReminderUtils.loadProfileById(id);
                                         if (profile != null) {
-                                            react(message, profile);
+                                            react(message, profile, false);
+                                            react(message, profile, true);//:arrows_counterclockwise:
                                         }
                                     }
                                 }
@@ -614,10 +618,13 @@ public class BuyUpgrade extends Action {
     }
 
 
-    private void react(Message message, Profile profile) {
+    private void react(Message message, Profile profile, boolean refresh) {
         String react = profile.getEmote();
         if (react == null || react.equals("")) {
             react = defaultReact;
+        }
+        if (refresh) {
+            react = reloadEmote;
         }
 
         if (react.startsWith("<")) {
@@ -661,4 +668,22 @@ public class BuyUpgrade extends Action {
         return defaultLocation;
     }
 
+    @Override
+    protected Mono<Object> doReactionEvent(ReactionAddEvent reactionAddEvent) {
+
+        if (reactionAddEvent.getEmoji().asUnicodeEmoji().get().getRaw().equals(reloadEmote)) {
+            //got reaction
+            Message message = reactionAddEvent.getMessage().block();
+            String messageAuthorId = getId(message);
+            if (messageAuthorId.equals(reactionAddEvent.getUserId().asString())) {
+                //user is the same as who wrote the did the message
+                //remove all reactions
+                message.removeAllReactions().block();
+                doAction(message);
+
+            }
+        }
+
+        return Mono.empty();
+    }
 }

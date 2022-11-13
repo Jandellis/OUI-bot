@@ -1,13 +1,13 @@
 package action;
 
 import action.reminder.ReminderUtils;
-import action.reminder.model.DepthId;
 import action.reminder.model.Profile;
 import bot.Config;
 import discord4j.common.util.Snowflake;
 import discord4j.core.DiscordClient;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.event.domain.message.MessageCreateEvent;
+import discord4j.core.event.domain.message.ReactionAddEvent;
 import discord4j.core.object.entity.Message;
 import discord4j.discordjson.Id;
 import discord4j.discordjson.json.MemberData;
@@ -46,6 +46,13 @@ public abstract class Action {
         return gateway.on(MessageCreateEvent.class, event -> doAction(event.getMessage())).then();
     }
 
+    public Mono<Void> reaction(GatewayDiscordClient gateway, DiscordClient client) {
+        this.client = client;
+        this.gateway = gateway;
+        guildId = config.get("guildId");
+        return gateway.on(ReactionAddEvent.class, reactionAddEvent -> doReactionEvent(reactionAddEvent)).then();
+    }
+
     /**
      * Change to return true, if true it means that action processed the message and to stop all others from processing it.
      * Move gateway and client to constructor
@@ -54,6 +61,10 @@ public abstract class Action {
      * @return
      */
     protected abstract Mono<Object> doAction(Message message);
+
+    protected Mono<Object> doReactionEvent(ReactionAddEvent reactionAddEvent) {
+        return Mono.empty();
+    }
 
     protected String getAction(Message message) {
         return getAction(message, param.toLowerCase());

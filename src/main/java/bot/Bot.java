@@ -34,6 +34,7 @@ import discord4j.core.DiscordClient;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.event.domain.lifecycle.ReadyEvent;
 import discord4j.core.event.domain.message.MessageCreateEvent;
+import discord4j.core.event.domain.message.ReactionAddEvent;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.User;
 import discord4j.core.object.presence.ClientActivity;
@@ -157,6 +158,14 @@ public class Bot {
                     franchiseStat.action(gateway, client);
                     franchiseStat.startUp();
 
+                    Mono<Void> reaction = gateway.on(ReactionAddEvent.class, reactionAddEvent -> {
+                        reactionAddEvent.getChannelId().toString();
+                        reactionAddEvent.getEmoji();
+                        reactionAddEvent.getMember();
+                        reactionAddEvent.getMessageId().toString();
+                        return Mono.empty();
+                    }).then();
+
                     Mono<Void> handlePingCommand = gateway.on(MessageCreateEvent.class, event -> {
                         Message message = event.getMessage();
 
@@ -216,10 +225,12 @@ public class Bot {
                             .and(new Heartbeat().action(gateway, client))
                             .and(new GiveAWay().action(gateway, client))
                             .and(new BuyUpgrade().action(gateway, client))
+                            .and(new BuyUpgrade().reaction(gateway, client))
                             .and(new Olympics().action(gateway, client))
                             .and(new FranchiseStat().action(gateway, client))
                             .and(new Sleep().action(gateway, client))
                             .and(new Donate().action(gateway, client))
+//                            .and(reaction)
                             .and(new UpdateAlerts().action(gateway, client));
 
                 });
