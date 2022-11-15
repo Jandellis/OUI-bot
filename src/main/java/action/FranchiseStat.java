@@ -89,13 +89,16 @@ public class FranchiseStat extends Action {
                                     dateTime = dateTime.plusHours(endHour - dateTime.getHour());
                                 }
 
-                                dateTime = dateTime.plusDays(8 - dateTime.getDayOfWeek().getValue());
-
-
                                 String timeLeft = lines[0].split("`")[1]; //6 days
+
+                                int daysToAdd = 8 - dateTime.getDayOfWeek().getValue();
+                                if (daysToAdd < 7 || timeLeft.contains("day"))
+                                    dateTime = dateTime.plusDays(8 - dateTime.getDayOfWeek().getValue());
+
+
                                 double days = 6;
                                 double pecentage = 1;
-                                if (timeLeft.contains("day")) {
+                                if (timeLeft.contains("day") || timeLeft.contains("hour")) {
                                     days = 7 - Integer.parseInt(timeLeft.split(" ")[0]);
                                     Duration delay = Duration.between(LocalDateTime.now(), dateTime);
                                     long totalSeconds = 60 * 60 * 24 * 7; // min * hour * day * week
@@ -103,11 +106,11 @@ public class FranchiseStat extends Action {
                                 }
 
                                 //2 hours
-                                if (timeLeft.contains("hour")) {
-                                    double hours = 24 - Integer.parseInt(timeLeft.split(" ")[0]);
-                                    days = days + hours / 24;
-                                    pecentage = days / 7;
-                                }
+//                                if (timeLeft.contains("hour")) {
+//                                    double hours = 24 - Integer.parseInt(timeLeft.split(" ")[0]);
+//                                    days = days + hours / 24;
+//                                    pecentage = days / 7;
+//                                }
 
                                 //56 minutes
                                 if (timeLeft.contains("minute")) {

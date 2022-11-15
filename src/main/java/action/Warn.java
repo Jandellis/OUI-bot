@@ -68,12 +68,12 @@ public class Warn extends Action {
                     }
 
 
-                    StringBuilder workList = new StringBuilder();
-                    workList.append("**__Please clean, vote, work & donate.__** \r\n");
-                    workList.append("__You have not done work in a while, start doing shifts otherwise you may be kicked__ \r\n");
-                    StringBuilder uncleanList = new StringBuilder();
-                    uncleanList.append("**__Please clean, vote, work & donate.__** \r\n");
-                    uncleanList.append("__Your status is unclean, clean your shack otherwise you may be kicked__ \r\n");
+                    List<String> workList = new ArrayList<>();
+                    workList.add("**__Please clean, vote, work & donate.__** \r\n");
+                    workList.add("__You have not done work in a while, start doing shifts otherwise you may be kicked__ \r\n");
+                    List<String> uncleanList = new ArrayList<>();
+                    uncleanList.add("**__Please clean, vote, work & donate.__** \r\n");
+                    uncleanList.add("__Your status is unclean, clean your shack otherwise you may be kicked__ \r\n");
                     for (KickMember kickMember : kickMemberList) {
                         boolean inServer = false;
                         AtomicInteger warning = new AtomicInteger();
@@ -100,13 +100,13 @@ public class Warn extends Action {
                         }
                         boolean warnMember = false;
                         if (kickMember.getDaysNoWork() >= level && kickMember.getDaysNoWork() <= max && !imunity.get()) {
-                            workList.append("<@" + kickMember.getId() + "> \r\n");
+                            workList.add("<@" + kickMember.getId() + "> \r\n");
                             warnMember = true;
 
                         }
 
                         if (kickMember.getDaysUnhappy() >= level && kickMember.getDaysUnhappy() <= max && !imunity.get()) {
-                            uncleanList.append("<@" + kickMember.getId() + "> \r\n");
+                            uncleanList.add("<@" + kickMember.getId() + "> \r\n");
                             warnMember = true;
                         }
 
@@ -142,11 +142,49 @@ public class Warn extends Action {
                         }
                     }
 
-                    client.getChannelById(Snowflake.of(warnChannel)).createMessage(workList.toString()).block();
-                    logger.info(workList);
+                    //print list of work warnings
+                    StringBuilder display = new StringBuilder();
+                    int count = 0;
+                    for (String line : workList) {
+                        count++;
+                        display.append(line);
+                        if (count == 30) {
+                            client.getChannelById(Snowflake.of(warnChannel)).createMessage(display.toString()).block();
+                            logger.info(display);
+                            display = new StringBuilder();
+                            count = 0;
+                        }
+                    }
+                    if (count > 0) {
+                        client.getChannelById(Snowflake.of(warnChannel)).createMessage(display.toString()).block();
+                        logger.info(display);
+                        display = new StringBuilder();
+                        count = 0;
+                    }
 
-                    client.getChannelById(Snowflake.of(warnChannel)).createMessage(uncleanList.toString()).block();
-                    logger.info(uncleanList);
+                    //print list of unclean warnings
+                    for (String line : uncleanList) {
+                        count++;
+                        display.append(line);
+                        if (count == 30) {
+                            client.getChannelById(Snowflake.of(warnChannel)).createMessage(display.toString()).block();
+                            logger.info(display);
+                            display = new StringBuilder();
+                            count = 0;
+                        }
+                    }
+                    if (count > 0) {
+                        client.getChannelById(Snowflake.of(warnChannel)).createMessage(display.toString()).block();
+                        logger.info(display);
+                    }
+
+
+//
+//                    client.getChannelById(Snowflake.of(warnChannel)).createMessage(workList.toString()).block();
+//                    logger.info(workList);
+
+//                    client.getChannelById(Snowflake.of(warnChannel)).createMessage(uncleanList.toString()).block();
+//                    logger.info(uncleanList);
 
                 } catch (Exception e) {
                     printException(e);
