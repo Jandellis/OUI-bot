@@ -30,16 +30,34 @@ public class ExportUtils {
 
 
     public static HashMap<Long, List<ExportData>> loadMemberHistory() {
+
+        LocalDateTime oneWeek = LocalDateTime.now().minusDays(7).minusHours(12);
+        LocalDateTime now = LocalDateTime.now();
+
+        return loadMemberHistory(oneWeek, now);
+    }
+
+    public static HashMap<Long, List<ExportData>> loadMemberHistoryYesterday() {
+
+        LocalDateTime oneWeek = LocalDateTime.now().minusDays(8).minusHours(12);
+        LocalDateTime now = LocalDateTime.now().minusHours(12);
+
+        return loadMemberHistory(oneWeek, now);
+    }
+
+    public static HashMap<Long, List<ExportData>> loadMemberHistory(LocalDateTime start, LocalDateTime end) {
         HashMap<Long, List<ExportData>> history = new HashMap<>();
 
         try {
             Connection con = DriverManager.getConnection(url, user, password);
             Statement st = con.createStatement();
 
-            LocalDateTime oneWeek = LocalDateTime.now().minusDays(7).minusHours(12);
 
-            PreparedStatement pst = con.prepareStatement("SELECT export_time, name, shack_name, income, shifts, weekly_shifts, tips, donations, happy FROM member_data WHERE export_time > ?  ORDER BY export_time");
-            pst.setTimestamp(1, Timestamp.valueOf(oneWeek));
+            PreparedStatement pst = con.prepareStatement("SELECT export_time, name, shack_name, income, shifts, weekly_shifts, tips, donations, happy FROM member_data " +
+                    "WHERE export_time > ? and " +
+                    "export_time < ?  ORDER BY export_time ");
+            pst.setTimestamp(1, Timestamp.valueOf(start));
+            pst.setTimestamp(2, Timestamp.valueOf(end));
             ResultSet rs = pst.executeQuery();
             while (rs.next()) {
                 Timestamp exportTime = rs.getTimestamp(1);
@@ -169,6 +187,7 @@ public class ExportUtils {
         }
         return false;
     }
+
     public static boolean clearWarning(String id) {
         try {
             Connection con = DriverManager.getConnection(url, user, password);

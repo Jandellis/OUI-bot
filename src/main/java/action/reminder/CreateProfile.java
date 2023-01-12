@@ -2,9 +2,11 @@ package action.reminder;
 
 import action.Action;
 import action.reminder.model.Status;
-import discord4j.core.object.Embed;
+import discord4j.common.util.Snowflake;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.reaction.ReactionEmoji;
+import discord4j.discordjson.json.EmbedData;
+import discord4j.discordjson.json.MemberData;
 import reactor.core.publisher.Mono;
 
 import java.util.Arrays;
@@ -13,7 +15,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class CreateProfile extends Action {
+public class CreateProfile extends Action implements EmbedAction {
 
     String tacoBot = "490707751832649738";
     List<String> watchChannels;
@@ -21,6 +23,7 @@ public class CreateProfile extends Action {
     public CreateProfile() {
         watchChannels = Arrays.asList(config.get("watchChannels").split(","));
     }
+
     ScheduledExecutorService executorService = Executors.newScheduledThreadPool(5);
 
 
@@ -45,41 +48,68 @@ public class CreateProfile extends Action {
             if (message.getData().author().id().asString().equals(tacoBot)) {
                 try {
                     //for some reason the embeds will be empty from slash, but if i load it again it will have data
-                    if (checkAge(message)) {
-                        checkMessageAgain(message);
+//                    if (checkAge(message)) {
+//                        checkMessageAgain(message);
+//                    }
+
+
+                    List<EmbedData> embedData;
+                    if (message.getEmbeds().isEmpty() || message.getEmbeds().size() == 0) {
+
+                        embedData = checkEmbeds(message);
+                    } else {
+                        embedData = message.getData().embeds();
                     }
-                    for (Embed embed : message.getEmbeds()) {
 
-                        if (embed.getFields().size() > 1 && embed.getFields().get(0).getName().equals("Shack Name")) {
-
-                            if (!embed.getThumbnail().isPresent()) {
-                                message.getChannel().block().createMessage("Sorry unable to create your profile. If you add an avatar i will be able to").block();
-                            } else {
-                                if (embed.getFooter().isPresent()) {
-
-                                    String line = embed.getFields().get(0).getValue().split("\n")[0];
-                                    //replace up, replace taco, replace (), hq building
-                                    String shackName = line.replace("\uD83D\uDD3A ", "").replace("\uD83C\uDF2E", "").replace(" ()", "").replace(" \uD83C\uDFDB", "");
-                                    Status status = Status.getStatus(embed.getFooter().get().getData().text());
-                                    String id = embed.getThumbnail().get().getUrl().replace("https://cdn.discordapp.com/avatars/", "").split("/")[0];
-
-                                    boolean newProfile = ReminderUtils.addProfile(id, shackName, status);
-
-                                    message.addReaction(ReactionEmoji.unicode("\uD83D\uDC4B")).block();
-                                    if (newProfile) {
-                                        message.getChannel().block().createMessage("Your profile has been created. Would you like to turn on reminders? Type `cyrm on` \r\nFor more details, type `cyhelp`").block();
-                                    }
-                                }
-                            }
-
-
-                        }
-                    }
+                    handleEmbedAction(message, embedData);
                 } catch (Exception e) {
                     printException(e);
                 }
 
             }
+        }
+        return Mono.empty();
+    }
+
+
+    @Override
+    public Mono<Object> handleEmbedAction(Message message, List<EmbedData> embedData) {
+
+        try {
+
+            for (EmbedData embed : embedData) {
+
+                if (embed.fields().toOptional().isPresent() && embed.fields().get().size() > 1 && embed.fields().get().get(0).name().equals("Shack Name")) {
+
+                    if (!embed.thumbnail().toOptional().isPresent()) {
+                        message.getChannel().block().createMessage("Sorry unable to create your profile. If you add an avatar i will be able to").block();
+                    } else {
+                        if (embed.footer().toOptional().isPresent()) {
+
+                            String line = embed.fields().get().get(0).value().split("\n")[0];
+                            //replace up, replace taco, replace (), hq building
+                            String shackName = line.replace("\uD83D\uDD3A ", "").replace("\uD83C\uDF2E", "").replace(" ()", "").replace(" \uD83C\uDFDB", "");
+                            Status status = Status.getStatus(embed.footer().get().text());
+                            String id = embed.thumbnail().get().url().get().replace("https://cdn.discordapp.com/avatars/", "").split("/")[0];
+
+                            MemberData memberData = client.getGuildById(Snowflake.of(guildId)).getMember(Snowflake.of(id)).block();
+                            String userName = memberData.user().username();
+                            String discriminator = memberData.user().discriminator();
+
+                            boolean newProfile = ReminderUtils.addProfile(id, shackName, status, userName + "#" + discriminator);
+
+                            message.addReaction(ReactionEmoji.unicode("\uD83D\uDC4B")).block();
+                            if (newProfile) {
+                                message.getChannel().block().createMessage("Your profile has been created. Would you like to turn on reminders? Type `cyrm on` \r\nFor more details, type `cyhelp`").block();
+                            }
+                        }
+                    }
+
+
+                }
+            }
+        } catch (Exception e) {
+            printException(e);
         }
         return Mono.empty();
     }

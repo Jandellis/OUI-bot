@@ -5,9 +5,9 @@ import action.reminder.model.Boost;
 import action.reminder.model.Profile;
 import action.reminder.model.Reminder;
 import discord4j.common.util.Snowflake;
-import discord4j.core.object.Embed;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.reaction.ReactionEmoji;
+import discord4j.discordjson.json.EmbedData;
 import discord4j.discordjson.json.MessageData;
 import discord4j.rest.entity.RestChannel;
 import reactor.core.publisher.Mono;
@@ -23,7 +23,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class CreateBoostReminder extends Action {
+public class CreateBoostReminder extends Action implements EmbedAction {
 
     String tacoBot = "490707751832649738";
     List<String> watchChannels;
@@ -86,21 +86,42 @@ public class CreateBoostReminder extends Action {
         if (watched.get()) {
             if (message.getData().author().id().asString().equals(tacoBot)) {
                 try {
-                    //for some reason the embeds will be empty from slash, but if i load it again it will have data
-                    if (checkAge(message)) {
-                        checkMessageAgain(message);
+
+
+                    List<EmbedData> embedData;
+                    if (message.getEmbeds().isEmpty() || message.getEmbeds().size() == 0) {
+
+                        embedData = checkEmbeds(message);
                     } else {
-                        for (Embed embed : message.getEmbeds()) {
+                        embedData = message.getData().embeds();
+                    }
+
+                    handleEmbedAction(message, embedData);
+                } catch (Exception e) {
+                    printException(e);
+                }
+
+            }
+        }
+        return Mono.empty();
+    }
 
 
-                            if (embed.getDescription().isPresent()) {
-                                String desc = embed.getDescription().get();
-                                //boosts
-                                if (desc.startsWith("\u2705") && desc.contains("You have purchased:")) {
+    @Override
+    public Mono<Object> handleEmbedAction(Message message, List<EmbedData> embedData) {
+
+        try {
+            for (EmbedData embed : embedData) {
 
 
-                                    AtomicReference<String> userId = new AtomicReference<>("");
-                                    userId.set(getId(message));
+                if (embed.description().toOptional().isPresent()) {
+                    String desc = embed.description().get();
+                    //boosts
+                    if (desc.startsWith("\u2705") && desc.contains("You have purchased:")) {
+
+
+                        AtomicReference<String> userId = new AtomicReference<>("");
+                        userId.set(getId(message, embed));
 
 //                                    if (userId.get().equals("")) {
 //                                        List<MessageData> historic = getMessagesOfChannel(message.getRestChannel());
@@ -112,61 +133,58 @@ public class CreateBoostReminder extends Action {
 //                                            }
 //                                        });
 //                                    }
-                                    Profile profile = ReminderUtils.loadProfileById(userId.get());
-                                    if (profile != null) {
+                        Profile profile = ReminderUtils.loadProfileById(userId.get());
+                        if (profile != null) {
 
-                                        for (Boost boost : boosts) {
-                                            if (desc.contains(boost.getName())) {
+                            for (Boost boost : boosts) {
+                                if (desc.contains(boost.getName())) {
 
-                                                createReminder(boost, message, profile);
+                                    createReminder(boost, message, profile);
+                                }
+                            }
+                        }
+
+                    }
+
+                }
+
+                if (embed.title().toOptional().isPresent()) {
+                    if (embed.title().get().startsWith("\uD83D\uDCC8 Active Boosts")) {
+                        AtomicReference<String> userId = new AtomicReference<>("");
+                        userId.set(getId(message, embed));
+
+                        Profile profile = ReminderUtils.loadProfileById(userId.get());
+                        if (profile != null) {
+                            String desc = embed.description().get();
+                            String[] lines = desc.split("\n");
+
+                            List<Reminder> reminders = ReminderUtils.loadReminder(profile.getName());
+
+                            for (String line : lines) {
+                                for (Boost boost : boosts) {
+                                    if (line.contains(boost.getName())) {
+                                        boolean found = false;
+
+                                        for (Reminder reminder : reminders) {
+                                            if (reminder.getType().getName().equals(boost.getName())) {
+                                                found = true;
+                                                break;
                                             }
                                         }
-                                    }
-
-                                }
-
-                            }
-
-                            if (embed.getTitle().isPresent()) {
-                                if (embed.getTitle().get().startsWith("\uD83D\uDCC8 Active Boosts")) {
-                                    AtomicReference<String> userId = new AtomicReference<>("");
-                                    userId.set(getId(message));
-
-                                    Profile profile = ReminderUtils.loadProfileById(userId.get());
-                                    if (profile != null) {
-                                        String desc = embed.getDescription().get();
-                                        String[] lines = desc.split("\n");
-
-                                        List<Reminder> reminders =  ReminderUtils.loadReminder(profile.getName());
-
-                                        for (String line: lines) {
-                                            for (Boost boost : boosts) {
-                                                if (line.contains(boost.getName())) {
-                                                    boolean found = false;
-
-                                                    for (Reminder reminder: reminders) {
-                                                        if (reminder.getType().getName().equals(boost.getName())) {
-                                                            found = true;
-                                                            break;
-                                                        }
-                                                    }
-                                                    if (!found) {
-                                                        createReminder(boost, message, profile, getSeconds(line));
-                                                    }
-                                                }
-                                            }
+                                        if (!found) {
+                                            createReminder(boost, message, profile, getSeconds(line));
                                         }
                                     }
                                 }
                             }
-
                         }
                     }
-                } catch (Exception e) {
-                    printException(e);
                 }
 
             }
+
+        } catch (Exception e) {
+            printException(e);
         }
         return Mono.empty();
     }

@@ -166,3 +166,10 @@ CREATE TABLE IF NOT EXISTS member_donations (
     name VARCHAR(25),
     donation  bigint
 );
+
+
+alter table profile add dm_reminder BOOLEAN;
+update profile set dm_reminder = false;
+alter table profile alter column dm_reminder set default false;
+
+alter table profile add username VARCHAR(255);

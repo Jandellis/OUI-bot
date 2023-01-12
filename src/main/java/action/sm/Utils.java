@@ -149,7 +149,7 @@ public class Utils {
 //            con.setAutoCommit(false);
 
             st.addBatch("insert into sm_alerts (name, alert_type, trigger, price, channel) " +
-                    "VALUES ('" + name + "', '" + type.getName() + "', '" + trigger + "', " + price + ", '"+channel+"')");
+                    "VALUES ('" + name + "', '" + type.getName() + "', '" + trigger + "', " + price + ", '" + channel + "')");
             st.executeBatch();
 //            con.commit();
         } catch (SQLException ex) {
@@ -210,13 +210,16 @@ public class Utils {
                             dropAlerts.add(sauce);
                         }
                         st.addBatch("insert into sm_alerts (name, alert_type, trigger, price, channel) " +
-                                "VALUES ('" + name + "', '" + trigger.getType() + "', '" + sauce + "', " + trigger.getPrice() + ", '"+channel+"')");
+                                "VALUES ('" + name + "', '" + trigger.getType() + "', '" + sauce + "', " + trigger.getPrice() + ", '" + channel + "')");
                     }
                 }
             }
             for (Watch watch : watches) {
                 for (Trigger trigger : triggers) {
-                    if (trigger.getType() == AlertType.low || (
+                    // alert is low, or drop type
+                    // for drop if its on watch list and both
+                    // but not if they own the sauce
+                    if (trigger.getType() == AlertType.low && !sauces.contains(watch.getSauce()) || (
                             trigger.getType() == AlertType.drop && (
                                     trigger.getDrop() == Drop.both || trigger.getDrop() == Drop.watchlist
                             )
@@ -229,7 +232,7 @@ public class Utils {
                             }
 
                             st.addBatch("insert into sm_alerts (name, alert_type, trigger, price, channel) " +
-                                    "VALUES ('" + name + "', '" + trigger.getType() + "', '" + watch.getSauce().getName() + "', " + trigger.getPrice() + ", '"+channel+"')");
+                                    "VALUES ('" + name + "', '" + trigger.getType() + "', '" + watch.getSauce().getName() + "', " + trigger.getPrice() + ", '" + channel + "')");
                         }
                     }
                 }
@@ -273,7 +276,7 @@ public class Utils {
                     )) {
 
                         st.addBatch("insert into sm_alerts (name, alert_type, trigger, price, channel) " +
-                                "VALUES ('" + name + "', '" + trigger.getType() + "', '" + watch.getSauce().getName() + "', " + trigger.getPrice() + ", '"+channel+"')");
+                                "VALUES ('" + name + "', '" + trigger.getType() + "', '" + watch.getSauce().getName() + "', " + trigger.getPrice() + ", '" + channel + "')");
                     }
                 }
             }
@@ -344,12 +347,6 @@ public class Utils {
     }
 
 
-
-
-
-
-
-
     public static void addWatch(String name, Sauce sauce) {
         try {
             Connection con = DriverManager.getConnection(url, user, password);
@@ -406,8 +403,6 @@ public class Utils {
     }
 
 
-
-
     public static List<SystemReminder> loadReminder(SystemReminderType rem) {
         List<SystemReminder> reminders = new ArrayList<>();
         try (Connection con = DriverManager.getConnection(url, user, password);
@@ -415,7 +410,7 @@ public class Utils {
              ResultSet rs = pst.executeQuery()) {
 
             while (rs.next()) {
-                SystemReminder reminder = new SystemReminder( SystemReminderType.getReminderType(rs.getString(1)), rs.getTimestamp(2), rs.getString(3), rs.getString(4));
+                SystemReminder reminder = new SystemReminder(SystemReminderType.getReminderType(rs.getString(1)), rs.getTimestamp(2), rs.getString(3), rs.getString(4));
                 reminders.add(reminder);
             }
 
@@ -432,7 +427,7 @@ public class Utils {
              ResultSet rs = pst.executeQuery()) {
 
             while (rs.next()) {
-                SystemReminder reminder = new SystemReminder( SystemReminderType.getReminderType(rs.getString(1)), rs.getTimestamp(2), rs.getString(3), rs.getString(4));
+                SystemReminder reminder = new SystemReminder(SystemReminderType.getReminderType(rs.getString(1)), rs.getTimestamp(2), rs.getString(3), rs.getString(4));
                 reminders.add(reminder);
             }
 
@@ -459,7 +454,7 @@ public class Utils {
                 st.executeUpdate("UPDATE system_reminder SET reminder_time = '" + time + "' WHERE id = " + id);
             } else {
                 st.addBatch("insert into system_reminder (type, reminder_time, message_id, name) " +
-                        "VALUES ('" + type.getName() + "', '" + time + "', '"+messageId+"', '"+name+"')");
+                        "VALUES ('" + type.getName() + "', '" + time + "', '" + messageId + "', '" + name + "')");
             }
             st.executeBatch();
         } catch (SQLException ex) {

@@ -1,13 +1,14 @@
 package action;
 
+import action.reminder.EmbedAction;
 import action.sm.Utils;
 import action.sm.model.SystemReminder;
 import action.sm.model.SystemReminderType;
 import com.gargoylesoftware.htmlunit.WebClient;
 import discord4j.common.util.Snowflake;
-import discord4j.core.object.Embed;
 import discord4j.core.object.entity.Message;
 import discord4j.discordjson.json.ChannelModifyRequest;
+import discord4j.discordjson.json.EmbedData;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -27,7 +28,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class FranchiseStat extends Action {
+public class FranchiseStat extends Action implements EmbedAction {
 
 
     String guildId;
@@ -65,83 +66,101 @@ public class FranchiseStat extends Action {
     public Mono<Object> doAction(Message message) {
         try {
             if (message.getData().author().id().asString().equals(tacoBot)) {
-                //for some reason the embeds will be empty from slash, but if i load it again it will have data
-                if (checkAge(message)) {
-                    checkMessageAgain(message);
-                } else {
-                    for (Embed embed : message.getEmbeds()) {
-                        if (embed.getTitle().isPresent() && embed.getDescription().isPresent()) {
-                            String title = embed.getTitle().get();
 
-                            if (title.contains("\uD83D\uDCC5 Weekly Tasks")) {
-                                String[] lines = embed.getDescription().get().split("\n");
+                List<EmbedData> embedData;
+                if (message.getEmbeds().isEmpty() || message.getEmbeds().size() == 0) {
+
+                    embedData = checkEmbeds(message);
+                } else {
+                    embedData = message.getData().embeds();
+                }
+                handleEmbedAction(message, embedData);
+                //for some reason the embeds will be empty from slash, but if i load it again it will have data
+//                if (checkAge(message)) {
+//                    checkMessageAgain(message);
+//                } else {
+            }
+//            }
+        } catch (Exception e) {
+            printException(e);
+        }
+        return Mono.empty();
+    }
+
+    @Override
+    public Mono<Object> handleEmbedAction(Message message, List<EmbedData> embedData) {
+        try {
+            for (EmbedData embed : embedData) {
+                if (embed.title().toOptional().isPresent() && embed.description().toOptional().isPresent()) {
+                    String title = embed.title().get();
+
+                    if (title.contains("\uD83D\uDCC5 Weekly Tasks")) {
+                        String[] lines = embed.description().get().split("\n");
 //                                lines[0];// Tasks will be reset in: `6 days`
 //                                lines[2];//<:bwemoji:666839150221197331><:bwemoji:666839150221197331><:bwemoji:666839150221197331> **Vote 170 Times** | `69/170`
 //                                lines[5];//<:bwemoji:666839150221197331><:bwemoji:666839150221197331><:bwemoji:666839150221197331> **Work 840 Overtime Shifts** | `357/840`
 
-                                LocalDateTime dateTime = LocalDateTime.now();
-                                dateTime = dateTime.plusSeconds(60 - dateTime.getSecond());
-                                dateTime = dateTime.plusMinutes(60 - dateTime.getMinute());
-                                int endHour = tasksEndHour; //18 my time // 6am server time
-                                if (dateTime.getHour() > endHour) {
-                                    dateTime = dateTime.minusHours(dateTime.getHour() - endHour);
-                                } else {
-                                    dateTime = dateTime.plusHours(endHour - dateTime.getHour());
-                                }
+                        LocalDateTime dateTime = LocalDateTime.now();
+                        dateTime = dateTime.plusSeconds(60 - dateTime.getSecond());
+                        dateTime = dateTime.plusMinutes(60 - dateTime.getMinute());
+                        int endHour = tasksEndHour; //18 my time // 6am server time
+                        if (dateTime.getHour() > endHour) {
+                            dateTime = dateTime.minusHours(dateTime.getHour() - endHour);
+                        } else {
+                            dateTime = dateTime.plusHours(endHour - dateTime.getHour());
+                        }
 
-                                String timeLeft = lines[0].split("`")[1]; //6 days
+                        String timeLeft = lines[0].split("`")[1]; //6 days
 
-                                int daysToAdd = 8 - dateTime.getDayOfWeek().getValue();
-                                if (daysToAdd < 7 || timeLeft.contains("day"))
-                                    dateTime = dateTime.plusDays(8 - dateTime.getDayOfWeek().getValue());
+                        int daysToAdd = 8 - dateTime.getDayOfWeek().getValue();
+                        if (daysToAdd < 7 || timeLeft.contains("day"))
+                            dateTime = dateTime.plusDays(8 - dateTime.getDayOfWeek().getValue());
 
 
-                                double days = 6;
-                                double pecentage = 1;
-                                if (timeLeft.contains("day") || timeLeft.contains("hour")) {
-                                    days = 7 - Integer.parseInt(timeLeft.split(" ")[0]);
-                                    Duration delay = Duration.between(LocalDateTime.now(), dateTime);
-                                    long totalSeconds = 60 * 60 * 24 * 7; // min * hour * day * week
-                                    pecentage = 1 - ( delay.getSeconds() * 1.0 / totalSeconds);
-                                }
+                        double days = 6;
+                        double pecentage = 1;
+                        if (timeLeft.contains("day") || timeLeft.contains("hour")) {
+                            days = 7 - Integer.parseInt(timeLeft.split(" ")[0]);
+                            Duration delay = Duration.between(LocalDateTime.now(), dateTime);
+                            long totalSeconds = 60 * 60 * 24 * 7; // min * hour * day * week
+                            pecentage = 1 - (delay.getSeconds() * 1.0 / totalSeconds);
+                        }
 
-                                //2 hours
+                        //2 hours
 //                                if (timeLeft.contains("hour")) {
 //                                    double hours = 24 - Integer.parseInt(timeLeft.split(" ")[0]);
 //                                    days = days + hours / 24;
 //                                    pecentage = days / 7;
 //                                }
 
-                                //56 minutes
-                                if (timeLeft.contains("minute")) {
-                                    double minutes = 60 - Integer.parseInt(timeLeft.split(" ")[0]);
-                                    double hours = 23.0 / 24.0;
-                                    days = days + hours + (minutes / 60.0 / 24.0);
-                                    pecentage = days / 7;
-                                }
+                        //56 minutes
+                        if (timeLeft.contains("minute")) {
+                            double minutes = 60 - Integer.parseInt(timeLeft.split(" ")[0]);
+                            double hours = 23.0 / 24.0;
+                            days = days + hours + (minutes / 60.0 / 24.0);
+                            pecentage = days / 7;
+                        }
 
 
-
-                                int votes = Integer.parseInt(lines[2].split("`")[1].split("/")[0].replace(",", ""));
-                                double voteAvg = votes / days;
+                        int votes = Integer.parseInt(lines[2].split("`")[1].split("/")[0].replace(",", ""));
+                        double voteAvg = votes / days;
 //                                double voteEstimate = voteAvg * 7;
 
-                                double voteEstimate = votes / pecentage;
-                                int ot = Integer.parseInt(lines[5].split("`")[1].split("/")[0].replace(",", ""));
-                                double otAvg = ot / days;
+                        double voteEstimate = votes / pecentage;
+                        int ot = Integer.parseInt(lines[5].split("`")[1].split("/")[0].replace(",", ""));
+                        double otAvg = ot / days;
 //                                double otEstimate = otAvg * 7;
-                                double otEstimate = ot / pecentage;
+                        double otEstimate = ot / pecentage;
 
-                                String msg = "I estimate you will get \n" +
-                                        ":small_blue_diamond: **Votes** : " + new DecimalFormat("#.0#").format(voteEstimate)  + "\n" +
-                                        ":small_blue_diamond: **Ot** : " + new DecimalFormat("#.0#").format(otEstimate);
+                        String msg = "I estimate you will get \n" +
+                                ":small_blue_diamond: **Votes** : " + new DecimalFormat("#.0#").format(voteEstimate) + "\n" +
+                                ":small_blue_diamond: **Ot** : " + new DecimalFormat("#.0#").format(otEstimate);
 
-                                client.getChannelById(message.getChannelId()).createMessage(msg).block();
-                            }
-                        }
+                        client.getChannelById(message.getChannelId()).createMessage(msg).block();
                     }
                 }
             }
+
         } catch (Exception e) {
             printException(e);
         }

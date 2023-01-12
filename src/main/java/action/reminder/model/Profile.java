@@ -14,6 +14,8 @@ public class Profile {
     int upgrade;
     Time sleepStart;
     Time sleepEnd;
+    Boolean dmReminder = false;
+    String userName;
 
     public Profile(String name, String shackName, Status status) {
         this.name = name;
@@ -21,7 +23,7 @@ public class Profile {
         this.status = status;
     }
 
-    public Profile(String name, String shackName, Status status, Boolean enabled, String emote, String message, int depth, int upgrade, Time sleepStart, Time sleepEnd) {
+    public Profile(String name, String shackName, Status status, Boolean enabled, String emote, String message, int depth, int upgrade, Time sleepStart, Time sleepEnd, Boolean dmReminder, String userName) {
         this.name = name;
         this.shackName = shackName;
         this.status = status;
@@ -34,6 +36,8 @@ public class Profile {
         this.upgrade = upgrade;
         this.sleepEnd = sleepEnd;
         this.sleepStart = sleepStart;
+        this.dmReminder = dmReminder;
+        this.userName = userName;
     }
 
     public String getName() {
@@ -80,6 +84,13 @@ public class Profile {
         this.depth = depth;
     }
 
+    public Boolean getDmReminder() {
+        return dmReminder;
+    }
+
+    public String getUserName() {
+        return userName;
+    }
     // emabled
     // emote
     // message

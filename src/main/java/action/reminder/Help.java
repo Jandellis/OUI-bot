@@ -45,6 +45,7 @@ public class Help extends Action {
                     sb.append("To set me up, first type `/shack`\n");
                     sb.append("Then type `cyrm on`\n");
                     sb.append("Type `cyrm off` to turn me off\n");
+                    sb.append("Type `cyrm dm` to toggle DM reminders\n");
                     sb.append("\n");
 //                    sb.append("I can do reminders for work, tips, overtime, daily, clean, vote, boosts and gifts\n");
                     sb.append("When you do something that I will create a reminder for that and i will tell you if im missing any cooldowns by reacting with the first letter\n");
@@ -58,7 +59,8 @@ public class Help extends Action {
                     sb.append("\n");
                     sb.append("You can also add a custom reminder messages\n");
                     sb.append("Type `cymsg <message>`, for example, type `cymsg Hey {ping} get back to {task} now! {cmd}` \n");
-                    sb.append("Type `cymsg delete`, to reset to the default \n");
+                    sb.append("Type `cymsg delete`, to reset to the default \n\n");
+                    sb.append("Type `cyrm history <limit>`, the higher the history, the more message I will go back and check who was the owner of a message\n");
                     message.getChannel().block().createMessage(sb.toString()).block();
 
                     sb = new StringBuilder();

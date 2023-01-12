@@ -19,6 +19,7 @@ import action.reminder.CreateBoostReminder;
 import action.reminder.CreateProfile;
 import action.reminder.CreateReminder;
 import action.reminder.DoReminder;
+import action.reminder.EmbedMessage;
 import action.reminder.EnableProfile;
 import action.reminder.Help;
 import action.reminder.Olympics;
@@ -32,15 +33,22 @@ import action.upgrades.BuyUpgrade;
 import discord4j.common.util.Snowflake;
 import discord4j.core.DiscordClient;
 import discord4j.core.GatewayDiscordClient;
+import discord4j.core.event.ReactiveEventAdapter;
+import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import discord4j.core.event.domain.lifecycle.ReadyEvent;
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.event.domain.message.ReactionAddEvent;
+import discord4j.core.object.command.ApplicationCommandOption;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.User;
 import discord4j.core.object.presence.ClientActivity;
 import discord4j.core.object.presence.ClientPresence;
+import discord4j.discordjson.json.ApplicationCommandOptionData;
+import discord4j.discordjson.json.ApplicationCommandRequest;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
@@ -53,6 +61,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class Bot {
@@ -202,7 +211,7 @@ public class Bot {
                             .and(new Warn().action(gateway, client))
                             .and(new Hit().action(gateway, client))
 //                            .and(new Kicked().action(gateway, client))
-                            .and(new GiveawayAdd().action(gateway, client))
+//                            .and(new GiveawayAdd().action(gateway, client))
                             .and(new GiveawayMembers().action(gateway, client))
                             .and(new GiveawayTotal().action(gateway, client))
                             .and(new Welcome().action(gateway, client))
@@ -215,23 +224,24 @@ public class Bot {
                             .and(new Left().action(gateway, client))
                             .and(new CleanUp().action(gateway, client))
 
-                            .and(new CreateProfile().action(gateway, client))
+//                            .and(new CreateProfile().action(gateway, client))
                             .and(new CreateReminder().action(gateway, client))
+                            .and(new EmbedMessage(gateway, client).action(gateway, client))
                             .and(new EnableProfile().action(gateway, client))
                             .and(new React().action(gateway, client))
                             .and(new Help().action(gateway, client))
                             .and(new action.reminder.Message().action(gateway, client))
-                            .and(new CreateBoostReminder().action(gateway, client))
+//                            .and(new CreateBoostReminder().action(gateway, client))
                             .and(new Heartbeat().action(gateway, client))
                             .and(new GiveAWay().action(gateway, client))
                             .and(new BuyUpgrade().action(gateway, client))
                             .and(new BuyUpgrade().reaction(gateway, client))
                             .and(new Olympics().action(gateway, client))
-                            .and(new FranchiseStat().action(gateway, client))
+//                            .and(new FranchiseStat().action(gateway, client))
                             .and(new Sleep().action(gateway, client))
-                            .and(new Donate().action(gateway, client))
+                            .and(new Donate().action(gateway, client));
 //                            .and(reaction)
-                            .and(new UpdateAlerts().action(gateway, client));
+//                            .and(new UpdateAlerts().action(gateway, client));
 
                 });
 

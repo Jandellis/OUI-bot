@@ -93,15 +93,37 @@ public class Import extends Action {
 
                     });
 
+                    HashMap<Long, List<ExportData>> historyYesterday = ExportUtils.loadMemberHistoryYesterday();
+                    HashMap<Long, WeeklyBestData> workYesterday = new HashMap<>();
+                    HashMap<Long, WeeklyBestData> tipsYesterday = new HashMap<>();
+                    HashMap<Long, WeeklyBestData> donationsYesterday = new HashMap<>();
+
+                    historyYesterday.forEach((id, dataList) -> {
+                        //get old entry
+                        int startWork = dataList.get(0).getMember().getShifts();
+                        int startTips = dataList.get(0).getMember().getTips();
+                        long startDonations = dataList.get(0).getMember().getDonations();
+
+                        //get current entry
+                        int endWork = dataList.get(dataList.size() - 1).getMember().getShifts();
+                        int endTips = dataList.get(dataList.size() - 1).getMember().getTips();
+                        long endDonations = dataList.get(dataList.size() - 1).getMember().getDonations();
+
+                        workYesterday.put(id, new WeeklyBestData(id, endWork - startWork));
+                        tipsYesterday.put(id, new WeeklyBestData(id, endTips - startTips));
+                        donationsYesterday.put(id, new WeeklyBestData(id, endDonations - startDonations));
+
+                    });
+
                     WeeklyBestData.sort(work);
                     WeeklyBestData.sort(tips);
                     WeeklyBestData.sort(donations);
                     EmbedCreateSpec.Builder embed = EmbedCreateSpec.builder();
                     embed.color(Color.SUMMER_SKY);
                     embed.title("OUI Weekly Best");
-                    embed.addField("Top Work", getBest(work, false), true);
-                    embed.addField("Top Tips", getBest(tips, false), false);
-                    embed.addField("Top Donations", getBest(donations, true), true);
+                    embed.addField("Top Work", getBest(work, workYesterday, false), true);
+                    embed.addField("Top Tips", getBest(tips, tipsYesterday,false), false);
+                    embed.addField("Top Donations", getBest(donations, donationsYesterday,true), true);
 
 
                     client.getChannelById(Snowflake.of(flex)).createMessage(embed.build().asRequest()).block();
@@ -170,7 +192,7 @@ public class Import extends Action {
         });
     }
 
-    private String getBest(List<WeeklyBestData> weeklyBestData, boolean money) {
+    private String getBest(List<WeeklyBestData> weeklyBestData, HashMap<Long, WeeklyBestData> weeklyBestDataYesterday,  boolean money) {
 
         StringBuilder sb = new StringBuilder();
         int count = 0;
@@ -186,7 +208,19 @@ public class Import extends Action {
             }
             value = value + String.format("%,d", data.getValue());
 //            builder.addField(count + start, "**"+ count + "**<@"+ data.getId() +"> - " + value, false);
-            sb.append("**" + count + "** - <@" + data.getId() + "> - " + value + "\r\n");
+            long change = data.getValue() - weeklyBestDataYesterday.get(data.getId()).getValue();
+
+            //<a:reddown:1015028786292592701>
+            //<a:greenup:1015028862368878723>
+            String emote = " <a:greenup:1015028862368878723> ";
+            if (change < 0) {
+                emote = " <a:reddown:1015028786292592701> ";
+            }
+            if (change == 0){
+                emote = " <a:orange_dots:1015118419047235585> ";
+            }
+
+            sb.append("**" + count + "** - <@" + data.getId() + "> - " + value + emote + String.format("%,d", change) +" \r\n");
         }
         return sb.toString();
     }

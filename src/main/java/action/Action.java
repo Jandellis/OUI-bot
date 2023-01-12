@@ -8,9 +8,13 @@ import discord4j.core.DiscordClient;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.event.domain.message.ReactionAddEvent;
+import discord4j.core.object.Embed;
 import discord4j.core.object.entity.Message;
+import discord4j.core.object.reaction.ReactionEmoji;
 import discord4j.discordjson.Id;
+import discord4j.discordjson.json.EmbedData;
 import discord4j.discordjson.json.MemberData;
+import discord4j.discordjson.json.MessageData;
 import discord4j.rest.http.client.ClientException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -20,6 +24,9 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -166,7 +173,38 @@ public abstract class Action {
         }
     }
 
-    protected String getId(Message message) {
+    protected String getId(Message message, EmbedData embedData) {
+        //check if embed data is not null
+
+        // if it has a footer with the username in it
+        // find the profile by username
+        //load profile by username and return that
+        //if no profile go to the old method
+
+        if (embedData != null && embedData.footer().toOptional().isPresent()) {
+
+            String username = embedData.footer().get().text();
+            if (username.contains("\n")){
+                String[] footer = username.split("\n");
+                username = footer[footer.length-1];
+            }
+            username = username.split(" ")[0];
+            Profile profile = ReminderUtils.loadProfileByUserName(username);
+
+            if (profile != null) {
+                logger.info("Got profile via footer " + profile.getName());
+                return profile.getName();
+            }
+
+//
+//            embedData.footer().get().text().split("\\|");
+        }
+
+
+
+
+
+        Message original = message;
         int count = 0;
         while (true) {
             count++;
@@ -193,14 +231,15 @@ public abstract class Action {
                 return "";
             }
 
-            if (profile.getDepth() >= count -1) {
+            if (profile.getDepth() >= count - 1) {
                 return userId;
             } else {
                 logger.info("hit history limit"); //<a:lights:1017394940789145610>
                 count--;
-                message.getChannel().block().createMessage("You have exceeded your history limit. This reminder will not be created.\n" +
-                        "To stop seeing this message increase your history limit with `cyrm history <limit>`, or stop clicking on other peoples buttons!\n" +
-                        "The higher the history, the more message I will go back and check who was the owner. For me to read this message your history would need to be more than " + count).block();
+//                message.getChannel().block().createMessage("You have exceeded your history limit. This reminder will not be created.\n" +
+//                        "To stop seeing this message increase your history limit with `cyrm history <limit>`, or stop clicking on other peoples buttons!\n" +
+//                        "The higher the history, the more message I will go back and check who was the owner. For me to read this message your history would need to be more than " + count).block();
+                original.addReaction(ReactionEmoji.unicode("\uD83D\uDEAB")).block(); //
                 return "";
             }
         }
@@ -219,20 +258,60 @@ public abstract class Action {
             }
 
         };
-//        logger.info("checking message again in 0.5 sec");
+//        logger.info("checking message again in 1 sec");
         executorService.schedule(taskWrapper, 500, TimeUnit.MILLISECONDS);
     }
 
     protected boolean checkAge(Message message) {
         LocalDateTime now = LocalDateTime.now().minusSeconds(10);
-        boolean notTooOld = now.isBefore((Timestamp.from(message.getTimestamp()).toLocalDateTime()));
-        if (notTooOld && message.getEmbeds().isEmpty()) {
+        boolean notTooOld = now.isBefore(Timestamp.from(message.getTimestamp()).toLocalDateTime());
+        if (notTooOld && (message.getEmbeds().isEmpty() || message.getContent().isEmpty())) {
+//            logger.info("message has no embeds or content " + message.getId());
 //            checkMessageAgain(message);
             return true;
         }
 //        if (!notTooOld) {
 //            logger.info("message is too old " + message.getId());
 //        }
+//        logger.info("message has embeds or content " + message.getId());
         return false;
     }
+
+
+    protected List<EmbedData> checkEmbeds(Message message) {
+
+        logger.info("checking embeds " + message.getId());
+        if (message.getEmbeds().isEmpty()) {
+            try {
+                Thread.sleep(250);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+
+            List<MessageData> history = getMessagesOfChannel(message);
+            for (MessageData messageData : history) {
+                if (messageData.id().asLong() == message.getId().asLong()) {
+                    List<Embed> embeds = new ArrayList<>();
+//                    messageData.embeds().get(0).fields();
+                    logger.info("checking embeds size " + messageData.embeds().size());
+                    return messageData.embeds();
+                }
+            }
+
+        }
+        return new ArrayList<>();
+    }
+
+    public static List<MessageData> getMessagesOfChannel(Message message) {
+
+//        Snowflake time = Snowflake.of(message.getTimestamp().minus(15, ChronoUnit.SECONDS));
+        return getMessagesOfChannel(message, 5);
+    }
+
+    public static List<MessageData> getMessagesOfChannel(Message message, int time) {
+        Snowflake snowflakeTime = Snowflake.of(message.getTimestamp().minus(time, ChronoUnit.SECONDS));
+        return message.getRestChannel().getMessagesAfter(snowflakeTime).collectList().block();
+    }
+
 }

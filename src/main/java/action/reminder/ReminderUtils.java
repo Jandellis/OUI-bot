@@ -248,7 +248,7 @@ public class ReminderUtils {
     }
 
 
-    public static boolean addProfile(String name, String shack, Status status) {
+    public static boolean addProfile(String name, String shack, Status status, String username) {
         Boolean newProfile = false;
         try {
             Connection con = DriverManager.getConnection(url, user, password);
@@ -259,21 +259,23 @@ public class ReminderUtils {
             int id = -1;
             while (rs.next()) {
                 id = rs.getInt(1);
-                String sql = "UPDATE profile SET shack_name = ?, status = ? WHERE id = ?";
+                String sql = "UPDATE profile SET shack_name = ?, status = ?, username = ? WHERE id = ?";
                 PreparedStatement p = con.prepareStatement(sql);
                 p.setString(1, shack);
                 p.setString(2, status.name());
-                p.setInt(3, id);
+                p.setString(3, username);
+                p.setInt(4, id);
                 p.executeUpdate();
 //                st.executeUpdate("UPDATE profile SET shack_name = '" + shack + "' WHERE id = " + id);
             }
             if (id == -1) {
-                String sql = "insert into profile (name, shack_name, status, enabled) " +
-                        "VALUES (?, ?, ?, false)";
+                String sql = "insert into profile (name, shack_name, status, enabled, username) " +
+                        "VALUES (?, ?, ?, false, ?)";
                 PreparedStatement p = con.prepareStatement(sql);
                 p.setString(1, name);
                 p.setString(2, shack);
                 p.setString(3, status.name());
+                p.setString(4, username);
                 p.execute();
                 newProfile = true;
 //                st.addBatch("insert into profile (name, shack_name, status, enabled) " +
@@ -418,7 +420,7 @@ public class ReminderUtils {
             Connection con = DriverManager.getConnection(url, user, password);
             Statement st = con.createStatement();
 
-            PreparedStatement pst = con.prepareStatement("SELECT name, shack_name, status, enabled, react, message, depth, upgrade, sleep_Start, sleep_End " +
+            PreparedStatement pst = con.prepareStatement("SELECT name, shack_name, status, enabled, react, message, depth, upgrade, sleep_Start, sleep_End, dm_reminder, username " +
                     "FROM profile  WHERE shack_name = ? and enabled = true");
             pst.setString(1, shack);
             ResultSet rs = pst.executeQuery();
@@ -432,7 +434,9 @@ public class ReminderUtils {
                         rs.getInt(7),
                         rs.getInt(8),
                         rs.getTime(9),
-                        rs.getTime(10));
+                        rs.getTime(10),
+                        rs.getBoolean(11),
+                        rs.getString(12));
 
             }
             st.executeBatch();
@@ -462,7 +466,7 @@ public class ReminderUtils {
     public static Profile loadProfileById(String id) {
         Profile profile = null;
         try (Connection con = DriverManager.getConnection(url, user, password);
-             PreparedStatement pst = con.prepareStatement("SELECT name, shack_name, status, enabled, react, message, depth, upgrade, sleep_Start, sleep_End " +
+             PreparedStatement pst = con.prepareStatement("SELECT name, shack_name, status, enabled, react, message, depth, upgrade, sleep_Start, sleep_End, dm_reminder, username " +
                      "FROM profile  WHERE name = '" + id + "' and enabled = true");
              ResultSet rs = pst.executeQuery()) {
 
@@ -476,7 +480,9 @@ public class ReminderUtils {
                         rs.getInt(7),
                         rs.getInt(8),
                         rs.getTime(9),
-                        rs.getTime(10));
+                        rs.getTime(10),
+                        rs.getBoolean(11),
+                        rs.getString(12));
             }
 
         } catch (SQLException ex) {
@@ -484,6 +490,43 @@ public class ReminderUtils {
         }
         return profile;
     }
+
+
+
+
+    public static Profile loadProfileByUserName(String username) {
+        Profile profile = null;
+        try {
+            Connection con = DriverManager.getConnection(url, user, password);
+            Statement st = con.createStatement();
+
+            PreparedStatement pst = con.prepareStatement("SELECT name, shack_name, status, enabled, react, message, depth, upgrade, sleep_Start, sleep_End, dm_reminder, username " +
+                    "FROM profile  WHERE username = ? and enabled = true");
+            pst.setString(1, username);
+            ResultSet rs = pst.executeQuery();
+            while (rs.next()) {
+                profile = new Profile(rs.getString(1),
+                        rs.getString(2),
+                        Status.getStatus(rs.getString(3)),
+                        rs.getBoolean(4),
+                        rs.getString(5),
+                        rs.getString(6),
+                        rs.getInt(7),
+                        rs.getInt(8),
+                        rs.getTime(9),
+                        rs.getTime(10),
+                        rs.getBoolean(11),
+                        rs.getString(12));
+
+            }
+            st.executeBatch();
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
+        return profile;
+    }
+
+
 
 
     public static boolean updateStatsWork(String id) {
@@ -745,6 +788,31 @@ public class ReminderUtils {
             while (rs.next()) {
                 id = rs.getInt(1);
                 String sql = "UPDATE profile SET sleep_end = null, sleep_start = null  WHERE id = ?";
+                PreparedStatement p = con.prepareStatement(sql);
+                p.setInt(1, id);
+                p.execute();
+                updated = true;
+            }
+            st.executeBatch();
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
+        return updated;
+    }
+
+
+    public static boolean toggleDmReminders(String name) {
+        boolean updated = false;
+        try {
+            Connection con = DriverManager.getConnection(url, user, password);
+            Statement st = con.createStatement();
+
+            PreparedStatement pst = con.prepareStatement("SELECT id FROM profile  WHERE name = '" + name + "'");
+            ResultSet rs = pst.executeQuery();
+            int id = -1;
+            while (rs.next()) {
+                id = rs.getInt(1);
+                String sql = "UPDATE profile SET dm_reminder = NOT dm_reminder  WHERE id = ?";
                 PreparedStatement p = con.prepareStatement(sql);
                 p.setInt(1, id);
                 p.execute();

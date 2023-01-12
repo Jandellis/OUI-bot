@@ -57,34 +57,39 @@ public class DoReminder extends Action {
      * @param reminder
      */
     public void runReminder(Reminder reminder) {
-        Runnable taskWrapper = new Runnable() {
+        try {
+            Runnable taskWrapper = new Runnable() {
 
-            @Override
-            public void run() {
-                logger.info("running reminder");
-                remind(reminder);
-            }
+                @Override
+                public void run() {
+                    logger.info("running reminder");
+                    remind(reminder);
+                }
 
-        };
+            };
 
-        LocalDateTime now = LocalDateTime.now().minusMinutes(10);
-        LocalDateTime reminderTime = reminder.getTime().toLocalDateTime();
-        if (now.isBefore(reminderTime)) {
-            Duration delay = Duration.between(LocalDateTime.now(), reminderTime);
+            LocalDateTime now = LocalDateTime.now().minusMinutes(10);
+            LocalDateTime reminderTime = reminder.getTime().toLocalDateTime();
+            if (now.isBefore(reminderTime)) {
+                Duration delay = Duration.between(LocalDateTime.now(), reminderTime);
 
-            if (delay.getSeconds() < 65) {
-                logger.info("reminder for " + reminder.getName() + " at " + formatter.format(reminderTime) + " of " + reminder.getType().getName() + " sleep for " + delay.getSeconds());
+                if (delay.getSeconds() < 65) {
+                    logger.info("reminder for " + reminder.getName() + " at " + formatter.format(reminderTime) + " of " + reminder.getType().getName() + " sleep for " + delay.getSeconds());
 
-                ReminderUtils.lockReminder(reminder);
-                executorService.schedule(taskWrapper, delay.getSeconds(), TimeUnit.SECONDS);
+                    ReminderUtils.lockReminder(reminder);
+                    executorService.schedule(taskWrapper, delay.getSeconds(), TimeUnit.SECONDS);
+                } else {
+                    ReminderUtils.unlockReminder(reminder);
+                }
             } else {
-                ReminderUtils.unlockReminder(reminder);
+                logger.info("deleting old reminder");
+                {
+                    ReminderUtils.deleteReminder(reminder.getName(), reminder.getType());
+                }
             }
-        } else {
-            logger.info("deleting old reminder");
-            {
-                ReminderUtils.deleteReminder(reminder.getName(), reminder.getType());
-            }
+        } catch (Exception e) {
+            printException(e);
+
         }
 
     }
@@ -229,7 +234,16 @@ public class DoReminder extends Action {
         msg = msg.replace("{cmd}", command);
 
 
-        client.getChannelById(Snowflake.of(reminder.getChannel())).createMessage(msg).block();
+        if (profile.getDmReminder()) {
+            String finalMsg = "**Reminder from <#" + reminder.getChannel() + ">** \r\n" + msg;
+            gateway.getUserById(Snowflake.of(profile.getName())).block().getPrivateChannel().flatMap(channel -> {
+                channel.createMessage(finalMsg).block();
+                logger.info("sent DM");
+                return Mono.empty();
+            }).block();
+        } else {
+            client.getChannelById(Snowflake.of(reminder.getChannel())).createMessage(msg).block();
+        }
         if (reminder.getType() == ReminderType.gift) {
             //for gifts only delete that reminder
             ReminderUtils.deleteReminder(reminder);

@@ -17,6 +17,7 @@ public class Karen extends Action {
     String param4;
     String param5;
     String param6;
+    String param7;
 
     public Karen() {
         param = "Someone left a tip for";
@@ -25,6 +26,7 @@ public class Karen extends Action {
         param4 = "Sell Game";
         param5 = "Math Game";
         param6 = "Unscramble Game";
+        param7 = "Trivia Game";
         customerChannel = "840942880775471114";
         customerPing = "931599227824517151";
 
@@ -49,7 +51,9 @@ public class Karen extends Action {
                         });
                     }
                     for (Embed embed: message.getEmbeds()){
-                        if (embed.getTitle().isPresent()) {
+                        if (embed.getTitle().isPresent() && embed.getDescription().isPresent()) {
+
+                            String [] question = embed.getDescription().get().split("`");
                             if (embed.getTitle().get().contains(param4)){
                                 logger.info("got sell");
                                 return message.getChannel().flatMap(channel -> {
@@ -59,13 +63,22 @@ public class Karen extends Action {
                             if (embed.getTitle().get().contains(param5)){
                                 logger.info("got math");
                                 return message.getChannel().flatMap(channel -> {
+                                    channel.createMessage("Bill was " + question[1]).block();
                                     return channel.createMessage("<@&" + customerPing + "> Karen is here, with math :speaking_head:");
                                 });
                             }
                             if (embed.getTitle().get().contains(param6)){
                                 logger.info("got unscramble");
                                 return message.getChannel().flatMap(channel -> {
+                                    channel.createMessage("Unscramble was " + question[1]).block();
                                     return channel.createMessage("<@&" + customerPing + "> Karen is here, with unscramble :speaking_head:");
+                                });
+                            }
+                            if (embed.getTitle().get().contains(param7)){
+                                logger.info("got trivia");
+                                return message.getChannel().flatMap(channel -> {
+                                    channel.createMessage("Question was " + question[1]).block();
+                                    return channel.createMessage("<@&" + customerPing + "> Karen is here, with trivia :speaking_head:");
                                 });
                             }
                         }

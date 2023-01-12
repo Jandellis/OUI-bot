@@ -4,7 +4,7 @@ public enum Status {
     gordon(6,2, "gordon"),
     exe(7,3, "executive"),
     head(7,3, "head"),
-    sous(7,3, "sous"),
+    sous(7,4, "sous"),
     normal(9,4, "normal");
 
     private int work;

@@ -1,6 +1,7 @@
 package action.reminder;
 
 import action.Action;
+import action.reminder.model.Profile;
 import action.reminder.model.Reminder;
 import discord4j.core.object.entity.Message;
 import discord4j.core.spec.EmbedCreateSpec;
@@ -111,6 +112,17 @@ public class EnableProfile extends Action {
 
                         ReminderUtils.setDepth(message.getAuthor().get().getId().asString(), number);
                         message.getChannel().block().createMessage("History updated to " + number).block();
+                        return Mono.empty();
+                    }
+
+                    if (action.equalsIgnoreCase("dm")) {
+
+
+                        Boolean toggled = ReminderUtils.toggleDmReminders(message.getAuthor().get().getId().asString());
+                        if (toggled) {
+                            Profile profile = ReminderUtils.loadProfileById(message.getAuthor().get().getId().asString());
+                            message.getChannel().block().createMessage("DM reminders toggled, currently is " + (profile.getDmReminder() ? "enabled":"disabled")).block();
+                        }
                         return Mono.empty();
                     }
 

@@ -1,15 +1,16 @@
 package action;
 
 import action.reminder.DoReminder;
+import action.reminder.EmbedAction;
+import action.reminder.ReminderType;
 import action.reminder.ReminderUtils;
 import action.reminder.model.Profile;
 import action.reminder.model.Reminder;
-import action.reminder.ReminderType;
 import bot.Clean;
 import discord4j.common.util.Snowflake;
-import discord4j.core.object.Embed;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.reaction.ReactionEmoji;
+import discord4j.discordjson.json.EmbedData;
 import discord4j.discordjson.json.MessageData;
 import reactor.core.publisher.Mono;
 
@@ -21,7 +22,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class GiveawayAdd extends Action {
+public class GiveawayAdd extends Action implements EmbedAction {
 
     String giveawayChannel;
     String tacoBot = "490707751832649738";
@@ -39,38 +40,19 @@ public class GiveawayAdd extends Action {
             if (message.getData().author().id().asString().equals(tacoBot)) {
                 try {
                     //for some reason the embeds will be empty from slash, but if i load it again it will have data
-                    if (checkAge(message)) {
-                        checkMessageAgain(message);
+//                    if (checkAge(message)) {
+//                        checkMessageAgain(message);
+//                    }
+
+                    List<EmbedData> embedData;
+                    if (message.getEmbeds().isEmpty() || message.getEmbeds().size() == 0) {
+
+                        embedData = checkEmbeds(message);
+                    } else {
+                        embedData = message.getData().embeds();
                     }
+                    handleEmbedAction(message, embedData);
 
-                    for (Embed embed : message.getEmbeds()) {
-                        if (embed.getDescription().isPresent()) {
-
-
-                            String line = embed.getDescription().get();
-
-                            if (line.contains(" You have received a gift of `$")) {
-
-                                String amount = line.replace(" You have received a gift of `", "");
-                                int index = amount.indexOf("$");
-                                amount = amount.substring(index + 1);
-                                amount = amount.replace(",", "");
-                                String[] split = amount.split("` from ");
-                                amount = split[0];
-                                try {
-                                    Clean.addGift(Integer.parseInt(amount));
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                }
-                                logger.info("Added to gift");
-                                logger.info(embed.getData());
-                                message.addReaction(ReactionEmoji.unicode("\uD83D\uDCB0")).block();
-                                doReminderCheck(message);
-
-                            }
-
-                        }
-                    }
                 } catch (Exception e) {
                     printException(e);
                 }
@@ -80,9 +62,48 @@ public class GiveawayAdd extends Action {
         return Mono.empty();
     }
 
-    private void doReminderCheck(Message message) {
+
+    @Override
+    public Mono<Object> handleEmbedAction(Message message, List<EmbedData> embedData) {
+
+        try {
+            for (EmbedData embed : embedData) {
+                if (embed.description().toOptional().isPresent()) {
+
+
+                    String line = embed.description().get();
+
+                    if (line.contains(" You have received a gift of `$")) {
+
+                        String amount = line.replace(" You have received a gift of `", "");
+                        int index = amount.indexOf("$");
+                        amount = amount.substring(index + 1);
+                        amount = amount.replace(",", "");
+                        String[] split = amount.split("` from ");
+                        amount = split[0];
+                        try {
+                            Clean.addGift(Integer.parseInt(amount));
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        logger.info("Added to gift");
+                        logger.info(embed);
+                        message.addReaction(ReactionEmoji.unicode("\uD83D\uDCB0")).block();
+                        doReminderCheck(message, embed);
+
+                    }
+
+                }
+            }
+        } catch (Exception e) {
+            printException(e);
+        }
+        return Mono.empty();
+    }
+
+    private void doReminderCheck(Message message, EmbedData embedData) {
         AtomicReference<String> userId = new AtomicReference<>("");
-        userId.set(getId(message));
+        userId.set(getId(message, embedData));
 
 
         if (userId.get().equals("")) {

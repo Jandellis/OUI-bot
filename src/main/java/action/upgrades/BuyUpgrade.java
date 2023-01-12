@@ -1,6 +1,7 @@
 package action.upgrades;
 
 import action.Action;
+import action.reminder.EmbedAction;
 import action.reminder.ReminderUtils;
 import action.reminder.model.Profile;
 import action.upgrades.model.Location;
@@ -12,6 +13,7 @@ import discord4j.core.object.Embed;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.reaction.ReactionEmoji;
 import discord4j.core.spec.EmbedCreateSpec;
+import discord4j.discordjson.json.EmbedData;
 import discord4j.rest.util.Color;
 import reactor.core.publisher.Mono;
 
@@ -22,7 +24,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class BuyUpgrade extends Action {
+public class BuyUpgrade extends Action implements EmbedAction {
 
     String tacoBot = "490707751832649738";
     List<String> watchChannels;
@@ -233,52 +235,25 @@ public class BuyUpgrade extends Action {
         if (watched.get()) {
             try {
                 if (message.getData().author().id().asString().equals(tacoBot)) {
-                    //for some reason the embeds will be empty from slash, but if i load it again it will have data
-                    if (checkAge(message)) {
-                        checkMessageAgain(message);
+
+
+                    List<EmbedData> embedData;
+                    if (message.getEmbeds().isEmpty() || message.getEmbeds().size() == 0){
+
+                        logger.info("empty embeds, skipping");
+//                        handleEmbedAction(message, checkEmbeds(message));
+                        return Mono.empty();
                     } else {
-                        for (Embed embed : message.getEmbeds()) {
-                            if (embed.getTitle().isPresent() && embed.getDescription().isPresent()) {
-                                String title = embed.getTitle().get();
-
-                                if (title.contains("Decorations") ||
-                                        title.contains("Upgrades ") ||
-                                        title.contains("Advertisements ") ||
-                                        title.contains("Employees ") ||
-                                        title.contains("Mall Kiosk") ||
-                                        title.contains("Taco Truck") ||
-                                        title.contains("Hotdog Cart") ||
-                                        title.contains("Ice Cream Stand")) {
-                                    String id = getId(message);
-                                    Location location = getLocation(title, embed.getDescription().get());
-
-                                    if (location == null) {
-                                        return Mono.empty();
-                                    }
-
-                                    if (embed.getDescription().isPresent()) {
-                                        String desc = embed.getDescription().get();
-                                        String[] lines = desc.split("\n");
-                                        List<Upgrade> upgrades = new ArrayList<>();
-                                        for (String line : lines) {
-
-                                            Upgrade upgrade = location.getUpgrade(line);
-                                            if (upgrade != null) {
-                                                upgrades.add(upgrade);
-                                                UpgradeUtils.addUserUpgrades(new UserUpgrades(id, location.getName().getName(), upgrade.getName(), upgrade.getPosition()));
-                                            }
-                                        }
-
-                                        Profile profile = ReminderUtils.loadProfileById(id);
-                                        if (profile != null) {
-                                            react(message, profile, false);
-                                            react(message, profile, true);//:arrows_counterclockwise:
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                        embedData = message.getData().embeds();
                     }
+                    //for some reason the embeds will be empty from slash, but if i load it again it will have data
+//                    if (checkAge(message)) {
+//                        checkMessageAgain(message);
+//                    } else {
+
+//                    }
+
+                    handleEmbedAction(message, embedData);
 
                 } else {
                     //message is from a user
@@ -591,22 +566,22 @@ public class BuyUpgrade extends Action {
                         String userId = message.getAuthor().get().getId().asString();
 
 
-                            int number;
-                            try {
-                                number = Integer.parseInt(action);
-                            } catch (NumberFormatException e) {
-                                message.getChannel().block().createMessage("missing number").block();
-                                return Mono.empty();
-                            }
-                            if (number > 30) {
-
-                                message.getChannel().block().createMessage("Max value is 30r").block();
-                                return Mono.empty();
-                            }
-
-                            ReminderUtils.setUpgrade(userId, number);
-                            message.getChannel().block().createMessage("Upgrade limit updated to " + number).block();
+                        int number;
+                        try {
+                            number = Integer.parseInt(action);
+                        } catch (NumberFormatException e) {
+                            message.getChannel().block().createMessage("missing number").block();
                             return Mono.empty();
+                        }
+                        if (number > 30) {
+
+                            message.getChannel().block().createMessage("Max value is 30r").block();
+                            return Mono.empty();
+                        }
+
+                        ReminderUtils.setUpgrade(userId, number);
+                        message.getChannel().block().createMessage("Upgrade limit updated to " + number).block();
+                        return Mono.empty();
                     }
 
                 }
@@ -616,6 +591,60 @@ public class BuyUpgrade extends Action {
         }
         return Mono.empty();
     }
+
+
+    @Override
+    public Mono<Object> handleEmbedAction(Message message, List<EmbedData> embedData) {
+
+        try {
+            for (EmbedData embed : embedData) {
+                if (embed.title().toOptional().isPresent() && embed.description().toOptional().isPresent()) {
+                    String title = embed.title().get();
+
+                    if (title.contains("Decorations") ||
+                            title.contains("Upgrades ") ||
+                            title.contains("Advertisements ") ||
+                            title.contains("Employees ") ||
+                            title.contains("Mall Kiosk") ||
+                            title.contains("Taco Truck") ||
+                            title.contains("Hotdog Cart") ||
+                            title.contains("Ice Cream Stand")) {
+                        String id = getId(message, embed);
+                        Location location = getLocation(title, embed.description().get());
+
+                        if (location == null) {
+                            return Mono.empty();
+                        }
+
+                        if (embed.description().toOptional().isPresent()) {
+                            String desc = embed.description().get();
+                            String[] lines = desc.split("\n");
+                            List<Upgrade> upgrades = new ArrayList<>();
+                            for (String line : lines) {
+
+                                Upgrade upgrade = location.getUpgrade(line);
+                                if (upgrade != null) {
+                                    upgrades.add(upgrade);
+                                    UpgradeUtils.addUserUpgrades(new UserUpgrades(id, location.getName().getName(), upgrade.getName(), upgrade.getPosition()));
+                                }
+                            }
+
+                            Profile profile = ReminderUtils.loadProfileById(id);
+                            if (profile != null) {
+                                react(message, profile, false);
+                                react(message, profile, true);//:arrows_counterclockwise:
+                            }
+                        }
+                    }
+                }
+            }
+
+        } catch (Exception e) {
+            printException(e);
+        }
+
+        return Mono.empty();
+}
 
 
     private void react(Message message, Profile profile, boolean refresh) {
@@ -671,17 +700,28 @@ public class BuyUpgrade extends Action {
     @Override
     protected Mono<Object> doReactionEvent(ReactionAddEvent reactionAddEvent) {
 
-        if (reactionAddEvent.getEmoji().asUnicodeEmoji().get().getRaw().equals(reloadEmote)) {
-            //got reaction
-            Message message = reactionAddEvent.getMessage().block();
-            String messageAuthorId = getId(message);
-            if (messageAuthorId.equals(reactionAddEvent.getUserId().asString())) {
-                //user is the same as who wrote the did the message
-                //remove all reactions
-                message.removeAllReactions().block();
-                doAction(message);
+        try {
 
-            }
+            if (reactionAddEvent.getEmoji().asUnicodeEmoji().isPresent())
+                if (reactionAddEvent.getEmoji().asUnicodeEmoji().get().getRaw().equals(reloadEmote)) {
+                    //got reaction
+                    Message message = reactionAddEvent.getMessage().block();
+                    EmbedData embedData = null;
+                    if (message.getEmbeds().size()> 0) {
+                     embedData = message.getEmbeds().get(0).getData();
+                    }
+
+                    String messageAuthorId = getId(message, embedData);
+                    if (messageAuthorId.equals(reactionAddEvent.getUserId().asString())) {
+                        //user is the same as who wrote the did the message
+                        //remove all reactions
+                        message.removeAllReactions().block();
+                        doAction(message);
+
+                    }
+                }
+        } catch (Exception e) {
+            printException(e);
         }
 
         return Mono.empty();
