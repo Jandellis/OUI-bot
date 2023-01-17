@@ -3,6 +3,7 @@ package action.sm.model;
 public enum AlertType {
     high("high"),
     drop("drop"),
+    rise("rise"),
     low("low");
 
     private String name;

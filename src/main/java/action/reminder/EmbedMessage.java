@@ -26,6 +26,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -75,7 +76,13 @@ public class EmbedMessage extends Action {
                     List<EmbedData> embedData;
                     if (message.getEmbeds().isEmpty() || message.getEmbeds().size() == 0){
                         logger.info("empty embeds");
-                        embedData = checkEmbeds(message);
+//                        embedData = checkEmbeds(message);
+                        if (message.getContent().isEmpty()) {
+                            lookForEmbeds(message, 0);
+                        } else {
+                            logger.info("Message has content, will not check for embeds");
+                        }
+                        return Mono.empty();
 
                     } else {
 
@@ -96,6 +103,57 @@ public class EmbedMessage extends Action {
 
 
         return Mono.empty();
+    }
+
+
+
+    public Mono<Object> doEmbed(Message message, List<EmbedData> embedData) {
+
+        if (message.getData().author().id().asString().equals(tacoBot)) {
+            try {
+                for (EmbedAction embedAction : embedActions) {
+                    embedAction.handleEmbedAction(message, embedData);
+                }
+            } catch (Exception e) {
+                printException(e);
+            }
+
+        }
+
+
+        return Mono.empty();
+    }
+
+    private void lookForEmbeds(Message message, int count) {
+
+        Runnable taskWrapper = new Runnable() {
+
+            @Override
+            public void run() {
+//                logger.info("checking message again");
+//                Message msg = gateway.getMessageById(Snowflake.of(message.getChannelId().asString()), Snowflake.of(message.getId().asString())).block();
+//                doAction(msg);
+
+                List<EmbedData> embedData;
+                logger.info("checking for embeds try "+ count);
+                embedData = checkEmbeds(message);
+                if (embedData.isEmpty()){
+                    int newCount = count + 1;
+                    lookForEmbeds(message, newCount);
+
+                } else {
+                    doEmbed(message, embedData);
+                }
+            }
+
+        };
+//        logger.info("checking message again in 1 sec");
+        if (count < 5) {
+            executorService.schedule(taskWrapper, 500, TimeUnit.MILLISECONDS);
+        } else {
+
+            logger.info("checking for embeds - hit "+ count);
+        }
     }
 
 

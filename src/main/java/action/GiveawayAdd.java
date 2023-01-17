@@ -89,7 +89,7 @@ public class GiveawayAdd extends Action implements EmbedAction {
                         logger.info("Added to gift");
                         logger.info(embed);
                         message.addReaction(ReactionEmoji.unicode("\uD83D\uDCB0")).block();
-                        doReminderCheck(message, embed);
+//                        doReminderCheck(message, embed);
 
                     }
 

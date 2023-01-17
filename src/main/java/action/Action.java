@@ -188,7 +188,7 @@ public abstract class Action {
                 String[] footer = username.split("\n");
                 username = footer[footer.length-1];
             }
-            username = username.split(" ")[0];
+            username = username.split(" \\| ")[0];
             Profile profile = ReminderUtils.loadProfileByUserName(username);
 
             if (profile != null) {
@@ -218,9 +218,21 @@ public abstract class Action {
                     continue;
                 }
                 if (message.getMessageReference().isPresent()) {
-                    Message msg = gateway.getMessageById(Snowflake.of(message.getChannelId().asString()), Snowflake.of(message.getMessageReference().get().getMessageId().get().asLong())).block();
-                    message = msg;
-                    continue;
+                    try {
+                        Message msg = gateway.getMessageById(Snowflake.of(message.getChannelId().asString()), Snowflake.of(message.getMessageReference().get().getMessageId().get().asLong())).block();
+                        message = msg;
+                        continue;
+                    } catch (ClientException e) {
+
+                        if (e.getErrorResponse().isPresent() &&
+                                e.getErrorResponse().get().getFields().get("code").equals(10008) &&
+                                e.getErrorResponse().get().getFields().get("message").equals("Unknown Message")) {
+                            logger.info("UserName is not know, and message history was deleted, skipping trying to do anything for this message");
+                        } else {
+                            printException(e);
+                        }
+                        return "";
+                    }
                 }
                 return "";
             }
@@ -282,11 +294,11 @@ public abstract class Action {
 
         logger.info("checking embeds " + message.getId());
         if (message.getEmbeds().isEmpty()) {
-            try {
-                Thread.sleep(250);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+//            try {
+//                Thread.sleep(250);
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
+//            }
 
 
             List<MessageData> history = getMessagesOfChannel(message);

@@ -36,6 +36,13 @@ public class Message extends Action {
 
                 if (action != null) {
                     action = message.getContent().substring(param.length() + 1);
+                    if (action.startsWith("`") && action.endsWith("`")) {
+                        action = action.substring(1, action.length() - 1);
+                    }
+
+                    action = action.replace("\\:", ":");
+
+
                     if (action.contains("<@")) {
                         message.getChannel().block().createMessage("You can not try to ping other people or roles!").block();
                     } else {

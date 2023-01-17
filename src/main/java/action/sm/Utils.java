@@ -219,7 +219,7 @@ public class Utils {
                     // alert is low, or drop type
                     // for drop if its on watch list and both
                     // but not if they own the sauce
-                    if (trigger.getType() == AlertType.low && !sauces.contains(watch.getSauce()) || (
+                    if ((trigger.getType() == AlertType.low || trigger.getType() == AlertType.rise ) && !sauces.contains(watch.getSauce()) || (
                             trigger.getType() == AlertType.drop && (
                                     trigger.getDrop() == Drop.both || trigger.getDrop() == Drop.watchlist
                             )
@@ -227,9 +227,9 @@ public class Utils {
                         if (trigger.getType() == AlertType.drop && dropAlerts.contains(watch.getSauce())) {
                             logger.info("All ready got this alert");
                         } else {
-                            if (!sauces.contains(watch.getSauce())) {
-                                sauces.add(watch.getSauce());
-                            }
+//                            if (!sauces.contains(watch.getSauce())) {
+//                                sauces.add(watch.getSauce());
+//                            }
 
                             st.addBatch("insert into sm_alerts (name, alert_type, trigger, price, channel) " +
                                     "VALUES ('" + name + "', '" + trigger.getType() + "', '" + watch.getSauce().getName() + "', " + trigger.getPrice() + ", '" + channel + "')");

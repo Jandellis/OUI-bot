@@ -130,6 +130,10 @@ public class PriceCheck extends Action {
                     HashMap<Integer, Integer> saucePrices = Utils.loadLast3(Sauce.getSauce(alert.getTrigger()));
                     alerts.get(alert.getName()).append(printDrop(saucePrices, Sauce.getSauce(alert.getTrigger()), alert.getName()));
                 }
+                if (alert.getType() == AlertType.rise) {
+                    HashMap<Integer, Integer> saucePrices = Utils.loadLast3(Sauce.getSauce(alert.getTrigger()));
+                    alerts.get(alert.getName()).append(printRise(saucePrices, Sauce.getSauce(alert.getTrigger()), alert.getName()));
+                }
                 if (alert.getType() == AlertType.high) {
                     int price = alert.getPrice();
                     alerts.get(alert.getName()).append(printHigh(prices, price, alert.getName(), alert.getTrigger()));
@@ -466,6 +470,49 @@ public class PriceCheck extends Action {
 
 
         if (dropping.get())
+            return sb.toString() + " \r\n";
+//             client.getChannelById(Snowflake.of(smChannel)).createMessage(sb.toString()).block();
+        else {
+            logger.info("No dropping sauce");
+            return "";
+        }
+    }
+
+    public String printRise(HashMap<Integer, Integer> prices, Sauce sauce, String person) {
+
+        StringBuilder sb = new StringBuilder();
+        AtomicBoolean rising = new AtomicBoolean(false);
+        sb.append(" <a:greenup:1015028862368878723>  " + sauce + " is rising");
+
+        Integer now = prices.get(0);
+        Integer hour1 = prices.get(1);
+        Integer hour2 = prices.get(2);
+
+        logger.info("now: " + now + ", hour + 1: " + hour1 + ", hour + 2:" + hour2);
+
+        if (hour1 == null) {
+            hour1 = now;
+        }
+//        if (hour2 == null) {
+//            hour2 = hour1;
+//        }
+
+        Integer dif = now - hour1;
+//        Integer dif2 = hour1 - hour2;
+
+        if (dif > 9) {
+            int rise = dif;
+            sb.append("\r\n  -  up $" + rise + " last hour ");
+            rising.set(true);
+        }
+//        if (dif < 0 && dif2 < 0) {
+//            int drop2 = (now - hour2) * -1;
+//            sb.append("\r\n  -  down $" + drop2 + " last 2 hours");
+//            dropping.set(true);
+//        }
+
+
+        if (rising.get())
             return sb.toString() + " \r\n";
 //             client.getChannelById(Snowflake.of(smChannel)).createMessage(sb.toString()).block();
         else {

@@ -34,6 +34,7 @@ public class GiveAWay extends Action {
     String giveawayChannel;
     String giveawayShower;
     String giveawayRole;
+    long chefRole;
 
     ScheduledExecutorService executorService = Executors.newScheduledThreadPool(2);
 
@@ -50,6 +51,7 @@ public class GiveAWay extends Action {
         giveawayRole = config.get("giveawayRole");
         react = "\uD83C\uDF89";
         recruiter = Long.parseLong(config.get("recruiter"));
+        chefRole = Long.parseLong(config.get("chefRole"));
 
     }
 
@@ -124,6 +126,7 @@ public class GiveAWay extends Action {
                     List<Id> roles = client.getGuildById(Snowflake.of(guildId)).getMember(Snowflake.of(user.getId().asString())).block().roles();
                     roles.forEach((roleId) -> {
                         if (roleId.asLong() == Long.parseLong(giveawayRole)) {
+//                        if (roleId.asLong() == chefRole) {
                             enteredList.add(user.getId().asString());
                         }
                     });
@@ -141,7 +144,7 @@ public class GiveAWay extends Action {
                     "<@&875880362482491422> to go <#875882488680034326> and use your gift";
 
             client.getChannelById(Snowflake.of(giveawayChannel)).createMessage(winnerMessage).block();
-            client.getChannelById(Snowflake.of(giveawayShower)).createMessage("New giveaway winner is <@" + winner + ">").block();
+            client.getChannelById(Snowflake.of(giveawayShower)).createMessage("<@&875880362482491422> you can gift again, please gift the new giveaway winner. \n\n <@" + winner + "> won!!").block();
             client.getChannelById(Snowflake.of(giveawayChannel)).createMessage("`/gift member: <@" + winner + ">`").block();
 
 

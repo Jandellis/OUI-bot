@@ -7,6 +7,7 @@ import discord4j.core.object.entity.Message;
 import discord4j.core.object.reaction.ReactionEmoji;
 import discord4j.discordjson.json.EmbedData;
 import discord4j.discordjson.json.MemberData;
+import discord4j.rest.http.client.ClientException;
 import reactor.core.publisher.Mono;
 
 import java.util.Arrays;
@@ -91,8 +92,29 @@ public class CreateProfile extends Action implements EmbedAction {
                             String shackName = line.replace("\uD83D\uDD3A ", "").replace("\uD83C\uDF2E", "").replace(" ()", "").replace(" \uD83C\uDFDB", "");
                             Status status = Status.getStatus(embed.footer().get().text());
                             String id = embed.thumbnail().get().url().get().replace("https://cdn.discordapp.com/avatars/", "").split("/")[0];
+                            MemberData memberData = null;
+                            try {
+                                logger.info("thumbnail id is " + embed.thumbnail().get().url().get());
+                                logger.info("User id is " + id);
+                                message.getGuildId().get();
+                                memberData = client.getGuildById(Snowflake.of(guildId)).getMember(Snowflake.of(id)).block();
 
-                            MemberData memberData = client.getGuildById(Snowflake.of(guildId)).getMember(Snowflake.of(id)).block();
+                            } catch (NumberFormatException e) {
+                                gateway.getUserById(Snowflake.of("292839877563908097")).block().getPrivateChannel().flatMap(channel -> {
+                                    channel.createMessage("**something broke!!**\r\n\r\n NumberFormatException in create profile! " + embed.thumbnail().get().url().get()).block();
+                                    return Mono.empty();
+                                }).block();
+                            } catch (ClientException e) {
+
+                                if (e.getErrorResponse().isPresent() &&
+                                        e.getErrorResponse().get().getFields().get("code").equals(10007) &&
+                                        e.getErrorResponse().get().getFields().get("message").equals("Unknown Member")) {
+                                    logger.info("Member not in server, not creating profile");
+                                } else {
+                                    printException(e);
+                                }
+                                return Mono.empty();
+                            }
                             String userName = memberData.user().username();
                             String discriminator = memberData.user().discriminator();
 

@@ -14,6 +14,7 @@ public class AddAlert extends Action {
     String smUpdate;
     String cheapPing;
     String paramDrop;
+    String paramRise;
     String paramDelete;
     String paramHigh;
     String paramLow;
@@ -30,6 +31,7 @@ public class AddAlert extends Action {
         smUpdate = config.get("smUpdate");
         cheapPing = config.get("cheapPing");
         paramDrop = "cySmDrop";
+        paramRise = "cySmRise";
         paramDelete = "cySmDelete";
         paramHigh = "cySmHigh";
         parmaAlert = "cySmAlert";
@@ -69,6 +71,15 @@ public class AddAlert extends Action {
                         break;
                 }
                 message.getChannel().block().createMessage("I will alert you when " + alert + " drop").block();
+            }
+
+
+            action = getAction(message, paramRise.toLowerCase());
+            if (action != null) {
+                String userId = message.getAuthor().get().getId().asString();
+
+                Utils.addTrigger(userId, AlertType.rise, Drop.watchlist.getPrice());
+                message.getChannel().block().createMessage("I will alert you when your sauces on your watchlist rise").block();
             }
 
             action = getAction(message, paramDelete.toLowerCase());
@@ -178,6 +189,7 @@ public class AddAlert extends Action {
                 StringBuilder sb = new StringBuilder("I can help you monitor the price of your sauces. ");
                 sb.append("To set me up, first create some triggers.\r\n");
                 sb.append(" :small_blue_diamond: **" + paramDrop + " <" + Drop.both.getName() + "|" + Drop.owned.getName() + "|" + Drop.watchlist.getName() + "> **- add trigger for price dropping more than $10 in one hour or 2 hours in a row. Example `" + paramDrop + " " + Drop.owned.getName() + "`\r\n");
+//                sb.append(" :small_blue_diamond: **" + paramRise + " **- add trigger for price rising more than $10 in one hour. Example `" + paramRise + "`\r\n");
                 sb.append(" :small_blue_diamond: **" + paramHigh + " <price>** - add trigger when price hits that. Example `" + paramHigh + " 150`\r\n");
                 sb.append(" :small_blue_diamond: **" + paramLow + " <price>** - add trigger when price is lower. Example `" + paramLow + " 55`\r\n");
 
