@@ -22,6 +22,9 @@ public enum LocationEnum {
 
 
     public static LocationEnum getLocation(String name) {
+        if (name.equalsIgnoreCase("taco")) {
+            return shack;
+        }
         for (LocationEnum value : values()) {
             if (value.name.startsWith(name.toLowerCase()))
                 return value;

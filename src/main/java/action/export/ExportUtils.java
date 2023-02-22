@@ -2,6 +2,7 @@ package action.export;
 
 import action.export.model.Donations;
 import action.export.model.MemberDonations;
+import action.export.model.WarningData;
 import bot.Config;
 import bot.Member;
 import org.apache.logging.log4j.LogManager;
@@ -234,5 +235,67 @@ public class ExportUtils {
             logger.error("Exception", ex);
         }
         return new MemberDonations(0, id);
+    }
+
+
+    public static boolean updateWarningData(WarningData warningData) {
+        try {
+            Connection con = DriverManager.getConnection(url, user, password);
+            PreparedStatement pst = con.prepareStatement("UPDATE warning_data SET immunity_until = ?,  last_warning = ? WHERE name = ?");
+            pst.setTimestamp(1, warningData.getImmunityUntil());
+            pst.setTimestamp(2, warningData.getLastWarning());
+            pst.setString(3, warningData.getName());
+            int rs = pst.executeUpdate();
+            if (rs == 1) {
+                return true;
+            } else {
+
+                pst = con.prepareStatement("INSERT INTO warning_data (name, last_warning, immunity_until ) VALUES (?, ?, ?)");
+                pst.setString(1, warningData.getName());
+                pst.setTimestamp(2, warningData.getLastWarning());
+                pst.setTimestamp(3, warningData.getImmunityUntil());
+                return pst.execute();
+            }
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
+        return false;
+    }
+
+
+    public static WarningData loadWarningData(String id) {
+        try {
+            Connection con = DriverManager.getConnection(url, user, password);
+            PreparedStatement pst = con.prepareStatement("SELECT name, immunity_until, last_warning FROM warning_data WHERE name = ?");
+            pst.setString(1, id);
+            ResultSet rs = pst.executeQuery();
+            while (rs.next()) {
+                WarningData memberDonations = new WarningData(rs.getString(1), rs.getTimestamp(2), rs.getTimestamp(3));
+                return memberDonations;
+            }
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
+        return new WarningData(id, null, null);
+    }
+
+    public static List<WarningData> loadWarningDataAfterImmunity() {
+        List<WarningData> warningDataList = new ArrayList<>();
+        try {
+            Connection con = DriverManager.getConnection(url, user, password);
+
+
+            PreparedStatement pst = con.prepareStatement("SELECT name, immunity_until, last_warning FROM warning_data " +
+                    "WHERE immunity_until < now()");
+            ResultSet rs = pst.executeQuery();
+            while (rs.next()) {
+                WarningData warningData = new WarningData(rs.getString(1), rs.getTimestamp(2), rs.getTimestamp(3));
+                warningDataList.add(warningData);
+            }
+
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
+        return warningDataList;
     }
 }

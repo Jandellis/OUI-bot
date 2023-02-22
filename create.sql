@@ -173,3 +173,37 @@ update profile set dm_reminder = false;
 alter table profile alter column dm_reminder set default false;
 
 alter table profile add username VARCHAR(255);
+
+CREATE TABLE IF NOT EXISTS warning_data (
+    id serial PRIMARY KEY,
+    name VARCHAR(25),
+    immunity_until timestamp,
+    last_warning timestamp
+);
+
+CREATE TABLE IF NOT EXISTS sm_history (
+    id serial PRIMARY KEY,
+    name VARCHAR(25),
+    price int,
+    update_time timestamp
+);
+
+alter table sm_history add change int;
+alter table sm_history add change_1_to_2 int;
+alter table sm_history add change_1_to_3 int;
+alter table sm_history add change_1_to_4 int;
+alter table sm_history add change_1_to_5 int;
+
+alter table sm_history add change_0_to_1 int;
+alter table sm_history add change_0_to_2 int;
+alter table sm_history add change_0_to_3 int;
+alter table sm_history add change_0_to_4 int;
+
+CREATE TABLE IF NOT EXISTS profile_stats (
+    id serial PRIMARY KEY,
+    name VARCHAR(25),
+    income bigint,
+    balance bigint,
+    location VARCHAR(25),
+    import_time timestamp
+);

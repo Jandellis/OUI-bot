@@ -56,6 +56,32 @@ public class Utils {
 
     }
 
+
+    public static HashMap<Integer, Integer> loadLast5(Sauce sauce) {
+        String sauceName = sauce.getName();
+        if (sauce == Sauce.guacamole) {
+            sauceName = "guac";
+        }
+
+
+        HashMap<Integer, Integer> prices = new HashMap<>();
+        try (Connection con = DriverManager.getConnection(url, user, password);
+             PreparedStatement pst = con.prepareStatement("SELECT price, update_time FROM sm_history WHERE name = '" + sauceName + "' ORDER BY update_time desc LIMIT 5 ");
+             ResultSet rs = pst.executeQuery()) {
+
+            int count = 1;
+            while (rs.next()) {
+                prices.put(count, rs.getInt(1));
+                count++;
+            }
+
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
+        return prices;
+
+    }
+
     public static void updatePrices(int pico, int guac, int salsa, int hotsauce, int chipotle) {
 
         try {
@@ -76,6 +102,24 @@ public class Utils {
                     "VALUES ('hotsauce', " + hotsauce + ", 0);");
             st.addBatch("insert into sm (name, price, age) " +
                     "VALUES ('chipotle', " + chipotle + ", 0);");
+
+            HashMap<Integer, Integer> picoHistory = loadLast5(Sauce.pico);
+            HashMap<Integer, Integer> guacHistory = loadLast5(Sauce.guacamole);
+            HashMap<Integer, Integer> salsaHistory = loadLast5(Sauce.salsa);
+            HashMap<Integer, Integer> hotsauceHistory = loadLast5(Sauce.hotsauce);
+            HashMap<Integer, Integer> chipotleHistory = loadLast5(Sauce.chipotle);
+
+            st.addBatch("insert into sm_history (name, price, update_time, change, change_1_to_2, change_1_to_3, change_1_to_4, change_1_to_5, change_0_to_1, change_0_to_2, change_0_to_3, change_0_to_4) " +
+                    "VALUES ('pico', " + pico + ", now() - interval '5 minutes', "+(pico - picoHistory.get(1))+", "+(picoHistory.get(1) - picoHistory.get(2))+", "+(picoHistory.get(1) - picoHistory.get(3))+", "+(picoHistory.get(1) - picoHistory.get(4))+", "+(picoHistory.get(1) - picoHistory.get(5))+", "+(pico - picoHistory.get(1))+", "+(pico - picoHistory.get(2))+", "+(pico - picoHistory.get(3))+", "+(pico - picoHistory.get(4))+");");
+            st.addBatch("insert into sm_history (name, price, update_time, change, change_1_to_2, change_1_to_3, change_1_to_4, change_1_to_5, change_0_to_1, change_0_to_2, change_0_to_3, change_0_to_4) " +
+                    "VALUES ('guac', " + guac + ", now() - interval '5 minutes', "+(guac - guacHistory.get(1))+", "+(guacHistory.get(1) - guacHistory.get(2))+", "+(guacHistory.get(1) - guacHistory.get(3))+", "+(guacHistory.get(1) - guacHistory.get(4))+", "+(guacHistory.get(1) - guacHistory.get(5))+", "+(guac - guacHistory.get(1))+", "+(guac - guacHistory.get(2))+", "+(guac - guacHistory.get(3))+", "+(guac - guacHistory.get(4))+");");
+            st.addBatch("insert into sm_history (name, price, update_time, change, change_1_to_2, change_1_to_3, change_1_to_4, change_1_to_5, change_0_to_1, change_0_to_2, change_0_to_3, change_0_to_4) " +
+                    "VALUES ('salsa', " + salsa + ", now() - interval '5 minutes', "+(salsa - salsaHistory.get(1))+", "+(salsaHistory.get(1) - salsaHistory.get(2))+", "+(salsaHistory.get(1) - salsaHistory.get(3))+", "+(salsaHistory.get(1) - salsaHistory.get(4))+", "+(salsaHistory.get(1) - salsaHistory.get(5))+", "+(salsa - salsaHistory.get(1))+", "+(salsa - salsaHistory.get(2))+", "+(salsa - salsaHistory.get(3))+", "+(salsa - salsaHistory.get(4))+");");
+            st.addBatch("insert into sm_history (name, price, update_time, change, change_1_to_2, change_1_to_3, change_1_to_4, change_1_to_5, change_0_to_1, change_0_to_2, change_0_to_3, change_0_to_4) " +
+                    "VALUES ('hotsauce', " + hotsauce + ", now() - interval '5 minutes', "+(hotsauce - hotsauceHistory.get(1))+", "+(hotsauceHistory.get(1) - hotsauceHistory.get(2))+", "+(hotsauceHistory.get(1) - hotsauceHistory.get(3))+", "+(hotsauceHistory.get(1) - hotsauceHistory.get(4))+", "+(hotsauceHistory.get(1) - hotsauceHistory.get(5))+", "+(hotsauce - hotsauceHistory.get(1))+", "+(hotsauce - hotsauceHistory.get(2))+", "+(hotsauce - hotsauceHistory.get(3))+", "+(hotsauce - hotsauceHistory.get(4))+");");
+            st.addBatch("insert into sm_history (name, price, update_time, change, change_1_to_2, change_1_to_3, change_1_to_4, change_1_to_5, change_0_to_1, change_0_to_2, change_0_to_3, change_0_to_4) " +
+                    "VALUES ('chipotle', " + chipotle + ", now() - interval '5 minutes', "+(chipotle - chipotleHistory.get(1))+", "+(chipotleHistory.get(1) - chipotleHistory.get(2))+", "+(chipotleHistory.get(1) - chipotleHistory.get(3))+", "+(chipotleHistory.get(1) - chipotleHistory.get(4))+", "+(chipotleHistory.get(1) - chipotleHistory.get(5))+", "+(chipotle - chipotleHistory.get(1))+", "+(chipotle - chipotleHistory.get(2))+", "+(chipotle - chipotleHistory.get(3))+", "+(chipotle - chipotleHistory.get(4))+");");
+
 
             st.executeBatch();
 

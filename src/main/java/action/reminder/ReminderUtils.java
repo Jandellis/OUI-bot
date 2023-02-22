@@ -1,10 +1,12 @@
 package action.reminder;
 
 import action.reminder.model.Profile;
+import action.reminder.model.ProfileStats;
 import action.reminder.model.Reminder;
 import action.reminder.model.Stats;
 import action.reminder.model.Status;
 import action.reminder.model.Team;
+import action.upgrades.model.LocationEnum;
 import bot.Config;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -492,8 +494,6 @@ public class ReminderUtils {
     }
 
 
-
-
     public static Profile loadProfileByUserName(String username) {
         Profile profile = null;
         try {
@@ -525,8 +525,6 @@ public class ReminderUtils {
         }
         return profile;
     }
-
-
 
 
     public static boolean updateStatsWork(String id) {
@@ -631,6 +629,7 @@ public class ReminderUtils {
 
         return statsList;
     }
+
     public static void resetStats() {
         try {
             Connection con = DriverManager.getConnection(url, user, password);
@@ -672,8 +671,6 @@ public class ReminderUtils {
             Connection con = DriverManager.getConnection(url, user, password);
 
 
-
-
             PreparedStatement pst = con.prepareStatement("select name, team, owner, joined from team_stats where team = ?");
             pst.setString(1, teamName);
             ResultSet rs = pst.executeQuery();
@@ -688,6 +685,7 @@ public class ReminderUtils {
 
         return teams;
     }
+
     public static void createTeam(Team team) {
         List<Team> teams = new ArrayList<>();
         try {
@@ -823,6 +821,63 @@ public class ReminderUtils {
             logger.error("Exception", ex);
         }
         return updated;
+    }
+
+
+    public static boolean addProfileStats(ProfileStats stats) {
+        Boolean newProfile = false;
+        try {
+            Connection con = DriverManager.getConnection(url, user, password);
+            Statement st = con.createStatement();
+
+            String sql = "insert into profile_stats (name, income, balance, location, import_time) " +
+                    "VALUES (?, ?, ?, ?, ?)";
+            PreparedStatement p = con.prepareStatement(sql);
+            p.setString(1, stats.getName());
+            p.setLong(2, stats.getIncome());
+            p.setLong(3, stats.getBalance());
+            p.setString(4, stats.getLocation().getName());
+            p.setTimestamp(5, stats.getImportTime());
+            p.execute();
+
+            st.executeBatch();
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
+        return newProfile;
+    }
+
+
+    public static List<ProfileStats> loadProfileStats(String id, int days, LocationEnum location) {
+        List<ProfileStats> stats = new ArrayList<>();
+
+
+        try {
+
+
+            LocalDateTime now = LocalDateTime.now().minusDays(days);
+            Timestamp timestamp = Timestamp.valueOf(now);
+                Connection con = DriverManager.getConnection(url, user, password);
+                PreparedStatement pst = con.prepareStatement("SELECT name, income, balance, location, import_time FROM profile_stats  " +
+                        "WHERE name = ? " +
+                        "and import_time > ? " +
+                        "and location = ? " +
+                        "order by import_time");
+                pst.setString(1, id);
+
+            pst.setTimestamp(2, timestamp);
+            pst.setString(3, location.getName());
+                ResultSet rs = pst.executeQuery();
+
+            while (rs.next()) {
+                ProfileStats stat = new ProfileStats(rs.getString(1), rs.getLong(2), rs.getLong(3), LocationEnum.getLocation(rs.getString(4)), rs.getTimestamp(5));
+                stats.add(stat);
+            }
+
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
+        return stats;
     }
 
 }

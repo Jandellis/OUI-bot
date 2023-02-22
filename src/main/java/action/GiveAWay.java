@@ -42,6 +42,7 @@ public class GiveAWay extends Action {
 
     String react;
     Long recruiter;
+    boolean openGiveaway;
 
     public GiveAWay() {
         param = "ouistartgift";
@@ -52,6 +53,7 @@ public class GiveAWay extends Action {
         react = "\uD83C\uDF89";
         recruiter = Long.parseLong(config.get("recruiter"));
         chefRole = Long.parseLong(config.get("chefRole"));
+        openGiveaway = Boolean.getBoolean(config.get("openGiveaway", "false"));
 
     }
 
@@ -125,8 +127,13 @@ public class GiveAWay extends Action {
                 try {
                     List<Id> roles = client.getGuildById(Snowflake.of(guildId)).getMember(Snowflake.of(user.getId().asString())).block().roles();
                     roles.forEach((roleId) -> {
-                        if (roleId.asLong() == Long.parseLong(giveawayRole)) {
-//                        if (roleId.asLong() == chefRole) {
+
+                        long roleCheck= Long.parseLong(giveawayRole);
+                        if (openGiveaway) {
+                            roleCheck = chefRole;
+                        }
+
+                        if (roleId.asLong() == roleCheck) {
                             enteredList.add(user.getId().asString());
                         }
                     });

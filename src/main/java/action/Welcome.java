@@ -1,10 +1,16 @@
 package action;
 
+import action.export.ExportUtils;
+import action.export.model.WarningData;
 import discord4j.common.util.Snowflake;
 import discord4j.core.object.entity.Message;
-import discord4j.core.object.entity.User;
 import discord4j.core.object.reaction.ReactionEmoji;
+import discord4j.rest.http.client.ClientException;
 import reactor.core.publisher.Mono;
+
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 
 public class Welcome extends Action {
 
@@ -14,12 +20,15 @@ public class Welcome extends Action {
     String log;
     Long recruiter;
 
+    Long immunityId;
+
     public Welcome() {
         param = "to the franchise!";
         guildId = config.get("guildId");
         chefRole = Long.parseLong(config.get("chefRole"));
         log = config.get("log");
         recruiter = Long.parseLong(config.get("recruiter"));
+        immunityId = Long.parseLong(config.get("immunityId"));
 
     }
 
@@ -64,6 +73,84 @@ public class Welcome extends Action {
                     client.getChannelById(message.getChannelId()).createMessage("welcomes member").block();
                 } else {
                     client.getChannelById(message.getChannelId()).createMessage("member has role already").block();
+
+                }
+
+
+            }
+
+
+            action = getAction(message, "ouihavemercy");
+            if (action != null && hasPermission(message, recruiter)) {
+                action = action.replace("<@", "").replace(">", "");
+                if (!hasPermission(action, immunityId)) {
+//                    joined(message, action);
+                    String length = getAction(message, "ouihavemercy", 1);
+                    int days;
+                    if (length.equals("")) {
+                        days = 7;
+                    } else {
+                        days = Integer.parseInt(length);
+                    }
+                    if (days > 46) {
+                        client.getChannelById(message.getChannelId()).createMessage("Max is 45 days, setting to 45").block();
+                        days = 45;
+                    }
+
+                    if (message.getAuthor().get().getId().asString().equals(action)) {
+                        client.getChannelById(message.getChannelId()).createMessage("Sorry, you can not give mercy to yourself").block();
+                        return Mono.empty();
+                    }
+
+                    WarningData warningData = ExportUtils.loadWarningData(action);
+                    LocalDateTime now = LocalDateTime.now().plusDays(days);
+                    warningData.setImmunityUntil(Timestamp.valueOf(now));
+
+                    ExportUtils.updateWarningData(warningData);
+                    try {
+                        client.getGuildById(Snowflake.of(guildId)).addMemberRole(
+                                Snowflake.of(action),
+                                Snowflake.of(immunityId),
+                                "welcome").block();
+                    } catch (ClientException e) {
+                        logger.info("user left the server " + action);
+                    }
+
+
+                    client.getChannelById(message.getChannelId()).createMessage("Mercy given to <@" + action + ">for " + days + " days!").block();
+                } else {
+                    client.getChannelById(message.getChannelId()).createMessage("Mercy has already been given").block();
+                    WarningData warningData = ExportUtils.loadWarningData(action);
+                    if (warningData.getImmunityUntil() == null ) {
+                        client.getChannelById(message.getChannelId()).createMessage("No end date is given... did someone give mercy by hand?").block();
+                    } else {
+                        LocalDateTime time = warningData.getImmunityUntil().toLocalDateTime();
+                        LocalDateTime now = LocalDateTime.now();
+                        long days = ChronoUnit.DAYS.between(now, time);
+                        long hours = ChronoUnit.HOURS.between(now, time) % 24;
+
+                        long minutes = ChronoUnit.MINUTES.between(now, time) % 60;
+                        long seconds = ChronoUnit.SECONDS.between(now, time) % 60;
+
+                        String display = "";
+                        if (days > 0) {
+                            display += days + " days, ";
+                        }
+                        if (hours > 0) {
+                            display += hours + " hours, ";
+                        }
+                        if (minutes > 0) {
+                            display += minutes + " minutes, ";
+                        }
+                        if (seconds > 0) {
+                            display += seconds + " seconds";
+                        }
+                        if (!display.equals("")) {
+                            client.getChannelById(message.getChannelId()).createMessage("Mercy will expire in " + display).block();
+                        } else {
+                            client.getChannelById(message.getChannelId()).createMessage("Mercy will expire after next data import").block();
+                        }
+                    }
 
                 }
 

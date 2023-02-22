@@ -1,7 +1,9 @@
 package action.export;
 
 import action.Action;
+import action.Warn;
 import action.export.model.Donations;
+import action.export.model.WarningData;
 import action.export.model.WeeklyBestData;
 import action.reminder.DoReminder;
 import action.reminder.ReminderUtils;
@@ -40,6 +42,8 @@ public class Import extends Action {
     String hitThread;
     String flex;
     Long recruiter;
+    Long immunityId;
+    boolean skipWarnings;
 
     public Import() {
         param = "ouiimport";
@@ -49,6 +53,8 @@ public class Import extends Action {
         hitThread = config.get("hitThread");
         flex = config.get("flex");
         recruiter = Long.parseLong(config.get("recruiter"));
+        immunityId = Long.parseLong(config.get("immunityId"));
+        skipWarnings = Boolean.getBoolean(config.get("skipWarnings", "false"));
     }
 
     @Override
@@ -133,6 +139,37 @@ public class Import extends Action {
                     channel.createMessage("Checking Roles").block();
 
                     checkRoles(history);
+
+                    channel.createMessage("Doing Warnings").block();
+                    //be able to skip warning if in downtime like over xmas
+                    //maybe add ouiadmin, list all the admin commands
+
+
+                    if (!skipWarnings) {
+                        Warn warn = new Warn();
+                        warn.action(gateway, client);
+                        warn.doWarnings(5, 300, true);
+                    }
+
+                    channel.createMessage("Removing Mercy").block();
+                    //load all users with mercy date before now
+                    //set date to null
+                    //remove role
+                    for (WarningData warningData : ExportUtils.loadWarningDataAfterImmunity()) {
+                        try {
+                        client.getGuildById(Snowflake.of(guildId)).removeMemberRole(
+                                Snowflake.of(warningData.getName()),
+                                Snowflake.of(immunityId),
+                                "Mercy has expired").block();
+
+                        } catch (ClientException e) {
+                            //member left the server
+                            logger.info("user left the server " + warningData.getName());
+
+                        }
+                        warningData.setImmunityUntil(null);
+                        ExportUtils.updateWarningData(warningData);
+                    }
 
                     Instant reminderTime = message.getTimestamp().plus(23, ChronoUnit.HOURS);
 

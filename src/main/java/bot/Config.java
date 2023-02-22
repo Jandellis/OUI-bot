@@ -41,4 +41,8 @@ public class Config {
     public String get(String property) {
         return prop.getProperty(property);
     }
+
+    public String get(String property, String defaultValue) {
+        return prop.getProperty(property, defaultValue);
+    }
 }

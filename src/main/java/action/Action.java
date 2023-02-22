@@ -83,11 +83,16 @@ public abstract class Action {
 
     protected String getAction(Message message, String paramInput, int position) {
 
-        try {
-            if (message.getContent().toLowerCase().startsWith(paramInput)) {
-                logger.info(message.getContent());
+        return getAction(message.getContent(), paramInput, position);
+    }
 
-                String temp = message.getContent().toLowerCase().replaceAll(paramInput + " ", "");
+    protected String getAction(String message, String paramInput, int position) {
+
+        try {
+            if (message.toLowerCase().startsWith(paramInput)) {
+                logger.info(message);
+
+                String temp = message.toLowerCase().replaceAll(paramInput + " ", "");
                 String action = temp.split(" ")[position];
                 logger.info("action " + action);
                 return action;
@@ -95,10 +100,10 @@ public abstract class Action {
                 if (paramInput.startsWith("cy")) {
                     //enable old commands to still work
                     paramInput = paramInput.replaceFirst("cy", "oui");
-                    if (message.getContent().toLowerCase().startsWith(paramInput)) {
-                        logger.info(message.getContent());
+                    if (message.toLowerCase().startsWith(paramInput)) {
+                        logger.info(message);
 
-                        String temp = message.getContent().toLowerCase().replaceAll(paramInput + " ", "");
+                        String temp = message.toLowerCase().replaceAll(paramInput + " ", "");
                         String action = temp.split(" ")[position];
                         logger.info("action " + action);
                         return action;
@@ -106,7 +111,7 @@ public abstract class Action {
                 }
             }
         } catch (IndexOutOfBoundsException e) {
-            logger.info("no var at position " + position + ", message was " + message.getContent());
+            logger.info("no var at position " + position + ", message was " + message);
             return "";
         } catch (Exception e) {
             printException(e);

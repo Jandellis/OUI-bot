@@ -1,0 +1,54 @@
+{
+    "name": "profile",
+    "description": "Show graph of your progress",
+    "options": [
+        {
+            "name": "type",
+            "description": "What type of data do you want on the graph?",
+            "type": 3,
+            "required": false,
+            "choices": [
+                {
+                    "name": "Income",
+                    "value": "income"
+                },
+                {
+                    "name": "Balance",
+                    "value": "balance"
+                }
+            ]
+        },
+        {
+            "name": "location",
+            "description": "What location do you want on the graph for?",
+            "type": 3,
+            "required": false,
+            "choices": [
+                {
+                    "name": "Shack",
+                    "value": "shack"
+                },
+                {
+                    "name": "Mall",
+                    "value": "mall"
+                },
+                {
+                    "name": "Beach",
+                    "value": "beach"
+                },
+                {
+                    "name": "City",
+                    "value": "city"
+                }
+            ]
+        },
+        {
+            "name": "days",
+            "description": "How long do you want the graph for",
+            "type": 4,
+            "required": false,
+            "min_value": 1,
+            "max_value": 90
+        }
+    ]
+}

@@ -50,6 +50,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
+import slash.GlobalCommandRegistrar;
+import slash.listeners.SlashCommandListener;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -202,6 +204,71 @@ public class Bot {
                         return Mono.empty();
                     }).then();
 
+
+
+//
+//
+//
+//
+                    //discord4j.core.object.command.ApplicationCommandOption.Type
+//                    ApplicationCommandRequest randomCommand = ApplicationCommandRequest.builder()
+//                            .name("random")
+//                            .description("Send a random number")
+//                            .addOption(ApplicationCommandOptionData.builder()
+//                                    .name("digits")
+//                                    .description("Number of digits (1-20)")
+//                                    .type(ApplicationCommandOption.Type.INTEGER.getValue())
+//                                    .required(false)
+//                                    .build())
+//                            .build();
+//
+//                    GuildCommandRegistrar.create(gateway.getRestClient(), guildId, Collections.singletonList(randomCommand))
+//                            .registerCommands()
+//                            .doOnError(e -> logger.warn("Unable to create guild command", e))
+//                            .onErrorResume(e -> Mono.empty())
+//                            .blockLast();
+//
+//                    gateway.on(new ReactiveEventAdapter() {
+//
+//                        private final Random random = new Random();
+//
+//                        @Override
+//                        public Publisher<?> onChatInputInteraction(ChatInputInteractionEvent event) {
+//                            if (event.getCommandName().equals("random")) {
+//                                String result = result(random, event.getInteraction().getCommandInteraction().get());
+//                                return event.reply(result);
+//                            }
+//                            return Mono.empty();
+//                        }
+//                    }).blockLast();
+
+
+                    List<String> commands = new ArrayList<>();
+//                    commands.add("greet.json");
+//                    commands.add("ping.json");
+                    commands.add("postAd.json");
+                    commands.add("ProfileStats.json");
+
+//            List.of("greet.json", "ping.json");
+                    try {
+                        new GlobalCommandRegistrar(gateway.getRestClient()).registerCommands(commands);
+                    } catch (Exception e) {
+                        logger.error("Error trying to register global slash commands", e);
+                    }
+
+                    //Register our slash command listener
+                    gateway.on(ChatInputInteractionEvent.class, SlashCommandListener::handle)
+                            .then(gateway.onDisconnect()).subscribe();
+//                            .block(); // We use .block() as there is not another non-daemon thread and the jvm would close otherwise.
+
+
+
+
+
+
+
+
+
                     // combine them!
                     return printOnLogin.and(handlePingCommand)
 //                            .and(input(gateway))
@@ -225,6 +292,7 @@ public class Bot {
                             .and(new CleanUp().action(gateway, client))
 
 //                            .and(new CreateProfile().action(gateway, client))
+                            .and(new CreateProfile().reaction(gateway, client))
                             .and(new CreateReminder().action(gateway, client))
                             .and(new EmbedMessage(gateway, client).action(gateway, client))
                             .and(new EnableProfile().action(gateway, client))
