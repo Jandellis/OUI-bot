@@ -41,6 +41,19 @@ public class GiveawayMembers extends Action {
                 e.printStackTrace();
             }
 
+        } else if (action.equals("reroll")) {
+            try {
+                String messageId = message.getContent().replaceAll(param + " reroll ", "");
+                logger.info("message id " + messageId);
+                GiveAWay giveAWay = new GiveAWay();
+                giveAWay.action(gateway, client);
+                String winner = giveAWay.doRoll(messageId);
+                giveAWay.printRerollMessage(winner);
+                return message.getChannel().flatMap(channel -> channel.createMessage("reroll"));
+            } catch (Exception e) {
+                printException(e);
+            }
+
         } else if (action.equals("export")) {
             return message.getChannel().flatMap(channel -> {
 

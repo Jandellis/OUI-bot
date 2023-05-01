@@ -1,15 +1,23 @@
 package action;
 
+import action.reminder.ReminderUtils;
+import action.reminder.model.Profile;
 import action.sm.model.SystemReminder;
 import action.sm.model.SystemReminderType;
 import action.sm.Utils;
+import action.upgrades.UpgradeUtils;
+import action.upgrades.model.Location;
+import action.upgrades.model.Upgrade;
+import action.upgrades.model.UserUpgrades;
 import bot.Clean;
 import discord4j.common.util.Snowflake;
+import discord4j.core.event.domain.message.ReactionAddEvent;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.User;
 import discord4j.core.object.reaction.ReactionEmoji;
 import discord4j.core.spec.EmbedCreateSpec;
 import discord4j.discordjson.Id;
+import discord4j.discordjson.json.EmbedData;
 import discord4j.discordjson.json.MessageData;
 import discord4j.rest.util.Color;
 import reactor.core.publisher.Mono;
@@ -75,6 +83,53 @@ public class GiveAWay extends Action {
         return Mono.empty();
     }
 
+
+    @Override
+    protected Mono<Object> doReactionEvent(ReactionAddEvent reactionAddEvent) {
+
+        try {
+
+            if (reactionAddEvent.getEmoji().asUnicodeEmoji().isPresent())
+                if (reactionAddEvent.getEmoji().asUnicodeEmoji().get().getRaw().equals(react)) {
+                    //got reaction
+                    Message message = reactionAddEvent.getMessage().block();
+
+                    //load last gift id
+                    //check its the same
+                    List<SystemReminder> rem = Utils.loadReminder(SystemReminderType.giveaway);
+                    if (rem.size() > 0 && rem.get(0).getMessageId().equals(message.getId().asString())) {
+
+
+                        long roleCheck = Long.parseLong(giveawayRole);
+                        if (openGiveaway) {
+                            roleCheck = chefRole;
+                        }
+
+                        String dmMessage;
+                        if (!hasPermission(reactionAddEvent.getUserId().asString(), roleCheck)) {
+                            message.removeReaction(reactionAddEvent.getEmoji(), reactionAddEvent.getUserId()).block();
+                            dmMessage = "Sorry, you do not meet the requirements to enter the giveaway. If you think you do meet the requirements, talk to a recruiter.";
+                        } else {
+                            dmMessage = "You have entered into the giveaway";
+                        }
+
+                        gateway.getUserById(reactionAddEvent.getUserId()).block().getPrivateChannel().flatMap(channel -> {
+                            channel.createMessage(dmMessage).block();
+                            logger.info("sent DM");
+                            return Mono.empty();
+                        }).block();
+                    }
+
+                }
+        } catch (Exception e) {
+            printException(e);
+        }
+
+        return Mono.empty();
+    }
+
+
+
     private void create(String winner) {
 
 
@@ -116,34 +171,40 @@ public class GiveAWay extends Action {
 
             List<SystemReminder> rem = Utils.loadReminder(SystemReminderType.giveaway);
             printTotal(rem.get(0).getName());
-
-            Message message = gateway.getMessageById(Snowflake.of(giveawayChannel), Snowflake.of(rem.get(0).getMessageId())).block();
-
-            List<String> enteredList = new ArrayList<>();
-
-            List<User> users = message.getReactors(ReactionEmoji.unicode(react)).collectList().block();
-
-            users.forEach(user -> {
-                try {
-                    List<Id> roles = client.getGuildById(Snowflake.of(guildId)).getMember(Snowflake.of(user.getId().asString())).block().roles();
-                    roles.forEach((roleId) -> {
-
-                        long roleCheck= Long.parseLong(giveawayRole);
-                        if (openGiveaway) {
-                            roleCheck = chefRole;
-                        }
-
-                        if (roleId.asLong() == roleCheck) {
-                            enteredList.add(user.getId().asString());
-                        }
-                    });
-                } catch (Exception e) {
-                    logger.info("assuming user has left the server " + user.getId().asString() + ", " + user.getUsername());
-                }
-            });
-
-            Random rand = new Random();
-            String winner = enteredList.get(rand.nextInt(enteredList.size()));
+//
+//            Message message = gateway.getMessageById(Snowflake.of(giveawayChannel), Snowflake.of(rem.get(0).getMessageId())).block();
+//
+//            List<String> enteredList = new ArrayList<>();
+//
+//            List<User> users = message.getReactors(ReactionEmoji.unicode(react)).collectList().block();
+//
+//            users.forEach(user -> {
+//                try {
+//                    List<Id> roles = client.getGuildById(Snowflake.of(guildId)).getMember(Snowflake.of(user.getId().asString())).block().roles();
+//                    roles.forEach((roleId) -> {
+//
+//                        long roleCheck= Long.parseLong(giveawayRole);
+//                        if (openGiveaway) {
+//                            roleCheck = chefRole;
+//                        }
+//
+//                        if (roleId.asLong() == roleCheck) {
+//                            enteredList.add(user.getId().asString());
+//                        }
+//                    });
+//                } catch (Exception e) {
+//                    logger.info("assuming user has left the server " + user.getId().asString() + ", " + user.getUsername());
+//                }
+//            });
+//
+//            Random rand = new Random();
+//            int randomNumber = rand.nextInt(enteredList.size());
+//            gateway.getUserById(Snowflake.of("292839877563908097")).block().getPrivateChannel().flatMap(channel -> {
+//                channel.createMessage("**Random Number is ** " + randomNumber).block();
+//                return Mono.empty();
+//            }).block();
+//            String winner = enteredList.get(randomNumber);
+            String winner = doRoll(rem.get(0).getMessageId());
 
             String winnerMessage = "Congratulations to <@" + winner + ">" +
                     "\r\n <@&875881574409859163>\n" +
@@ -160,6 +221,48 @@ public class GiveAWay extends Action {
             printException(e);
         }
 
+    }
+
+    public void printRerollMessage(String winner) {
+        client.getChannelById(Snowflake.of(giveawayChannel)).createMessage("Rerolled!, new winner is <@" + winner + ">").block();
+        client.getChannelById(Snowflake.of(giveawayShower)).createMessage("Rerolled!, new winner is  <@" + winner + ">").block();
+    }
+
+    public String doRoll(String messageId) {
+
+        Message message = gateway.getMessageById(Snowflake.of(giveawayChannel), Snowflake.of(messageId)).block();
+
+        List<String> enteredList = new ArrayList<>();
+
+        List<User> users = message.getReactors(ReactionEmoji.unicode(react)).collectList().block();
+
+        users.forEach(user -> {
+            try {
+                List<Id> roles = client.getGuildById(Snowflake.of(guildId)).getMember(Snowflake.of(user.getId().asString())).block().roles();
+                roles.forEach((roleId) -> {
+
+                    long roleCheck= Long.parseLong(giveawayRole);
+                    if (openGiveaway) {
+                        roleCheck = chefRole;
+                    }
+
+                    if (roleId.asLong() == roleCheck) {
+                        enteredList.add(user.getId().asString());
+                    }
+                });
+            } catch (Exception e) {
+                logger.info("assuming user has left the server " + user.getId().asString() + ", " + user.getUsername());
+            }
+        });
+
+        Random rand = new Random();
+        int randomNumber = rand.nextInt(enteredList.size());
+//        gateway.getUserById(Snowflake.of("292839877563908097")).block().getPrivateChannel().flatMap(channel -> {
+//            channel.createMessage("**Random Number is ** " + randomNumber).block();
+//            return Mono.empty();
+//        }).block();
+        String winner = enteredList.get(randomNumber);
+        return winner;
     }
 
     public void runGiveAWay(long delay) {

@@ -1,5 +1,6 @@
 package action.reminder;
 
+import action.reminder.model.FlexStats;
 import action.reminder.model.Profile;
 import action.reminder.model.ProfileStats;
 import action.reminder.model.Reminder;
@@ -857,20 +858,81 @@ public class ReminderUtils {
 
             LocalDateTime now = LocalDateTime.now().minusDays(days);
             Timestamp timestamp = Timestamp.valueOf(now);
-                Connection con = DriverManager.getConnection(url, user, password);
-                PreparedStatement pst = con.prepareStatement("SELECT name, income, balance, location, import_time FROM profile_stats  " +
-                        "WHERE name = ? " +
-                        "and import_time > ? " +
-                        "and location = ? " +
-                        "order by import_time");
-                pst.setString(1, id);
+            Connection con = DriverManager.getConnection(url, user, password);
+            String sql = "SELECT name, income, balance, location, import_time FROM profile_stats  " +
+                    "WHERE name = ? " +
+                    "and import_time > ? " ;
+            if (location != null) {
+                sql += "and location = ? ";
+            }
+            sql += "order by import_time";
+            PreparedStatement pst = con.prepareStatement(sql);
+            pst.setString(1, id);
 
             pst.setTimestamp(2, timestamp);
-            pst.setString(3, location.getName());
-                ResultSet rs = pst.executeQuery();
+            if (location != null) {
+                pst.setString(3, location.getName());
+            }
+            ResultSet rs = pst.executeQuery();
 
             while (rs.next()) {
                 ProfileStats stat = new ProfileStats(rs.getString(1), rs.getLong(2), rs.getLong(3), LocationEnum.getLocation(rs.getString(4)), rs.getTimestamp(5));
+                stats.add(stat);
+            }
+
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
+        return stats;
+    }
+
+
+    public static List<FlexStats> loadFlexStats(int daysAgoEnd, int days, List<String> ids) {
+        List<FlexStats> stats = new ArrayList<>();
+
+
+        try {
+
+            //SELECT export_time, name, shack_name, shifts, tips FROM member_data
+
+            LocalDateTime end = LocalDateTime.now().minusDays(daysAgoEnd);
+            LocalDateTime start = end.minusDays(days);
+            Timestamp endStamp = Timestamp.valueOf(end);
+            Timestamp startStamp = Timestamp.valueOf(start);
+            Connection con = DriverManager.getConnection(url, user, password);
+            String sql = "SELECT export_time, name, shack_name, shifts, tips, donations, votes, overtime FROM member_data  " +
+                    "WHERE export_time > ? " +
+                    "and export_time < ? " ;
+            String or = "  ";
+            sql += " and (";
+//            int count = 3;
+            for (String id : ids) {
+                sql += or +" name = ? " ;
+//                pst.setString(count, id);
+//                count++;
+                or = " or ";
+            }
+            sql += ") ";
+            sql += "order by export_time";
+            logger.info(sql);
+
+            PreparedStatement pst = con.prepareStatement(sql);
+
+            pst.setTimestamp(1, startStamp);
+            pst.setTimestamp(2, endStamp);
+            int count = 3;
+            for (String id : ids) {
+//                sql += " name = ? " + or;
+                pst.setString(count, id);
+                count++;
+//                or = " or ";
+            }
+
+
+            ResultSet rs = pst.executeQuery();
+
+            while (rs.next()) {
+                FlexStats stat = new FlexStats(rs.getTimestamp(1), rs.getString(2), rs.getString(3), rs.getLong(4), rs.getLong(5), rs.getLong(6), rs.getLong(7), rs.getLong(8));
                 stats.add(stat);
             }
 

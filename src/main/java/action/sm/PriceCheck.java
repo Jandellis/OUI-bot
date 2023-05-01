@@ -188,7 +188,17 @@ public class PriceCheck extends Action {
                         sb.append("\r\n-----------------------------------\r\n");
                         String channel = Utils.loadAlerts(person).get(0).getChannel();
                         try {
-                            client.getChannelById(Snowflake.of(channel)).createMessage(sb.toString()).block();
+                            boolean suppress = true;
+                            if (channel.equals("865115506813960222")) {
+                                if (hasPermission(person, chefRole)) {
+                                    suppress = false;
+                                }
+                            } else {
+                                suppress = false;
+                            }
+                            if (!suppress) {
+                                client.getChannelById(Snowflake.of(channel)).createMessage(sb.toString()).block();
+                            }
                         } catch (Exception e) {
                             printException(e);
                         }

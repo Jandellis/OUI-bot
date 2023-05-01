@@ -5,7 +5,7 @@ import discord4j.core.object.command.ApplicationCommandInteractionOption;
 import discord4j.core.object.command.ApplicationCommandInteractionOptionValue;
 import reactor.core.publisher.Mono;
 
-public class GreetCommand implements SlashCommand {
+public class GreetCommand extends SlashCommand {
     @Override
     public String getName() {
         return "greet";

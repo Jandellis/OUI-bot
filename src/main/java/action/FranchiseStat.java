@@ -181,7 +181,7 @@ public class FranchiseStat extends Action implements EmbedAction {
 
         try {
             String tacos = request("https://tacoshack.online/api/franchise/tacos?quantity=25", false);
-            String members = request("https://tacoshack.online/api/franchise/members?quantity=25", false);
+            String members = request("https://tacoshack.online/api/franchise/members?quantity=100", false);
             String boost = request("https://tacoshack.online/api/franchise/incomes?quantity=25", false);
             String balance = request("https://tacoshack.online/api/franchise/richest?quantity=100", true);
             String shifts = request("https://tacoshack.online/api/franchise/shifts?quantity=25", false);

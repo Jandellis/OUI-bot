@@ -1,0 +1,56 @@
+{
+    "name": "flex",
+    "description": "Show graph of your progress",
+    "options": [
+        {
+            "name": "type",
+            "description": "What type of data do you want on the graph?",
+            "type": 3,
+            "required": false,
+            "choices": [
+                {
+                    "name": "Work",
+                    "value": "work"
+                },
+                {
+                    "name": "Tips",
+                    "value": "tips"
+                },
+                {
+                    "name": "Votes",
+                    "value": "votes"
+                },
+                {
+                    "name": "Overtime",
+                    "value": "overtime"
+                },
+                {
+                    "name": "Donations",
+                    "value": "donations"
+                }
+            ]
+        },
+        {
+            "name": "days",
+            "description": "How long do you want the graph for",
+            "type": 4,
+            "required": false,
+            "min_value": 1,
+            "max_value": 90
+        },
+        {
+            "name": "end",
+            "description": "How many days ago did you want it to end",
+            "type": 4,
+            "required": false,
+            "min_value": 1,
+            "max_value": 90
+        },
+        {
+            "name": "compare",
+            "description": "Id of the person you want to compare to and separated by , for multiple",
+            "type": 3,
+            "required": false
+        }
+    ]
+}

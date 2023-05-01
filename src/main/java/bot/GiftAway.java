@@ -1,5 +1,6 @@
 package bot;
 
+import action.export.ExportUtils;
 import discord4j.common.util.Snowflake;
 import discord4j.core.DiscordClient;
 import org.apache.logging.log4j.LogManager;
@@ -10,6 +11,8 @@ import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -68,6 +71,9 @@ public class GiftAway {
                             Snowflake.of(person.getNameAsId()),
                             Snowflake.of(giveawayRole),
                             "givaway role").block();
+
+                    LocalDateTime now = LocalDateTime.now().plusDays(7);
+                    ExportUtils.updateWarningData(person.getNameAsId() + "", Timestamp.valueOf(now));
                     logger.info("Given role to " + person.getName());
                 } catch (Exception e) {
                     logger.info("Not in server " + person.getName());
@@ -93,6 +99,9 @@ public class GiftAway {
                             Snowflake.of(person.getNameAsId()),
                             Snowflake.of(giveawayRole),
                             "givaway role").block();
+
+                    LocalDateTime now = LocalDateTime.now().plusDays(7);
+                    ExportUtils.updateWarningData(person.getNameAsId() + "", Timestamp.valueOf(now));
                     logger.info("Given role to " + person.getName());
                 } catch (Exception e) {
                     logger.info("Not in server " + person.getName());

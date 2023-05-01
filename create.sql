@@ -207,3 +207,9 @@ CREATE TABLE IF NOT EXISTS profile_stats (
     location VARCHAR(25),
     import_time timestamp
 );
+
+ALTER TABLE member_data add  overtime int;
+ALTER TABLE member_data add  votes int;
+
+
+ALTER TABLE warning_data add giveaway_until timestamp;

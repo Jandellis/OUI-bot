@@ -248,10 +248,11 @@ public class Bot {
 //                    commands.add("ping.json");
                     commands.add("postAd.json");
                     commands.add("ProfileStats.json");
+                    commands.add("FlexStats.json");
 
 //            List.of("greet.json", "ping.json");
                     try {
-                        new GlobalCommandRegistrar(gateway.getRestClient()).registerCommands(commands);
+                        new GlobalCommandRegistrar(gateway.getRestClient(), gateway).registerCommands(commands);
                     } catch (Exception e) {
                         logger.error("Error trying to register global slash commands", e);
                     }
@@ -302,6 +303,7 @@ public class Bot {
 //                            .and(new CreateBoostReminder().action(gateway, client))
                             .and(new Heartbeat().action(gateway, client))
                             .and(new GiveAWay().action(gateway, client))
+                            .and(new GiveAWay().reaction(gateway, client))
                             .and(new BuyUpgrade().action(gateway, client))
                             .and(new BuyUpgrade().reaction(gateway, client))
                             .and(new Olympics().action(gateway, client))

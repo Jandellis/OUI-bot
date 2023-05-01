@@ -3,7 +3,7 @@ package slash.commands;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import reactor.core.publisher.Mono;
 
-public class PingCommand implements SlashCommand {
+public class PingCommand extends SlashCommand {
     @Override
     public String getName() {
         return "ping";

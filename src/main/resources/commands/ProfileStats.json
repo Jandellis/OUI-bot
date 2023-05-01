@@ -39,8 +39,22 @@
                 {
                     "name": "City",
                     "value": "city"
+                },
+                {
+                    "name": "Hq",
+                    "value": "hq"
+                },
+                {
+                    "name": "All",
+                    "value": "all"
                 }
             ]
+        },
+        {
+            "name": "compress",
+            "description": "Do you want to remove the empty space at the bottom?",
+            "type": 5,
+            "required": false
         },
         {
             "name": "days",

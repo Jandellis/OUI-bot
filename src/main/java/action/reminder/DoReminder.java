@@ -221,7 +221,7 @@ public class DoReminder extends Action {
                 command = "</franchise memberdata export:1006354977788268626>";
                 break;
             case postAd:
-                command = reminder.getType().getName() + " <#663937997313540128>";
+                command = reminder.getType().getName() + " <#663937997313540128> </postad:1077546065559035964>";
                 break;
             default:
                 //boosts off cooldown

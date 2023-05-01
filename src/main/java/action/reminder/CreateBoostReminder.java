@@ -52,7 +52,7 @@ public class CreateBoostReminder extends Action implements EmbedAction {
         //beach
         boosts.add(new Boost("Concert", 4));
         boosts.add(new Boost("Hammock", 4));
-        boosts.add(new Boost("Parasailing ", 6));
+        boosts.add(new Boost("Parasailing", 6));
         boosts.add(new Boost("Beach Chairs", 8));
         boosts.add(new Boost("Helicopter Tours", 24));
 

@@ -54,7 +54,8 @@ public class ExportUtils {
             Statement st = con.createStatement();
 
 
-            PreparedStatement pst = con.prepareStatement("SELECT export_time, name, shack_name, income, shifts, weekly_shifts, tips, donations, happy FROM member_data " +
+            PreparedStatement pst = con.prepareStatement("SELECT export_time, name, shack_name, income, shifts, weekly_shifts, tips, donations, happy, overtime, votes " +
+                    "FROM member_data " +
                     "WHERE export_time > ? and " +
                     "export_time < ?  ORDER BY export_time ");
             pst.setTimestamp(1, Timestamp.valueOf(start));
@@ -70,7 +71,10 @@ public class ExportUtils {
                         rs.getInt(6),
                         rs.getInt(7),
                         rs.getLong(8),
-                        rs.getDouble(9)
+                        rs.getDouble(9),
+                        rs.getInt(10),
+                        rs.getInt(11)
+
                 );
                 ExportData data = new ExportData(member, exportTime);
                 if (history.containsKey(member.getId())) {
@@ -118,8 +122,8 @@ public class ExportUtils {
 
 
             if (id == -1) {
-                String sql = "insert into member_data (export_time, name, shack_name, income, shifts, weekly_shifts, tips, donations, happy) " +
-                        "VALUES (?, ?, ?, ?,?,?,?,?,?)";
+                String sql = "insert into member_data (export_time, name, shack_name, income, shifts, weekly_shifts, tips, donations, happy, overtime, votes) " +
+                        "VALUES (?, ?, ?, ?,?,?,?,?,?,?,?)";
                 PreparedStatement p = con.prepareStatement(sql);
                 p.setTimestamp(1, exportTime);
                 p.setString(2, member.getId().toString());
@@ -130,6 +134,8 @@ public class ExportUtils {
                 p.setInt(7, member.getTips());
                 p.setLong(8, member.getDonations());
                 p.setDouble(9, member.getHappy());
+                p.setInt(10, member.getOvertime());
+                p.setInt(11, member.getVotes());
                 p.execute();
             }
             st.executeBatch();
@@ -263,20 +269,47 @@ public class ExportUtils {
     }
 
 
-    public static WarningData loadWarningData(String id) {
+    public static boolean updateWarningData(String id, Timestamp giveawayUntil) {
         try {
             Connection con = DriverManager.getConnection(url, user, password);
-            PreparedStatement pst = con.prepareStatement("SELECT name, immunity_until, last_warning FROM warning_data WHERE name = ?");
-            pst.setString(1, id);
-            ResultSet rs = pst.executeQuery();
-            while (rs.next()) {
-                WarningData memberDonations = new WarningData(rs.getString(1), rs.getTimestamp(2), rs.getTimestamp(3));
-                return memberDonations;
+            PreparedStatement pst = con.prepareStatement("UPDATE warning_data SET giveaway_until = ? WHERE name = ?");
+            pst.setTimestamp(1,giveawayUntil);
+            pst.setString(2, id);
+            int rs = pst.executeUpdate();
+            if (rs == 1) {
+                return true;
+            } else {
+
+                pst = con.prepareStatement("INSERT INTO warning_data (name, giveaway_until ) VALUES (?, ?)");
+                pst.setString(1, id);
+                pst.setTimestamp(2, giveawayUntil);
+                return pst.execute();
             }
         } catch (SQLException ex) {
             logger.error("Exception", ex);
         }
-        return new WarningData(id, null, null);
+        return false;
+    }
+
+
+    public static WarningData loadWarningData(String id) {
+        try {
+            Connection con = DriverManager.getConnection(url, user, password);
+            PreparedStatement pst = con.prepareStatement("SELECT name, immunity_until, last_warning, giveaway_until FROM warning_data WHERE name = ?");
+            pst.setString(1, id);
+            ResultSet rs = pst.executeQuery();
+            while (rs.next()) {
+                WarningData warningData = new WarningData(
+                        rs.getString(1),
+                        rs.getTimestamp(2),
+                        rs.getTimestamp(3),
+                        rs.getTimestamp(4));
+                return warningData;
+            }
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
+        return new WarningData(id, null, null, null);
     }
 
     public static List<WarningData> loadWarningDataAfterImmunity() {
@@ -285,11 +318,40 @@ public class ExportUtils {
             Connection con = DriverManager.getConnection(url, user, password);
 
 
-            PreparedStatement pst = con.prepareStatement("SELECT name, immunity_until, last_warning FROM warning_data " +
+            PreparedStatement pst = con.prepareStatement("SELECT name, immunity_until, last_warning, giveaway_until FROM warning_data " +
                     "WHERE immunity_until < now()");
             ResultSet rs = pst.executeQuery();
             while (rs.next()) {
-                WarningData warningData = new WarningData(rs.getString(1), rs.getTimestamp(2), rs.getTimestamp(3));
+                WarningData warningData = new WarningData(
+                        rs.getString(1),
+                        rs.getTimestamp(2),
+                        rs.getTimestamp(3),
+                        rs.getTimestamp(4));
+                warningDataList.add(warningData);
+            }
+
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
+        return warningDataList;
+    }
+
+
+    public static List<WarningData> loadWarningDataAfterGiveaway() {
+        List<WarningData> warningDataList = new ArrayList<>();
+        try {
+            Connection con = DriverManager.getConnection(url, user, password);
+
+
+            PreparedStatement pst = con.prepareStatement("SELECT name, immunity_until, last_warning, giveaway_until FROM warning_data " +
+                    "WHERE giveaway_until < now()");
+            ResultSet rs = pst.executeQuery();
+            while (rs.next()) {
+                WarningData warningData = new WarningData(
+                        rs.getString(1),
+                        rs.getTimestamp(2),
+                        rs.getTimestamp(3),
+                        rs.getTimestamp(4));
                 warningDataList.add(warningData);
             }
 

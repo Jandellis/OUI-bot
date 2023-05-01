@@ -9,8 +9,10 @@ public class Member {
     int tips;
     long donations;
     double happy;
+    int overtime;
+    int votes;
 
-    public Member(Long id, String name, int income, int shifts, int weeklyShifts, int tips, long donations, double happy) {
+    public Member(Long id, String name, int income, int shifts, int weeklyShifts, int tips, long donations, double happy, int overtime, int votes) {
         this.id = id;
         this.name = name;
         this.income = income;
@@ -19,9 +21,11 @@ public class Member {
         this.tips = tips;
         this.donations = donations;
         this.happy = happy;
+        this.overtime = overtime;
+        this.votes = votes;
     }
 
-    public Member(String id, String name, String income, String shifts, String weeklyShifts, String tips, String donations, String happy) {
+    public Member(String id, String name, String income, String shifts, String weeklyShifts, String tips, String donations, String happy, String overtime, String votes) {
         this.id = Long.parseLong(id);
         this.name = name;
         this.income = Integer.parseInt(income);
@@ -30,6 +34,8 @@ public class Member {
         this.tips = Integer.parseInt(tips);
         this.donations = Long.parseLong(donations);
         this.happy = Double.parseDouble(happy);
+        this.overtime = Integer.parseInt(overtime);;
+        this.votes = Integer.parseInt(votes);;
     }
 
     public Long getId() {
@@ -94,6 +100,38 @@ public class Member {
 
     public void setHappy(double happy) {
         this.happy = happy;
+    }
+
+    public int getOvertime() {
+        return overtime;
+    }
+
+    public void setOvertime(int overtime) {
+        this.overtime = overtime;
+    }
+
+    public int getVotes() {
+        return votes;
+    }
+
+    public void setVotes(int votes) {
+        this.votes = votes;
+    }
+
+    @Override
+    public String toString() {
+        return "Member{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", income=" + income +
+                ", shifts=" + shifts +
+                ", weeklyShifts=" + weeklyShifts +
+                ", tips=" + tips +
+                ", donations=" + donations +
+                ", happy=" + happy +
+                ", overtime=" + overtime +
+                ", votes=" + votes +
+                '}';
     }
 }
 

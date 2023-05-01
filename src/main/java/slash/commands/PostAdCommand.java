@@ -15,7 +15,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 
-public class PostAdCommand implements SlashCommand {
+public class PostAdCommand extends SlashCommand {
     @Override
     public String getName() {
         return "postad";
@@ -31,13 +31,13 @@ public class PostAdCommand implements SlashCommand {
 
         In this case, there is no fear it will return empty/null as this is marked "required: true" in our json.
          */
-        Boolean ping = false;
-        Optional<Boolean> pingPresent = event.getOption("ping")
-            .flatMap(ApplicationCommandInteractionOption::getValue)
-            .map(ApplicationCommandInteractionOptionValue::asBoolean);
-        if (pingPresent.isPresent()) {
-            ping = pingPresent.get();
-        }
+        Boolean ping = getParameter("ping", false, event);
+//        Optional<Boolean> pingPresent = event.getOption("ping")
+//            .flatMap(ApplicationCommandInteractionOption::getValue)
+//            .map(ApplicationCommandInteractionOptionValue::asBoolean);
+//        if (pingPresent.isPresent()) {
+//            ping = pingPresent.get();
+//        }
 
         String response = "Posted ";
         if (ping) {

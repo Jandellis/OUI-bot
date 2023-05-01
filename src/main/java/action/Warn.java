@@ -1,6 +1,7 @@
 package action;
 
 import action.export.ExportUtils;
+import action.export.model.MemberDonations;
 import action.export.model.WarningData;
 import bot.Clean;
 import bot.KickMember;
@@ -136,7 +137,7 @@ public class Warn extends Action {
                 }
                 boolean warnMember = false;
                 WarningData warningData = ExportUtils.loadWarningData(kickMember.getId().toString());
-                LocalDateTime twoDaysAgo = LocalDateTime.now().minusDays(2);
+                LocalDateTime twoDaysAgo = LocalDateTime.now().minusDays(3);
 
 
                 // hasnt worked in more than x days
@@ -150,7 +151,7 @@ public class Warn extends Action {
                         && kickMember.getDaysNoWork() <= max
                         && !imunity.get()
                         && (warningData.getLastWarning() == null || warningData.getLastWarning().toLocalDateTime().isBefore(twoDaysAgo))) {
-                    workList.add("<@" + kickMember.getId() + "> \r\n");
+//                    workList.add("<@" + kickMember.getId() + "> \r\n");
                     warnMember = true;
 
                 }
@@ -168,10 +169,17 @@ public class Warn extends Action {
                     if (warning.get() == 0) {
                         //set donations to 0
                         ExportUtils.resetMemberDonations(kickMember.getId().toString());
-                        client.getGuildById(Snowflake.of(guildId)).addMemberRole(
-                                Snowflake.of(kickMember.getId()),
-                                Snowflake.of(firstWarning),
-                                "first warning").block();
+                        MemberDonations donations = ExportUtils.loadMemberDonations(kickMember.getId().toString());
+                        if (donations.getDonation() >= 5000000) {
+                            ExportUtils.clearWarning(kickMember.getId().toString());
+                            warnMember = false;
+                            logger.info("user should be warned, but they have donated to ingore the warning " + kickMember.getId());
+                        } else {
+                            client.getGuildById(Snowflake.of(guildId)).addMemberRole(
+                                    Snowflake.of(kickMember.getId()),
+                                    Snowflake.of(firstWarning),
+                                    "first warning").block();
+                        }
                     }
                     if (warning.get() == 1) {
                         client.getGuildById(Snowflake.of(guildId)).addMemberRole(
@@ -196,6 +204,10 @@ public class Warn extends Action {
                     LocalDateTime now = LocalDateTime.now();
                     warningData.setLastWarning(Timestamp.valueOf(now));
                     ExportUtils.updateWarningData(warningData);
+                }
+
+                if (inServer && warnMember) {
+                    workList.add("<@" + kickMember.getId() + "> \r\n");
                 }
             }
 

@@ -1,11 +1,14 @@
 package slash;
 
 import discord4j.common.JacksonResources;
+import discord4j.common.util.Snowflake;
+import discord4j.core.GatewayDiscordClient;
 import discord4j.discordjson.json.ApplicationCommandRequest;
 import discord4j.rest.RestClient;
 import discord4j.rest.service.ApplicationService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import reactor.core.publisher.Mono;
 //import org.slf4j.Logger;
 //import org.slf4j.LoggerFactory;
 
@@ -23,12 +26,14 @@ public class GlobalCommandRegistrar {
     private final Logger LOGGER = LogManager.getLogger("ouiBot");
 
     private final RestClient restClient;
+    private GatewayDiscordClient gateway;
 
     // The name of the folder the commands json is in, inside our resources folder
     private static final String commandsFolderName = "commands/";
 
-    public GlobalCommandRegistrar(RestClient restClient) {
+    public GlobalCommandRegistrar(RestClient restClient, GatewayDiscordClient gateway) {
         this.restClient = restClient;
+        this.gateway = gateway;
     }
 
     //Since this will only run once on startup, blocking is okay.
@@ -54,7 +59,15 @@ public class GlobalCommandRegistrar {
         */
         applicationService.bulkOverwriteGlobalApplicationCommand(applicationId, commands)
             .doOnNext(cmd -> LOGGER.debug("Successfully registered Global Command " + cmd.name()))
-            .doOnError(e -> LOGGER.error("Failed to register global commands", e))
+            .doOnError(e -> {
+                LOGGER.error("Failed to register global commands", e);
+
+                gateway.getUserById(Snowflake.of("292839877563908097")).block().getPrivateChannel().flatMap(channel -> {
+                    channel.createMessage("**Failed to register global commands!!**\r\n\r\n " + e.getMessage()).block();
+                    LOGGER.info("sent DM");
+                    return Mono.empty();
+                }).block();
+            })
             .subscribe();
     }
 

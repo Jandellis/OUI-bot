@@ -29,7 +29,7 @@ public enum ReminderType {
     //beach
     Concert("Concert"),
     Hammock("Hammock"),
-    Parasailing("Parasailing "),
+    Parasailing("Parasailing"),
     Chairs("Beach Chairs"),
     Helicopter("Helicopter Tours"),
 
