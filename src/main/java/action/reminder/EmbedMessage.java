@@ -76,11 +76,16 @@ public class EmbedMessage extends Action {
                     List<EmbedData> embedData;
                     if (message.getEmbeds().isEmpty() || message.getEmbeds().size() == 0){
                         logger.info("empty embeds");
-//                        embedData = checkEmbeds(message);
-                        if (message.getContent().isEmpty()) {
-                            lookForEmbeds(message, 0);
+                        if (message.getData().interaction().toOptional().isPresent() && message.getData().interaction().get().name().equals("saucemarket buy")) {
+                            logger.info("Skipping message");
                         } else {
-                            logger.info("Message has content, will not check for embeds");
+
+//                        embedData = checkEmbeds(message);
+                            if (message.getContent().isEmpty()) {
+                                lookForEmbeds(message, 0);
+                            } else {
+                                logger.info("Message has content, will not check for embeds");
+                            }
                         }
                         return Mono.empty();
 

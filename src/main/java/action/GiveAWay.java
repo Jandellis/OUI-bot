@@ -1,6 +1,7 @@
 package action;
 
 import action.reminder.ReminderUtils;
+import action.reminder.model.FlexStats;
 import action.reminder.model.Profile;
 import action.sm.model.SystemReminder;
 import action.sm.model.SystemReminderType;
@@ -19,6 +20,7 @@ import discord4j.core.spec.EmbedCreateSpec;
 import discord4j.discordjson.Id;
 import discord4j.discordjson.json.EmbedData;
 import discord4j.discordjson.json.MessageData;
+import discord4j.rest.http.client.ClientException;
 import discord4j.rest.util.Color;
 import reactor.core.publisher.Mono;
 
@@ -108,16 +110,40 @@ public class GiveAWay extends Action {
                         String dmMessage;
                         if (!hasPermission(reactionAddEvent.getUserId().asString(), roleCheck)) {
                             message.removeReaction(reactionAddEvent.getEmoji(), reactionAddEvent.getUserId()).block();
-                            dmMessage = "Sorry, you do not meet the requirements to enter the giveaway. If you think you do meet the requirements, talk to a recruiter.";
+
+                            //load votes
+                            List<String> ids = new ArrayList<>();
+                            ids.add(reactionAddEvent.getUserId().asString());
+                            List<FlexStats> stats = ReminderUtils.loadFlexStats(0, 7, ids);
+                            FlexStats today = stats.get(stats.size() - 1);
+                            FlexStats lastWeek = stats.get(0);
+                            long votes = today.getVotes() - lastWeek.getVotes();
+                            long ot = today.getOvertime() - lastWeek.getOvertime();
+                            long work = today.getWork() - lastWeek.getWork();
+                            dmMessage = "Sorry, you do not meet the requirements to enter the giveaway. If you think you do meet the requirements, talk to a recruiter." +
+                                    "\n\nOver the last 7 days you have done" +
+                                    "\n :small_orange_diamond: Votes **" + votes + "** (Need at least 7)" +
+                                    "\n :small_orange_diamond: Overtime **" + ot + "** (Need at least 30)" +
+                                    "\n :small_orange_diamond: Work **" + work + "** (Need at least 50)";
+
+
                         } else {
                             dmMessage = "You have entered into the giveaway";
                         }
 
-                        gateway.getUserById(reactionAddEvent.getUserId()).block().getPrivateChannel().flatMap(channel -> {
-                            channel.createMessage(dmMessage).block();
-                            logger.info("sent DM");
-                            return Mono.empty();
-                        }).block();
+                        try {
+                            gateway.getUserById(reactionAddEvent.getUserId()).block().getPrivateChannel().flatMap(channel -> {
+                                channel.createMessage(dmMessage).block();
+                                logger.info("sent DM");
+                                return Mono.empty();
+                            }).block();
+                        } catch (ClientException e) {
+                            if (e.getMessage().contains("Cannot send messages to this user")) {
+                                logger.info("Assume DMs are closed");
+                            } else {
+                                printException(e);
+                            }
+                        }
                     }
 
                 }
@@ -127,7 +153,6 @@ public class GiveAWay extends Action {
 
         return Mono.empty();
     }
-
 
 
     private void create(String winner) {
@@ -140,7 +165,7 @@ public class GiveAWay extends Action {
         EmbedCreateSpec.Builder embed = EmbedCreateSpec.builder();
         embed.color(Color.SUMMER_SKY);
         embed.title("Daily Giftaway");
-        embed.description("React with "+react+" to enter the giftaway \r\n Must have the role:<@&" + giveawayRole + ">");
+        embed.description("React with " + react + " to enter the giftaway \r\n Must have the role:<@&" + giveawayRole + ">");
 
         MessageData msg = client.getChannelById(Snowflake.of(giveawayChannel)).createMessage(embed.build().asRequest()).block();
 
@@ -217,6 +242,7 @@ public class GiveAWay extends Action {
 
 
             create(winner);
+            ReminderUtils.addWinner(winner);
         } catch (Exception e) {
             printException(e);
         }
@@ -241,7 +267,7 @@ public class GiveAWay extends Action {
                 List<Id> roles = client.getGuildById(Snowflake.of(guildId)).getMember(Snowflake.of(user.getId().asString())).block().roles();
                 roles.forEach((roleId) -> {
 
-                    long roleCheck= Long.parseLong(giveawayRole);
+                    long roleCheck = Long.parseLong(giveawayRole);
                     if (openGiveaway) {
                         roleCheck = chefRole;
                     }
@@ -285,7 +311,7 @@ public class GiveAWay extends Action {
 
     //TODO: NEED TO CALL THIS
 
-    public void startUp(){
+    public void startUp() {
 
         //if file is empty it will not run tasks
         LocalDateTime lockTime = LocalDateTime.now().minusMinutes(1);
@@ -306,7 +332,7 @@ public class GiveAWay extends Action {
 
     }
 
-    private void printTotal(String winner){
+    private void printTotal(String winner) {
         int total = 0;
         try {
             total = Clean.getGift();
@@ -314,7 +340,7 @@ public class GiveAWay extends Action {
             e.printStackTrace();
         }
         int finalTotal = total;
-        String responseMessage = "<@"+winner+"> was gifted $" + String.format("%,d", finalTotal) + " in yesterdays last giveaway"+
+        String responseMessage = "<@" + winner + "> was gifted $" + String.format("%,d", finalTotal) + " in yesterdays last giveaway" +
                 "\r\nIf you would like to help increase this ask a recruiter to become a gifter today!";
 
         //write message to chat

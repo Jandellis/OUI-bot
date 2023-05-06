@@ -7,6 +7,7 @@ import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import slash.commands.FlexStatsCommand;
+import slash.commands.GiveawayCommand;
 import slash.commands.GreetCommand;
 import slash.commands.PingCommand;
 import slash.commands.PostAdCommand;
@@ -27,6 +28,7 @@ public class SlashCommandListener {
         commands.add(new PostAdCommand());
         commands.add(new ProfileStatsCommand());
         commands.add(new FlexStatsCommand());
+        commands.add(new GiveawayCommand());
     }
 
     public static Mono<Void> handle(ChatInputInteractionEvent event) {

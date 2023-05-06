@@ -1,5 +1,6 @@
 package action.reminder;
 
+import action.giveaway.model.GiveawayWinner;
 import action.reminder.model.FlexStats;
 import action.reminder.model.Profile;
 import action.reminder.model.ProfileStats;
@@ -20,6 +21,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -826,6 +828,10 @@ public class ReminderUtils {
 
 
     public static boolean addProfileStats(ProfileStats stats) {
+        if (stats.getLocation() == null) {
+            return false;
+        }
+
         Boolean newProfile = false;
         try {
             Connection con = DriverManager.getConnection(url, user, password);
@@ -940,6 +946,57 @@ public class ReminderUtils {
             logger.error("Exception", ex);
         }
         return stats;
+    }
+
+    public static void addWinner(String name) {
+
+        try {
+            Connection con = DriverManager.getConnection(url, user, password);
+            Statement st = con.createStatement();
+
+            PreparedStatement pst = con.prepareStatement("SELECT id FROM giveaway_winner  WHERE name = '" + name + "'");
+            ResultSet rs = pst.executeQuery();
+            int id = -1;
+            while (rs.next()) {
+                id = rs.getInt(1);
+                String sql = "UPDATE giveaway_winner SET wins = wins + 1, last_win = ? WHERE id = ?";
+                PreparedStatement p = con.prepareStatement(sql);
+                p.setTimestamp(1, Timestamp.from(Instant.now()));
+                p.executeUpdate();
+            }
+            if (id == -1) {
+                String sql = "insert into giveaway_winner (name, wins, last_win) " +
+                        "VALUES (?, 1, ?)";
+                PreparedStatement p = con.prepareStatement(sql);
+                p.setString(1, name);
+                p.setTimestamp(2, Timestamp.from(Instant.now()));
+                p.execute();
+            }
+            st.executeBatch();
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
+    }
+
+    public static List<GiveawayWinner> loadGiveawayWins() {
+        List<GiveawayWinner> winers = new ArrayList<>();
+
+        try {
+            Connection con = DriverManager.getConnection(url, user, password);
+            Statement st = con.createStatement();
+
+            PreparedStatement pst = con.prepareStatement("SELECT name, wins, last_win FROM giveaway_winner Order by wins DESC");
+            ResultSet rs = pst.executeQuery();
+            int id = -1;
+            while (rs.next()) {
+                GiveawayWinner winner = new GiveawayWinner(rs.getString(1), rs.getInt(2), rs.getTimestamp(3));
+                winers.add(winner);
+
+            }
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
+        return winers;
     }
 
 }

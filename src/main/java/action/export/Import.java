@@ -156,7 +156,9 @@ public class Import extends Action {
                     embed.title("OUI Weekly Best");
                     embed.addField("Top Work", getBest(work, workYesterday, false), true);
                     embed.addField("Top Tips", getBest(tips, tipsYesterday,false), false);
-                    embed.addField("Top Donations", getBest(donations, donationsYesterday,true), true);
+                    embed.addField("Top Donations", getBest(donations, donationsYesterday,true), false);
+                    embed.addField("Top Overtime", getBest(overtime, overtimeYesterday, false), false);
+                    embed.addField("Top Votes", getBest(votes, votesYesterday,false), false);
 
 
                     EmbedCreateSpec.Builder embed2 = EmbedCreateSpec.builder();
@@ -170,9 +172,9 @@ public class Import extends Action {
 
                     channel.createMessage(embed.build()).block();
 
-                    client.getChannelById(Snowflake.of(flex)).createMessage(embed2.build().asRequest()).block();
-
-                    channel.createMessage(embed2.build()).block();
+//                    client.getChannelById(Snowflake.of(flex)).createMessage(embed2.build().asRequest()).block();
+//
+//                    channel.createMessage(embed2.build()).block();
 
                     channel.createMessage("Checking Roles").block();
 
@@ -273,13 +275,13 @@ public class Import extends Action {
                             client.getGuildById(Snowflake.of(guildId)).addMemberRole(
                                     Snowflake.of(member.getId()),
                                     Snowflake.of(zeroVotes),
-                                    "Add Giveaway role").block();
+                                    "Add 0 Vote role").block();
                         } else {
                             //remove the 0 vote role
                             client.getGuildById(Snowflake.of(guildId)).removeMemberRole(
                                     Snowflake.of(member.getId()),
                                     Snowflake.of(zeroVotes),
-                                    "Giveaway role has expired").block();
+                                    "User has voted").block();
                         }
 
                         } catch (ClientException e) {
