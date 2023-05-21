@@ -250,6 +250,7 @@ public class Bot {
                     commands.add("ProfileStats.json");
                     commands.add("FlexStats.json");
                     commands.add("giveaway.json");
+                    commands.add("reminders.json");
 
 //            List.of("greet.json", "ping.json");
                     try {

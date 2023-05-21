@@ -1,6 +1,7 @@
 package action.reminder;
 
 import action.giveaway.model.GiveawayWinner;
+import action.reminder.model.ReminderSettings;
 import action.reminder.model.FlexStats;
 import action.reminder.model.Profile;
 import action.reminder.model.ProfileStats;
@@ -426,7 +427,7 @@ public class ReminderUtils {
             Statement st = con.createStatement();
 
             PreparedStatement pst = con.prepareStatement("SELECT name, shack_name, status, enabled, react, message, depth, upgrade, sleep_Start, sleep_End, dm_reminder, username " +
-                    "FROM profile  WHERE shack_name = ? and enabled = true");
+                    "FROM profile  WHERE shack_name = ?");
             pst.setString(1, shack);
             ResultSet rs = pst.executeQuery();
             while (rs.next()) {
@@ -472,7 +473,7 @@ public class ReminderUtils {
         Profile profile = null;
         try (Connection con = DriverManager.getConnection(url, user, password);
              PreparedStatement pst = con.prepareStatement("SELECT name, shack_name, status, enabled, react, message, depth, upgrade, sleep_Start, sleep_End, dm_reminder, username " +
-                     "FROM profile  WHERE name = '" + id + "' and enabled = true");
+                     "FROM profile  WHERE name = '" + id + "'");
              ResultSet rs = pst.executeQuery()) {
 
             while (rs.next()) {
@@ -504,7 +505,7 @@ public class ReminderUtils {
             Statement st = con.createStatement();
 
             PreparedStatement pst = con.prepareStatement("SELECT name, shack_name, status, enabled, react, message, depth, upgrade, sleep_Start, sleep_End, dm_reminder, username " +
-                    "FROM profile  WHERE username = ? and enabled = true");
+                    "FROM profile  WHERE username = ?");
             pst.setString(1, username);
             ResultSet rs = pst.executeQuery();
             while (rs.next()) {
@@ -867,7 +868,7 @@ public class ReminderUtils {
             Connection con = DriverManager.getConnection(url, user, password);
             String sql = "SELECT name, income, balance, location, import_time FROM profile_stats  " +
                     "WHERE name = ? " +
-                    "and import_time > ? " ;
+                    "and import_time > ? ";
             if (location != null) {
                 sql += "and location = ? ";
             }
@@ -908,12 +909,12 @@ public class ReminderUtils {
             Connection con = DriverManager.getConnection(url, user, password);
             String sql = "SELECT export_time, name, shack_name, shifts, tips, donations, votes, overtime FROM member_data  " +
                     "WHERE export_time > ? " +
-                    "and export_time < ? " ;
+                    "and export_time < ? ";
             String or = "  ";
             sql += " and (";
 //            int count = 3;
             for (String id : ids) {
-                sql += or +" name = ? " ;
+                sql += or + " name = ? ";
 //                pst.setString(count, id);
 //                count++;
                 or = " or ";
@@ -950,6 +951,39 @@ public class ReminderUtils {
 
     public static void addWinner(String name) {
 
+        addWinner(name, Timestamp.from(Instant.now()));
+
+//        try {
+//            Connection con = DriverManager.getConnection(url, user, password);
+//            Statement st = con.createStatement();
+//
+//            PreparedStatement pst = con.prepareStatement("SELECT id FROM giveaway_winner  WHERE name = '" + name + "'");
+//            ResultSet rs = pst.executeQuery();
+//            int id = -1;
+//            while (rs.next()) {
+//                id = rs.getInt(1);
+//                String sql = "UPDATE giveaway_winner SET wins = wins + 1, last_win = ? WHERE id = ?";
+//                PreparedStatement p = con.prepareStatement(sql);
+//                p.setTimestamp(1, Timestamp.from(Instant.now()));
+//                p.executeUpdate();
+//            }
+//            if (id == -1) {
+//                String sql = "insert into giveaway_winner (name, wins, last_win) " +
+//                        "VALUES (?, 1, ?)";
+//                PreparedStatement p = con.prepareStatement(sql);
+//                p.setString(1, name);
+//                p.setTimestamp(2, Timestamp.from(Instant.now()));
+//                p.execute();
+//            }
+//            st.executeBatch();
+//        } catch (SQLException ex) {
+//            logger.error("Exception", ex);
+//        }
+    }
+
+
+    public static void addWinner(String name, Timestamp time) {
+
         try {
             Connection con = DriverManager.getConnection(url, user, password);
             Statement st = con.createStatement();
@@ -961,7 +995,8 @@ public class ReminderUtils {
                 id = rs.getInt(1);
                 String sql = "UPDATE giveaway_winner SET wins = wins + 1, last_win = ? WHERE id = ?";
                 PreparedStatement p = con.prepareStatement(sql);
-                p.setTimestamp(1, Timestamp.from(Instant.now()));
+                p.setTimestamp(1, time);
+                p.setInt(2, id);
                 p.executeUpdate();
             }
             if (id == -1) {
@@ -969,7 +1004,7 @@ public class ReminderUtils {
                         "VALUES (?, 1, ?)";
                 PreparedStatement p = con.prepareStatement(sql);
                 p.setString(1, name);
-                p.setTimestamp(2, Timestamp.from(Instant.now()));
+                p.setTimestamp(2, time);
                 p.execute();
             }
             st.executeBatch();
@@ -997,6 +1032,83 @@ public class ReminderUtils {
             logger.error("Exception", ex);
         }
         return winers;
+    }
+
+
+    public static ReminderSettings loadReminderSettings(String name) {
+        try {
+            Connection con = DriverManager.getConnection(url, user, password);
+            Statement st = con.createStatement();
+
+            PreparedStatement pst = con.prepareStatement("SELECT name, tip, work, overtime, vote, daily, clean, boost FROM reminder_settings " +
+                    " WHERE name = ?");
+            pst.setString(1, name);
+            ResultSet rs = pst.executeQuery();
+            int id = -1;
+            while (rs.next()) {
+                ReminderSettings reminderSettings = new ReminderSettings(
+                        rs.getString(1),
+                        rs.getBoolean(2),
+                        rs.getBoolean(3),
+                        rs.getBoolean(4),
+                        rs.getBoolean(5),
+                        rs.getBoolean(6),
+                        rs.getBoolean(7),
+                        rs.getBoolean(8));
+                return reminderSettings;
+            }
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
+        return null;
+    }
+
+
+    public static boolean updateReminderSettings(ReminderSettings reminderSettings) {
+        Boolean newProfile = false;
+        try {
+            Connection con = DriverManager.getConnection(url, user, password);
+            Statement st = con.createStatement();
+
+            PreparedStatement pst = con.prepareStatement("SELECT id FROM reminder_settings  WHERE name = ?");
+            pst.setString(1, reminderSettings.getName());
+            ResultSet rs = pst.executeQuery();
+            int id = -1;
+            while (rs.next()) {
+                id = rs.getInt(1);
+                String sql = "UPDATE reminder_settings SET " +
+                        "tip = ?, work = ?, overtime = ?, vote = ?, daily = ?, clean = ?, boost = ? WHERE id = ?";
+                PreparedStatement p = con.prepareStatement(sql);
+                p.setBoolean(1, reminderSettings.isTip());
+                p.setBoolean(2, reminderSettings.isWork());
+                p.setBoolean(3, reminderSettings.isOvertime());
+                p.setBoolean(4, reminderSettings.isVote());
+                p.setBoolean(5, reminderSettings.isDaily());
+                p.setBoolean(6, reminderSettings.isClean());
+                p.setBoolean(7, reminderSettings.isBoost());
+                p.setInt(8, id);
+                p.executeUpdate();
+            }
+            if (id == -1) {
+                String sql = "insert into reminder_settings (name, tip, work, overtime, vote, daily, clean, boost) " +
+                        "VALUES (?,?,?,?,?,?,?,?)";
+                PreparedStatement p = con.prepareStatement(sql);
+                p.setString(1, reminderSettings.getName());
+                p.setBoolean(2, reminderSettings.isTip());
+                p.setBoolean(3, reminderSettings.isWork());
+                p.setBoolean(4, reminderSettings.isOvertime());
+                p.setBoolean(5, reminderSettings.isVote());
+                p.setBoolean(6, reminderSettings.isDaily());
+                p.setBoolean(7, reminderSettings.isClean());
+                p.setBoolean(8, reminderSettings.isBoost());
+                p.execute();
+                newProfile = true;
+            }
+            st.executeBatch();
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
+        return newProfile;
     }
 
 }

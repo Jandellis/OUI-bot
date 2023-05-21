@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS reminder (
     channel  VARCHAR(25)
 );
 
-alter table profile add enabled BOOLEAN ;
+alter table profile add enabled BOOLBOOLEAN ;
 alter table profile add react VARCHAR(25) ;
 
 ALTER TABLE profile ALTER COLUMN react TYPE VARCHAR(255);
@@ -213,3 +213,28 @@ ALTER TABLE member_data add  votes int;
 
 
 ALTER TABLE warning_data add giveaway_until timestamp;
+
+CREATE TABLE IF NOT EXISTS giveaway_winner (
+    id serial PRIMARY KEY,
+    name VARCHAR(25),
+    wins int,
+    last_win timestamp
+);
+
+CREATE TABLE IF NOT EXISTS franchise (
+    id serial PRIMARY KEY,
+    name VARCHAR(25),
+    members int
+);
+
+CREATE TABLE IF NOT EXISTS reminder_settings (
+    id serial PRIMARY KEY,
+    name VARCHAR(25),
+    tip BOOLEAN,
+    work BOOLEAN,
+    overtime BOOLEAN,
+    vote BOOLEAN,
+    daily BOOLEAN,
+    clean BOOLEAN,
+    boost BOOLEAN
+);

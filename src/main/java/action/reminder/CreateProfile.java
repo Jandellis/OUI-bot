@@ -1,6 +1,7 @@
 package action.reminder;
 
 import action.Action;
+import action.reminder.model.Profile;
 import action.reminder.model.ProfileStats;
 import action.reminder.model.Status;
 import action.upgrades.model.LocationEnum;
@@ -87,23 +88,32 @@ public class CreateProfile extends Action implements EmbedAction {
 
             for (EmbedData embed : embedData) {
 
-                if (embed.fields().toOptional().isPresent() && embed.fields().get().size() > 1 && embed.fields().get().get(0).name().equals("Shack Name")) {
+                if (embed.fields().toOptional().isPresent()
+                        && embed.fields().get().size() > 1
+                        && embed.fields().get().get(0).name().equals("Shack Name")) {
 
-                    if (!embed.thumbnail().toOptional().isPresent()) {
-                        message.getChannel().block().createMessage("Sorry unable to create your profile. If you add an avatar i will be able to").block();
-                    } else {
+                    String id = null;
+                    if (message.getData().interaction().toOptional().isPresent()) {
+                        if (message.getData().interaction().get().name().equalsIgnoreCase("shack")){
+                            id = message.getData().interaction().get().user().id().toString();
+                        }
+                    }
+
+                    if (embed.thumbnail().toOptional().isPresent() || id != null) {
                         if (embed.footer().toOptional().isPresent()) {
 
                             String line = embed.fields().get().get(0).value().split("\n")[0];
                             //replace up, replace taco, replace (), hq building
                             String shackName = line.replace("\uD83D\uDD3A ", "").replace("\uD83C\uDF2E", "").replace(" ()", "").replace(" \uD83C\uDFDB", "");
                             Status status = Status.getStatus(embed.footer().get().text());
-                            String id = embed.thumbnail().get().url().get().replace("https://cdn.discordapp.com/avatars/", "").split("/")[0];
+                            if (id == null) {
+                                id = embed.thumbnail().get().url().get().replace("https://cdn.discordapp.com/avatars/", "").split("/")[0];
+                                logger.info("thumbnail id is " + embed.thumbnail().get().url().get());
+                            }
                             MemberData memberData = null;
                             try {
-                                logger.info("thumbnail id is " + embed.thumbnail().get().url().get());
                                 logger.info("User id is " + id);
-                                message.getGuildId().get();
+                                String guildId = message.getGuildId().get().asString();
                                 memberData = client.getGuildById(Snowflake.of(guildId)).getMember(Snowflake.of(id)).block();
 
                             } catch (NumberFormatException e) {
@@ -126,8 +136,14 @@ public class CreateProfile extends Action implements EmbedAction {
                             }
                             String userName = memberData.user().username();
                             String discriminator = memberData.user().discriminator();
+                            boolean newProfile;
+                            if (discriminator == null) {
+                                newProfile = ReminderUtils.addProfile(id, shackName, status, userName);
+                            } else {
+                                newProfile = ReminderUtils.addProfile(id, shackName, status, userName + "#" + discriminator);
+                            }
 
-                            boolean newProfile = ReminderUtils.addProfile(id, shackName, status, userName + "#" + discriminator);
+
 
                             ProfileStats profileStats = new ProfileStats(id);
                             profileStats.setImportTime(Timestamp.from(Instant.now()));
@@ -152,12 +168,17 @@ public class CreateProfile extends Action implements EmbedAction {
 
 
 
-                            message.addReaction(ReactionEmoji.unicode("\uD83D\uDC4B")).block();
-                            message.addReaction(ReactionEmoji.unicode(reloadEmote)).block();
+                            Profile profile = ReminderUtils.loadProfileById(id);
+                            if (profile.getEnabled()) {
+                                message.addReaction(ReactionEmoji.unicode("\uD83D\uDC4B")).block();
+                                message.addReaction(ReactionEmoji.unicode(reloadEmote)).block();
+                            }
                             if (newProfile) {
                                 message.getChannel().block().createMessage("Your profile has been created. Would you like to turn on reminders? Type `cyrm on` \r\nFor more details, type `cyhelp`").block();
                             }
                         }
+                    } else {
+                        message.getChannel().block().createMessage("Sorry unable to create your profile. If you add an avatar i will be able to or do /shack").block();
                     }
 
 
@@ -184,8 +205,9 @@ public class CreateProfile extends Action implements EmbedAction {
                                 }
 //                            }
                         }
-
-                        message.addReaction(ReactionEmoji.unicode("\uD83D\uDC4B")).block();
+                        Profile profile = ReminderUtils.loadProfileById(id);
+                        if (profile.getEnabled())
+                            message.addReaction(ReactionEmoji.unicode("\uD83D\uDC4B")).block();
 
 
                     }

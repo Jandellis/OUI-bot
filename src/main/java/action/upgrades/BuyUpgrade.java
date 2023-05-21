@@ -648,6 +648,8 @@ public class BuyUpgrade extends Action implements EmbedAction {
 
 
     private void react(Message message, Profile profile, boolean refresh) {
+        if (!profile.getEnabled())
+            return;
         String react = profile.getEmote();
         if (react == null || react.equals("")) {
             react = defaultReact;

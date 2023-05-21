@@ -83,6 +83,11 @@ public class Help extends Action {
                     sb.append("To view sleep times`\n");
                     sb.append("Type `cySleepList`\n");
                     message.getChannel().block().createMessage(sb.toString()).block();
+
+                    sb = new StringBuilder();
+                    sb.append("To view what reminders you have enabled type </reminders:1109632647807901746>\n");
+                    sb.append("To change  what reminders you have enabled type </reminders:1109632647807901746> and select the ones that you want\n");
+                    message.getChannel().block().createMessage(sb.toString()).block();
                 }
 
 

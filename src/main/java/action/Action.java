@@ -256,7 +256,9 @@ public abstract class Action {
 //                message.getChannel().block().createMessage("You have exceeded your history limit. This reminder will not be created.\n" +
 //                        "To stop seeing this message increase your history limit with `cyrm history <limit>`, or stop clicking on other peoples buttons!\n" +
 //                        "The higher the history, the more message I will go back and check who was the owner. For me to read this message your history would need to be more than " + count).block();
-                original.addReaction(ReactionEmoji.unicode("\uD83D\uDEAB")).block(); //
+                if (profile.getEnabled()) {
+                    original.addReaction(ReactionEmoji.unicode("\uD83D\uDEAB")).block();
+                }
                 return "";
             }
         }

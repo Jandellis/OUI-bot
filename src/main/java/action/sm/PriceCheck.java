@@ -99,7 +99,9 @@ public class PriceCheck extends Action {
 
             for (Sauce sauce : Sauce.values()) {
                 int price = Integer.parseInt(((JSONObject) ((JSONObject) obj).get(sauce.getName())).get("price").toString());
-                int price2 = oldPrices.get(sauce);
+                int price2 = price;
+                if (oldPrices == null)
+                    price2 = oldPrices.get(sauce);
                 //Integer.parseInt(((JSONArray) ((JSONObject) ((JSONObject) obj).get(sauce.getName())).get("history")).get(0).toString());
 
 

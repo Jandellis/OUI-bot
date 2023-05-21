@@ -23,7 +23,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class CreateReminder extends Action implements EmbedAction{
+public class CreateReminder extends Action implements EmbedAction {
 
     String tacoBot = "490707751832649738";
     List<String> watchChannels;
@@ -60,7 +60,7 @@ public class CreateReminder extends Action implements EmbedAction{
             if (message.getData().author().id().asString().equals(tacoBot)) {
                 try {
 
-                    if (message.getEmbeds().isEmpty() || message.getEmbeds().size() == 0){
+                    if (message.getEmbeds().isEmpty() || message.getEmbeds().size() == 0) {
                         logger.info("empty embeds, skipping");
 //                        handleEmbedAction(message, checkEmbeds(message));
                         return Mono.empty();
@@ -78,16 +78,16 @@ public class CreateReminder extends Action implements EmbedAction{
         }
 
         String actionData = getAction(message, "cyposted");
-        if (actionData != null ) {
+        if (actionData != null) {
 //            if (hasPermission(message, recruiter)) {
 
-                Instant reminderTime = message.getTimestamp().plus(6, ChronoUnit.HOURS);
+            Instant reminderTime = message.getTimestamp().plus(6, ChronoUnit.HOURS);
 
-                Reminder reminder = ReminderUtils.addReminder(message.getAuthor().get().getId().asString(), ReminderType.postAd, Timestamp.from(reminderTime), message.getChannelId().asString());
-                DoReminder doReminder = new DoReminder(gateway, client);
-                doReminder.runReminder(reminder);
-                Profile profile = ReminderUtils.loadProfileById(message.getAuthor().get().getId().asString());
-                react(message, profile);
+            Reminder reminder = ReminderUtils.addReminder(message.getAuthor().get().getId().asString(), ReminderType.postAd, Timestamp.from(reminderTime), message.getChannelId().asString());
+            DoReminder doReminder = new DoReminder(gateway, client);
+            doReminder.runReminder(reminder);
+            Profile profile = ReminderUtils.loadProfileById(message.getAuthor().get().getId().asString());
+            react(message, profile);
 //            } else {
 //                logger.info(message.getAuthor().get().getId().asString() + " is not a recruiter");
 //            }
@@ -121,214 +121,214 @@ public class CreateReminder extends Action implements EmbedAction{
                     //for some reason the embeds will be empty from slash, but if i load it again it will have data
 //                    if (checkAge(message)) {
 //                    } else {
-                        for (EmbedData embed :embedData) {
-                            logger.info("EmbedData is -- " + embed);
+                    for (EmbedData embed : embedData) {
+                        logger.info("EmbedData is -- " + embed);
 
 
-                            if (embed.description().toOptional().isPresent()) {
-                                String desc = embed.description().get();
-                                //tips
-                                if (desc.startsWith("\uD83D\uDCB5") && desc.contains("** in tips!")) {
+                        if (embed.description().toOptional().isPresent()) {
+                            String desc = embed.description().get();
+                            //tips
+                            if (desc.startsWith("\uD83D\uDCB5") && desc.contains("** in tips!")) {
 
-                                    createReminder(ReminderType.tips, message, desc, embed);
-                                }
-                                //work
-                                if (desc.contains("\uD83D\uDC68\u200D\uD83C\uDF73") && desc.contains("** has cooked a total of")
-                                        && !desc.contains("** while working overtime!")) {
-                                    createReminder(ReminderType.work, message, desc, embed);
-                                }
-                                if (desc.startsWith("\uD83D\uDCB5") && desc.contains("** while working!")) {
+                                createReminder(ReminderType.tips, message, desc, embed);
+                            }
+                            //work
+                            if (desc.contains("\uD83D\uDC68\u200D\uD83C\uDF73") && desc.contains("** has cooked a total of")
+                                    && !desc.contains("** while working overtime!")) {
+                                createReminder(ReminderType.work, message, desc, embed);
+                            }
+                            if (desc.startsWith("\uD83D\uDCB5") && desc.contains("** while working!")) {
 
-                                    createReminder(ReminderType.work, message, desc, embed);
-                                }
-                                //ot
-                                if (desc.startsWith("\uD83D\uDCB5") && desc.contains("** while working overtime!")) {
-                                    createReminder(ReminderType.ot, message, desc, embed);
+                                createReminder(ReminderType.work, message, desc, embed);
+                            }
+                            //ot
+                            if (desc.startsWith("\uD83D\uDCB5") && desc.contains("** while working overtime!")) {
+                                createReminder(ReminderType.ot, message, desc, embed);
 
-                                }
-
-                                //vote
-                                if ((desc.startsWith("\u2705") || desc.startsWith("\uD83C\uDF89")) && desc.contains("Voting Daily Streak Progress")) {
-                                    AtomicReference<String> userId = new AtomicReference<>("");
-                                    userId.set(getId(message, embed));
-
-                                    if (userId.get().equals("")) {
-                                        //go look for history and find the last message that has claim and use that for the userid
-                                        List<MessageData> historic = getMessagesOfChannel(message);
-                                        historic.forEach(messageData -> {
-                                            Instant messageDataTime = DateTimeFormatter.ISO_OFFSET_DATE_TIME.parse(messageData.timestamp(), Instant::from);
-                                            if (Timestamp.from(messageDataTime).before(Timestamp.from(message.getTimestamp()))) {
-                                                if (messageData.content().toLowerCase().contains("claim")) {
-                                                    userId.set(messageData.author().id().toString());
-                                                }
-                                            }
-                                        });
-                                    }
-                                    if (userId.get().equals(tacoBot)) {
-                                        // if user clicks on claim button
-                                        //go find /vote link command and use that user
-                                        List<MessageData> historic2 = getMessagesOfChannel(message, 120);
-
-                                        historic2.forEach(messageData -> {
-                                            Instant messageDataTime = DateTimeFormatter.ISO_OFFSET_DATE_TIME.parse(messageData.timestamp(), Instant::from);
-                                            if (Timestamp.from(messageDataTime).before(Timestamp.from(message.getTimestamp())) && messageData.interaction().toOptional().isPresent()) {
-
-                                                if (messageData.interaction().get().name().toLowerCase().contains("vote link")) {
-                                                    userId.set(messageData.interaction().get().user().id().toString());
-                                                }
-                                            }
-                                        });
-                                    }
-                                    Profile profile = ReminderUtils.loadProfileById(userId.get());
-                                    if (profile != null) {
-                                        createReminder(ReminderType.vote, message, profile);
-                                    }
-
-                                }
-
-                                //daily
-                                if ((desc.startsWith("\u2705") || desc.startsWith("\uD83C\uDF89"))
-                                        && desc.contains("__**Daily Streak Progress**__")
-//                                        && embed.getFooter().isPresent()
-//                                        && embed.getFooter().get().getText().contains("daily")
-                                ) {
-
-                                    AtomicReference<String> userId = new AtomicReference<>("");
-                                    userId.set(getId(message, embed));
-                                    if (userId.get().equals("")) {
-                                        List<MessageData> historic = getMessagesOfChannel(message);
-                                        historic.forEach(messageData -> {
-                                            Instant messageDataTime = DateTimeFormatter.ISO_OFFSET_DATE_TIME.parse(messageData.timestamp(), Instant::from);
-                                            if (Timestamp.from(messageDataTime).before(Timestamp.from(message.getTimestamp()))) {
-                                                String noSpace = messageData.content().toLowerCase().replace(" ", "");
-                                                if (noSpace.contains("!d") || noSpace.contains("!daily")) {
-                                                    userId.set(messageData.author().id().toString());
-                                                }
-                                            }
-                                        });
-                                    }
-                                    Profile profile = ReminderUtils.loadProfileById(userId.get());
-                                    if (profile != null) {
-                                        createReminder(ReminderType.daily, message, profile);
-                                    }
-
-                                }
-                                //clean
-                                if (desc.startsWith("\u2705") && desc.contains("You have cleaned")) {
-                                    AtomicReference<String> userId = new AtomicReference<>("");
-                                    userId.set(getId(message, embed));
-
-                                    if (userId.get().equals("")) {
-                                        List<MessageData> historic = getMessagesOfChannel(message);
-                                        historic.forEach(messageData -> {
-                                            Instant messageDataTime = DateTimeFormatter.ISO_OFFSET_DATE_TIME.parse(messageData.timestamp(), Instant::from);
-                                            if (Timestamp.from(messageDataTime).before(Timestamp.from(message.getTimestamp()))) {
-                                                if (messageData.content().toLowerCase().contains("clean")) {
-                                                    userId.set(messageData.author().id().toString());
-                                                }
-                                            }
-                                        });
-                                    }
-                                    Profile profile = ReminderUtils.loadProfileById(userId.get());
-                                    if (profile != null) {
-                                        createReminder(ReminderType.clean, message, profile);
-                                    }
-
-                                }
-
-                            } else if (embed.title().toOptional().isPresent()) {
-
-                                //cooldown
-
-                                String title = embed.title().get();
-
-                                if (title.contains("Cooldowns |")) {
-                                    AtomicReference<String> userId = new AtomicReference<>("");
-                                    userId.set(getId(message, embed));
-
-                                    if (userId.get().equals("")) {
-                                        String footer = embed.footer().get().text();
-
-                                        List<MessageData> historic = getMessagesOfChannel(message);
-                                        historic.forEach(messageData -> {
-                                            Instant messageDataTime = DateTimeFormatter.ISO_OFFSET_DATE_TIME.parse(messageData.timestamp(), Instant::from);
-                                            if (Timestamp.from(messageDataTime).before(Timestamp.from(message.getTimestamp()))) {
-                                                if (footer.contains(messageData.author().discriminator())) {
-                                                    userId.set(messageData.author().id().toString());
-                                                }
-                                            }
-                                        });
-                                    }
-                                    Profile profile = ReminderUtils.loadProfileById(userId.get());
-
-
-                                    if (profile != null) {
-                                        List<Reminder> reminders = ReminderUtils.loadReminder(profile.getName());
-                                        //if already got reminder dont add
-                                        boolean tips = false;
-                                        boolean work = false;
-                                        boolean ot = false;
-                                        boolean vote = false;
-                                        boolean daily = false;
-                                        boolean clean = false;
-
-
-                                        for (Reminder dbReminder : reminders) {
-                                            if (dbReminder.getType() == ReminderType.tips) {
-                                                tips = true;
-                                            }
-                                            if (dbReminder.getType() == ReminderType.work) {
-                                                work = true;
-                                            }
-                                            if (dbReminder.getType() == ReminderType.ot) {
-                                                ot = true;
-                                            }
-                                            if (dbReminder.getType() == ReminderType.vote) {
-                                                vote = true;
-                                            }
-                                            if (dbReminder.getType() == ReminderType.clean) {
-                                                clean = true;
-                                            }
-                                            if (dbReminder.getType() == ReminderType.daily) {
-                                                daily = true;
-                                            }
-
-                                        }
-                                        //need to add in cooldown time
-                                        if (!work) {
-                                            int seconds = getSeconds(embed.fields().get().get(0).value());
-                                            createReminder(ReminderType.work, message, profile, seconds);
-                                        }
-                                        if (!tips) {
-                                            int seconds = getSeconds(embed.fields().get().get(1).value());
-                                            createReminder(ReminderType.tips, message, profile, seconds);
-                                        }
-                                        if (!ot) {
-                                            int seconds = getSeconds(embed.fields().get().get(2).value());
-                                            createReminder(ReminderType.ot, message, profile, seconds);
-                                        }
-                                        if (!vote) {
-                                            int seconds = getSeconds(embed.fields().get().get(5).value());
-                                            createReminder(ReminderType.vote, message, profile, seconds);
-                                        }
-                                        if (!daily) {
-                                            int seconds = getSeconds(embed.fields().get().get(4).value());
-                                            createReminder(ReminderType.daily, message, profile, seconds);
-                                        }
-                                        if (!clean) {
-                                            int seconds = getSeconds(embed.fields().get().get(3).value());
-                                            createReminder(ReminderType.clean, message, profile, seconds);
-                                        }
-
-                                    }
-
-                                }
                             }
 
-                            // react with emots for what reminders i dont have
+                            //vote
+                            if ((desc.startsWith("\u2705") || desc.startsWith("\uD83C\uDF89")) && desc.contains("Voting Daily Streak Progress")) {
+                                AtomicReference<String> userId = new AtomicReference<>("");
+                                userId.set(getId(message, embed));
+
+                                if (userId.get().equals("")) {
+                                    //go look for history and find the last message that has claim and use that for the userid
+                                    List<MessageData> historic = getMessagesOfChannel(message);
+                                    historic.forEach(messageData -> {
+                                        Instant messageDataTime = DateTimeFormatter.ISO_OFFSET_DATE_TIME.parse(messageData.timestamp(), Instant::from);
+                                        if (Timestamp.from(messageDataTime).before(Timestamp.from(message.getTimestamp()))) {
+                                            if (messageData.content().toLowerCase().contains("claim")) {
+                                                userId.set(messageData.author().id().toString());
+                                            }
+                                        }
+                                    });
+                                }
+                                if (userId.get().equals(tacoBot)) {
+                                    // if user clicks on claim button
+                                    //go find /vote link command and use that user
+                                    List<MessageData> historic2 = getMessagesOfChannel(message, 120);
+
+                                    historic2.forEach(messageData -> {
+                                        Instant messageDataTime = DateTimeFormatter.ISO_OFFSET_DATE_TIME.parse(messageData.timestamp(), Instant::from);
+                                        if (Timestamp.from(messageDataTime).before(Timestamp.from(message.getTimestamp())) && messageData.interaction().toOptional().isPresent()) {
+
+                                            if (messageData.interaction().get().name().toLowerCase().contains("vote link")) {
+                                                userId.set(messageData.interaction().get().user().id().toString());
+                                            }
+                                        }
+                                    });
+                                }
+                                Profile profile = ReminderUtils.loadProfileById(userId.get());
+                                if (profile != null) {
+                                    createReminder(ReminderType.vote, message, profile);
+                                }
+
+                            }
+
+                            //daily
+                            if ((desc.startsWith("\u2705") || desc.startsWith("\uD83C\uDF89"))
+                                    && desc.contains("__**Daily Streak Progress**__")
+//                                        && embed.getFooter().isPresent()
+//                                        && embed.getFooter().get().getText().contains("daily")
+                            ) {
+
+                                AtomicReference<String> userId = new AtomicReference<>("");
+                                userId.set(getId(message, embed));
+                                if (userId.get().equals("")) {
+                                    List<MessageData> historic = getMessagesOfChannel(message);
+                                    historic.forEach(messageData -> {
+                                        Instant messageDataTime = DateTimeFormatter.ISO_OFFSET_DATE_TIME.parse(messageData.timestamp(), Instant::from);
+                                        if (Timestamp.from(messageDataTime).before(Timestamp.from(message.getTimestamp()))) {
+                                            String noSpace = messageData.content().toLowerCase().replace(" ", "");
+                                            if (noSpace.contains("!d") || noSpace.contains("!daily")) {
+                                                userId.set(messageData.author().id().toString());
+                                            }
+                                        }
+                                    });
+                                }
+                                Profile profile = ReminderUtils.loadProfileById(userId.get());
+                                if (profile != null) {
+                                    createReminder(ReminderType.daily, message, profile);
+                                }
+
+                            }
+                            //clean
+                            if (desc.startsWith("\u2705") && desc.contains("You have cleaned")) {
+                                AtomicReference<String> userId = new AtomicReference<>("");
+                                userId.set(getId(message, embed));
+
+                                if (userId.get().equals("")) {
+                                    List<MessageData> historic = getMessagesOfChannel(message);
+                                    historic.forEach(messageData -> {
+                                        Instant messageDataTime = DateTimeFormatter.ISO_OFFSET_DATE_TIME.parse(messageData.timestamp(), Instant::from);
+                                        if (Timestamp.from(messageDataTime).before(Timestamp.from(message.getTimestamp()))) {
+                                            if (messageData.content().toLowerCase().contains("clean")) {
+                                                userId.set(messageData.author().id().toString());
+                                            }
+                                        }
+                                    });
+                                }
+                                Profile profile = ReminderUtils.loadProfileById(userId.get());
+                                if (profile != null) {
+                                    createReminder(ReminderType.clean, message, profile);
+                                }
+
+                            }
+
+                        } else if (embed.title().toOptional().isPresent()) {
+
+                            //cooldown
+
+                            String title = embed.title().get();
+
+                            if (title.contains("Cooldowns |")) {
+                                AtomicReference<String> userId = new AtomicReference<>("");
+                                userId.set(getId(message, embed));
+
+                                if (userId.get().equals("")) {
+                                    String footer = embed.footer().get().text();
+
+                                    List<MessageData> historic = getMessagesOfChannel(message);
+                                    historic.forEach(messageData -> {
+                                        Instant messageDataTime = DateTimeFormatter.ISO_OFFSET_DATE_TIME.parse(messageData.timestamp(), Instant::from);
+                                        if (Timestamp.from(messageDataTime).before(Timestamp.from(message.getTimestamp()))) {
+                                            if (footer.contains(messageData.author().discriminator())) {
+                                                userId.set(messageData.author().id().toString());
+                                            }
+                                        }
+                                    });
+                                }
+                                Profile profile = ReminderUtils.loadProfileById(userId.get());
 
 
+                                if (profile != null) {
+                                    List<Reminder> reminders = ReminderUtils.loadReminder(profile.getName());
+                                    //if already got reminder dont add
+                                    boolean tips = false;
+                                    boolean work = false;
+                                    boolean ot = false;
+                                    boolean vote = false;
+                                    boolean daily = false;
+                                    boolean clean = false;
+
+
+                                    for (Reminder dbReminder : reminders) {
+                                        if (dbReminder.getType() == ReminderType.tips) {
+                                            tips = true;
+                                        }
+                                        if (dbReminder.getType() == ReminderType.work) {
+                                            work = true;
+                                        }
+                                        if (dbReminder.getType() == ReminderType.ot) {
+                                            ot = true;
+                                        }
+                                        if (dbReminder.getType() == ReminderType.vote) {
+                                            vote = true;
+                                        }
+                                        if (dbReminder.getType() == ReminderType.clean) {
+                                            clean = true;
+                                        }
+                                        if (dbReminder.getType() == ReminderType.daily) {
+                                            daily = true;
+                                        }
+
+                                    }
+                                    //need to add in cooldown time
+                                    if (!work) {
+                                        int seconds = getSeconds(embed.fields().get().get(0).value());
+                                        createReminder(ReminderType.work, message, profile, seconds);
+                                    }
+                                    if (!tips) {
+                                        int seconds = getSeconds(embed.fields().get().get(1).value());
+                                        createReminder(ReminderType.tips, message, profile, seconds);
+                                    }
+                                    if (!ot) {
+                                        int seconds = getSeconds(embed.fields().get().get(2).value());
+                                        createReminder(ReminderType.ot, message, profile, seconds);
+                                    }
+                                    if (!vote) {
+                                        int seconds = getSeconds(embed.fields().get().get(5).value());
+                                        createReminder(ReminderType.vote, message, profile, seconds);
+                                    }
+                                    if (!daily) {
+                                        int seconds = getSeconds(embed.fields().get().get(4).value());
+                                        createReminder(ReminderType.daily, message, profile, seconds);
+                                    }
+                                    if (!clean) {
+                                        int seconds = getSeconds(embed.fields().get().get(3).value());
+                                        createReminder(ReminderType.clean, message, profile, seconds);
+                                    }
+
+                                }
+
+                            }
                         }
+
+                        // react with emots for what reminders i dont have
+
+
+                    }
 //                    }
                 } catch (Exception e) {
                     printException(e);
@@ -338,7 +338,7 @@ public class CreateReminder extends Action implements EmbedAction{
         }
 
         String actionData = getAction(message, "cyposted");
-        if (actionData != null ) {
+        if (actionData != null) {
 //            if (hasPermission(message, recruiter)) {
 
             Instant reminderTime = message.getTimestamp().plus(6, ChronoUnit.HOURS);
@@ -404,17 +404,17 @@ public class CreateReminder extends Action implements EmbedAction{
 
         if (type == ReminderType.work) {
             if (!ReminderUtils.updateStatsWork(profile.getName())) {
-                ReminderUtils.createStats(profile.getName(), 1,0,0);
+                ReminderUtils.createStats(profile.getName(), 1, 0, 0);
             }
         }
         if (type == ReminderType.tips) {
             if (!ReminderUtils.updateStatsTips(profile.getName())) {
-                ReminderUtils.createStats(profile.getName(), 0,1,0);
+                ReminderUtils.createStats(profile.getName(), 0, 1, 0);
             }
         }
         if (type == ReminderType.ot) {
             if (!ReminderUtils.updateStatsOvertime(profile.getName())) {
-                ReminderUtils.createStats(profile.getName(), 0,0,1);
+                ReminderUtils.createStats(profile.getName(), 0, 0, 1);
             }
         }
         createReminder(type, message, profile);
@@ -428,7 +428,7 @@ public class CreateReminder extends Action implements EmbedAction{
                 if (message.getGuildId().get().asString().equals(server)) {
                     isPatreonServer.set(true);
                 }
-            } );
+            });
         }
         switch (type) {
             case work:
@@ -481,68 +481,71 @@ public class CreateReminder extends Action implements EmbedAction{
         boolean clean = false;
 
 
-        for (Reminder dbReminder : reminders) {
-            if (dbReminder.getType() == ReminderType.tips) {
-                tips = true;
+        //only put letter emotes or /commands if enabled
+        if (profile.getEnabled()) {
+            for (Reminder dbReminder : reminders) {
+                if (dbReminder.getType() == ReminderType.tips) {
+                    tips = true;
+                }
+                if (dbReminder.getType() == ReminderType.work) {
+                    work = true;
+                }
+                if (dbReminder.getType() == ReminderType.ot) {
+                    ot = true;
+                }
+                if (dbReminder.getType() == ReminderType.vote) {
+                    vote = true;
+                }
+                if (dbReminder.getType() == ReminderType.clean) {
+                    clean = true;
+                }
+                if (dbReminder.getType() == ReminderType.daily) {
+                    daily = true;
+                }
             }
-            if (dbReminder.getType() == ReminderType.work) {
-                work = true;
-            }
-            if (dbReminder.getType() == ReminderType.ot) {
-                ot = true;
-            }
-            if (dbReminder.getType() == ReminderType.vote) {
-                vote = true;
-            }
-            if (dbReminder.getType() == ReminderType.clean) {
-                clean = true;
-            }
-            if (dbReminder.getType() == ReminderType.daily) {
-                daily = true;
-            }
-        }
 
-        StringBuilder missingReminders = new StringBuilder();
-        if (!work) {
-            missingReminders.append("</work:1006354978274820109>\n");
-        }
-        if (!tips) {
-            missingReminders.append("</tips:1006354978153169013>\n");
-        }
-        if (!ot) {
-            missingReminders.append("</overtime:1006354977981210646>\n");
-        }
-        if (!vote) {
-            missingReminders.append("</vote link:1006354978274820108>\n");
-        }
-        if (!daily) {
-            missingReminders.append("</daily:1006354977788268621>\n");
-        }
-        if (!clean) {
-            missingReminders.append("</clean:1006354977721176143>\n");
-        }
-        if (missingReminders.toString().length() > 1) {
-            message.getChannel().block().createMessage(missingReminders.toString()).block();
-        }
-        react(message, profile);
+            StringBuilder missingReminders = new StringBuilder();
+            if (!work) {
+                missingReminders.append("</work:1006354978274820109>\n");
+            }
+            if (!tips) {
+                missingReminders.append("</tips:1006354978153169013>\n");
+            }
+            if (!ot) {
+                missingReminders.append("</overtime:1006354977981210646>\n");
+            }
+            if (!vote) {
+                missingReminders.append("</vote link:1006354978274820108>\n");
+            }
+            if (!daily) {
+                missingReminders.append("</daily:1006354977788268621>\n");
+            }
+            if (!clean) {
+                missingReminders.append("</clean:1006354977721176143>\n");
+            }
+            if (missingReminders.toString().length() > 1) {
+                message.getChannel().block().createMessage(missingReminders.toString()).block();
+            }
+            react(message, profile);
 
-        if (!work) {
-            message.addReaction(ReactionEmoji.unicode("\uD83C\uDDFC")).block();
-        }
-        if (!tips) {
-            message.addReaction(ReactionEmoji.unicode("\uD83C\uDDF9")).block();
-        }
-        if (!ot) {
-            message.addReaction(ReactionEmoji.unicode("\uD83C\uDDF4")).block();
-        }
-        if (!vote) {
-            message.addReaction(ReactionEmoji.unicode("\uD83C\uDDFB")).block();
-        }
-        if (!daily) {
-            message.addReaction(ReactionEmoji.unicode("\uD83C\uDDE9")).block();
-        }
-        if (!clean) {
-            message.addReaction(ReactionEmoji.unicode("\uD83C\uDDE8")).block();
+            if (!work) {
+                message.addReaction(ReactionEmoji.unicode("\uD83C\uDDFC")).block();
+            }
+            if (!tips) {
+                message.addReaction(ReactionEmoji.unicode("\uD83C\uDDF9")).block();
+            }
+            if (!ot) {
+                message.addReaction(ReactionEmoji.unicode("\uD83C\uDDF4")).block();
+            }
+            if (!vote) {
+                message.addReaction(ReactionEmoji.unicode("\uD83C\uDDFB")).block();
+            }
+            if (!daily) {
+                message.addReaction(ReactionEmoji.unicode("\uD83C\uDDE9")).block();
+            }
+            if (!clean) {
+                message.addReaction(ReactionEmoji.unicode("\uD83C\uDDE8")).block();
+            }
         }
 
 
@@ -579,6 +582,8 @@ public class CreateReminder extends Action implements EmbedAction{
     }
 
     private void react(Message message, Profile profile) {
+        if (!profile.getEnabled())
+            return;
         String react;
         if (profile == null) {
             react = defaultReact;

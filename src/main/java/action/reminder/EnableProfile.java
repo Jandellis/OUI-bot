@@ -129,7 +129,7 @@ public class EnableProfile extends Action {
                     if (onOff) {
                         updated = ReminderUtils.enableProfile(message.getAuthor().get().getId().asString(), enable);
                         if (!updated) {
-                            message.getChannel().block().createMessage("Profile does not exists. Please type `!shack`").block();
+                            message.getChannel().block().createMessage("Profile does not exists. Please type `/shack`").block();
                         } else {
                             message.getChannel().block().createMessage(response).block();
                         }

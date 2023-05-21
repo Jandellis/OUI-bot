@@ -1,5 +1,6 @@
 package action;
 
+import action.export.ExportUtils;
 import discord4j.common.util.Snowflake;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.reaction.ReactionEmoji;
@@ -61,6 +62,8 @@ public class Left extends Action {
                     }
 
                     message.addReaction(ReactionEmoji.unicode("\uD83D\uDD2B")).block();
+
+                    ExportUtils.removeMember("oui");
                     return Mono.empty();
                 }
             }

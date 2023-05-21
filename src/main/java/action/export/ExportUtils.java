@@ -360,4 +360,44 @@ public class ExportUtils {
         }
         return warningDataList;
     }
+
+    public static void removeMember(String name) {
+        try {
+            Connection con = DriverManager.getConnection(url, user, password);
+            PreparedStatement pst = con.prepareStatement("UPDATE franchise SET members = members - 1 WHERE name = ?");
+            pst.setString(1, name);
+            int rs = pst.executeUpdate();
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
+    }
+
+    public static void addMember(String name) {
+        try {
+            Connection con = DriverManager.getConnection(url, user, password);
+            PreparedStatement pst = con.prepareStatement("UPDATE franchise SET members = members + 1 WHERE name = ?");
+            pst.setString(1, name);
+            int rs = pst.executeUpdate();
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
+    }
+
+    public static int getMembers(String name) {
+
+        try {
+            Connection con = DriverManager.getConnection(url, user, password);
+            PreparedStatement pst = con.prepareStatement("SELECT members FROM franchise " +
+                    "WHERE name = ?");
+            pst.setString(1, name);
+            ResultSet rs = pst.executeQuery();
+            while (rs.next()) {
+                return rs.getInt(1);
+            }
+
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
+        return 0;
+    }
 }

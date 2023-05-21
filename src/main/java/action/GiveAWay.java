@@ -255,23 +255,19 @@ public class GiveAWay extends Action {
     }
 
     public String doRoll(String messageId) {
-
         Message message = gateway.getMessageById(Snowflake.of(giveawayChannel), Snowflake.of(messageId)).block();
-
         List<String> enteredList = new ArrayList<>();
-
         List<User> users = message.getReactors(ReactionEmoji.unicode(react)).collectList().block();
-
         users.forEach(user -> {
             try {
                 List<Id> roles = client.getGuildById(Snowflake.of(guildId)).getMember(Snowflake.of(user.getId().asString())).block().roles();
                 roles.forEach((roleId) -> {
-
                     long roleCheck = Long.parseLong(giveawayRole);
+                    // When the giveaway is open use the chef role
                     if (openGiveaway) {
                         roleCheck = chefRole;
                     }
-
+                    //only add users who have the correct role into the giveaway
                     if (roleId.asLong() == roleCheck) {
                         enteredList.add(user.getId().asString());
                     }
@@ -280,13 +276,9 @@ public class GiveAWay extends Action {
                 logger.info("assuming user has left the server " + user.getId().asString() + ", " + user.getUsername());
             }
         });
-
+        // roll a random number and pick a user at random
         Random rand = new Random();
         int randomNumber = rand.nextInt(enteredList.size());
-//        gateway.getUserById(Snowflake.of("292839877563908097")).block().getPrivateChannel().flatMap(channel -> {
-//            channel.createMessage("**Random Number is ** " + randomNumber).block();
-//            return Mono.empty();
-//        }).block();
         String winner = enteredList.get(randomNumber);
         return winner;
     }

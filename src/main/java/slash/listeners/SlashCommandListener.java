@@ -12,6 +12,7 @@ import slash.commands.GreetCommand;
 import slash.commands.PingCommand;
 import slash.commands.PostAdCommand;
 import slash.commands.ProfileStatsCommand;
+import slash.commands.RemindersCommand;
 import slash.commands.SlashCommand;
 
 import java.util.ArrayList;
@@ -29,6 +30,7 @@ public class SlashCommandListener {
         commands.add(new ProfileStatsCommand());
         commands.add(new FlexStatsCommand());
         commands.add(new GiveawayCommand());
+        commands.add(new RemindersCommand());
     }
 
     public static Mono<Void> handle(ChatInputInteractionEvent event) {

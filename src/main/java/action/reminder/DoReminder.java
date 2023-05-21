@@ -4,6 +4,7 @@ import action.Action;
 import action.GiveawayAdd;
 import action.reminder.model.Profile;
 import action.reminder.model.Reminder;
+import action.reminder.model.ReminderSettings;
 import discord4j.common.util.Snowflake;
 import discord4j.core.DiscordClient;
 import discord4j.core.GatewayDiscordClient;
@@ -123,6 +124,9 @@ public class DoReminder extends Action {
 //        }
 
         Profile profile = ReminderUtils.loadProfileById(reminder.getName());
+        if (!profile.getEnabled())
+            return;
+
         String msg = defaultReact + " Boo {ping} go do {cmd}!";
 
         //if shas sleep, check in sleep time
@@ -182,6 +186,12 @@ public class DoReminder extends Action {
             }
         }
 
+        ReminderSettings reminderSettings = ReminderUtils.loadReminderSettings(profile.getName());
+        if (reminderSettings == null) {
+            reminderSettings = new ReminderSettings(profile.getName(), true, true, true, true, true, true, true);
+        }
+
+
         if (profile.getMessage() != null && profile.getMessage().length() > 5) {
             msg = profile.getMessage();
         }
@@ -194,25 +204,32 @@ public class DoReminder extends Action {
         msg = msg.replace("{task}", reminder.getType().getName());
 
         String command = "";
+        boolean doReminder = true;
 
         switch (reminder.getType()) {
             case work:
                 command = "</work:1006354978274820109>";
+                doReminder = reminderSettings.isWork();
                 break;
             case ot:
                 command = "</overtime:1006354977981210646>";
+                doReminder = reminderSettings.isOvertime();
                 break;
             case tips:
                 command = "</tips:1006354978153169013>";
+                doReminder = reminderSettings.isTip();
                 break;
             case vote:
                 command = "</vote link:1006354978274820108>";
+                doReminder = reminderSettings.isVote();
                 break;
             case clean:
                 command = "</clean:1006354977721176143>";
+                doReminder = reminderSettings.isClean();
                 break;
             case daily:
                 command = "</daily:1006354977788268621>";
+                doReminder = reminderSettings.isDaily();
                 break;
             case gift:
                 command = "</gift:1006354977847001160>";
@@ -226,6 +243,7 @@ public class DoReminder extends Action {
             default:
                 //boosts off cooldown
                 command = "</shop:1006354978153169007>";
+                doReminder = reminderSettings.isBoost();
                 if (!hasTask) {
                     command = command + " **" + reminder.getType().getName() + "**";
                 }
@@ -234,21 +252,24 @@ public class DoReminder extends Action {
         msg = msg.replace("{cmd}", command);
 
 
-        if (profile.getDmReminder()) {
-            String finalMsg = "**Reminder from <#" + reminder.getChannel() + ">** \r\n" + msg;
-            gateway.getUserById(Snowflake.of(profile.getName())).block().getPrivateChannel().flatMap(channel -> {
-                channel.createMessage(finalMsg).block();
-                logger.info("sent DM");
-                return Mono.empty();
-            }).block();
-        } else {
-            client.getChannelById(Snowflake.of(reminder.getChannel())).createMessage(msg).block();
-        }
-        if (reminder.getType() == ReminderType.gift) {
-            //for gifts only delete that reminder
-            ReminderUtils.deleteReminder(reminder);
-        } else {
-            ReminderUtils.deleteReminder(reminder.getName(), reminder.getType());
+        //only do reminder if its been enabled
+        if (doReminder) {
+            if (profile.getDmReminder()) {
+                String finalMsg = "**Reminder from <#" + reminder.getChannel() + ">** \r\n" + msg;
+                gateway.getUserById(Snowflake.of(profile.getName())).block().getPrivateChannel().flatMap(channel -> {
+                    channel.createMessage(finalMsg).block();
+                    logger.info("sent DM");
+                    return Mono.empty();
+                }).block();
+            } else {
+                client.getChannelById(Snowflake.of(reminder.getChannel())).createMessage(msg).block();
+            }
+            if (reminder.getType() == ReminderType.gift) {
+                //for gifts only delete that reminder
+                ReminderUtils.deleteReminder(reminder);
+            } else {
+                ReminderUtils.deleteReminder(reminder.getName(), reminder.getType());
+            }
         }
     }
 

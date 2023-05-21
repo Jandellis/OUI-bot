@@ -1,0 +1,54 @@
+{
+    "name": "reminders",
+    "description": "What reminders would you like enabled?",
+    "options": [
+        {
+            "name": "all",
+            "description": "Do you want all reminders enabled?",
+            "type": 5,
+            "required": false
+        },
+        {
+            "name": "tip",
+            "description": "Do you want tip reminders enabled?",
+            "type": 5,
+            "required": false
+        },
+        {
+            "name": "work",
+            "description": "Do you want work reminders enabled?",
+            "type": 5,
+            "required": false
+        },
+        {
+            "name": "overtime",
+            "description": "Do you want overtime reminders enabled?",
+            "type": 5,
+            "required": false
+        },
+        {
+            "name": "daily",
+            "description": "Do you want daily reminders enabled?",
+            "type": 5,
+            "required": false
+        },
+        {
+            "name": "clean",
+            "description": "Do you want clean reminders enabled?",
+            "type": 5,
+            "required": false
+        },
+        {
+            "name": "vote",
+            "description": "Do you want vote reminders enabled?",
+            "type": 5,
+            "required": false
+        },
+        {
+            "name": "boost",
+            "description": "Do you want boost reminders enabled?",
+            "type": 5,
+            "required": false
+        }
+    ]
+}

@@ -21,6 +21,7 @@ public class Welcome extends Action {
     Long recruiter;
 
     Long immunityId;
+    String giveawayRole;
 
     public Welcome() {
         param = "to the franchise!";
@@ -29,6 +30,7 @@ public class Welcome extends Action {
         log = config.get("log");
         recruiter = Long.parseLong(config.get("recruiter"));
         immunityId = Long.parseLong(config.get("immunityId"));
+        giveawayRole = config.get("giveawayRole");
 
     }
 
@@ -44,7 +46,26 @@ public class Welcome extends Action {
 
                     String memberId = message.getContent().split("`")[1].split("]")[0].substring(1);
 
-                    joined(message, memberId);
+                    try {
+                        joined(message, memberId);
+                    } catch (Exception ignored) {
+                        logger.info("user has dms closed");
+                    }
+                    try {
+                        client.getGuildById(Snowflake.of(guildId)).addMemberRole(
+                                Snowflake.of(memberId),
+                                Snowflake.of(giveawayRole),
+                                "Add Giveaway role").block();
+
+                    } catch (ClientException e) {
+                        //member left the server
+                        logger.info("user left the server " + memberId);
+
+                    }
+                    LocalDateTime now = LocalDateTime.now().plusDays(4);
+                    ExportUtils.updateWarningData(memberId + "", Timestamp.valueOf(now));
+
+                    ExportUtils.addMember("oui");
 
 //                    logger.info("Member joined is " + memberId);
 //                    client.getGuildById(Snowflake.of(guildId)).addMemberRole(

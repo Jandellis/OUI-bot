@@ -133,6 +133,8 @@ public class GiveawayAdd extends Action implements EmbedAction {
     String defaultReact = "\uD83D\uDC4B";
 
     private void react(Message message, Profile profile) {
+        if (!profile.getEnabled())
+            return;
         String react = profile.getEmote();
         if (react == null || react.equals("")) {
             react = defaultReact;

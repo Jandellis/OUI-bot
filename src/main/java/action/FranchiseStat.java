@@ -1,5 +1,6 @@
 package action;
 
+import action.export.ExportUtils;
 import action.reminder.EmbedAction;
 import action.sm.Utils;
 import action.sm.model.SystemReminder;
@@ -180,19 +181,21 @@ public class FranchiseStat extends Action implements EmbedAction {
     private void update() {
 
         try {
-            String tacos = request("https://tacoshack.online/api/franchise/tacos?quantity=25", false);
-            String members = request("https://tacoshack.online/api/franchise/members?quantity=100", false);
-            String boost = request("https://tacoshack.online/api/franchise/incomes?quantity=25", false);
-            String balance = request("https://tacoshack.online/api/franchise/richest?quantity=100", true);
-            String shifts = request("https://tacoshack.online/api/franchise/shifts?quantity=25", false);
+            request("https://tacoshack.online/api/leaderboard/franchise/all", false);
+
+//            String tacos = request("https://tacoshack.online/api/franchise/tacos?quantity=25", false);
+//            String members = request("https://tacoshack.online/api/franchise/members?quantity=100", false);
+//            String boost = request("https://tacoshack.online/api/franchise/incomes?quantity=25", false);
+//            String balance = request("https://tacoshack.online/api/franchise/richest?quantity=100", true);
+//            String shifts = request("https://tacoshack.online/api/franchise/shifts?quantity=25", false);
 
 //            ChannelModifyRequest change = ChannelModifyRequest.builder().name("update stats").build();
-
-            updateChannel(tacosChannel, "Tacos Sold: " + tacos);
-            updateChannel(membersChannel, "Franchise Members: " + members);
-            updateChannel(boostChannel, "Income Boost: " + boost);
-            updateChannel(balanceChannel, "Balance: " + balance);
-            updateChannel(shiftsChannel, "Shifts Worked: " + shifts);
+//
+//            updateChannel(tacosChannel, "Tacos Sold: " + tacos);
+//            updateChannel(membersChannel, "Franchise Members: " + members);
+//            updateChannel(boostChannel, "Income Boost: " + boost);
+//            updateChannel(balanceChannel, "Balance: " + balance);
+//            updateChannel(shiftsChannel, "Shifts Worked: " + shifts);
 
         } catch (Throwable e) {
             printException(e);
@@ -238,7 +241,7 @@ public class FranchiseStat extends Action implements EmbedAction {
     }
 
 
-    private String request(String url, boolean money) throws IOException, ParseException {
+    private void request(String url, boolean money) throws IOException, ParseException {
         WebClient webClient = new WebClient();
         webClient.getOptions().setCssEnabled(false);
         webClient.getOptions().setJavaScriptEnabled(false);
@@ -248,16 +251,54 @@ public class FranchiseStat extends Action implements EmbedAction {
         logger.info(data);
         JSONParser jsonParser = new JSONParser();
 
-        Object obj = jsonParser.parse(data);
+        JSONObject obj = (JSONObject)jsonParser.parse(data);
+//        AtomicLong value = new AtomicLong(0);
+//            JSONObject itemData = (JSONObject) obj;
+
+
+
+
+
+                updateChannel(balanceChannel, "Balance: " + getValue((JSONObject)obj.get("richest")));
+
+                updateChannel(tacosChannel, "Tacos Sold: " + getValue((JSONObject)obj.get("tacos")));
+
+                updateChannel(shiftsChannel, "Shifts Worked: " + getValue((JSONObject)obj.get("shifts")));
+
+        updateChannel(boostChannel, "Income Boost: " +getValue((JSONObject)obj.get("income")));
+
+
+        updateChannel(membersChannel, "Franchise Members: " + ExportUtils.getMembers("oui"));
+
+
+
+//            if (itemData.get("tag").toString().equals("OUI")) {
+//                value.set(Long.parseLong(itemData.get("value").toString()));
+//            }
+//        if (money && value.get() == 0) {
+//            value.set(Long.parseLong(((JSONObject) ((JSONArray) obj).get(99)).get("value").toString()));
+//            String formatted = format(value.get());
+//            return "< " + formatted;
+//        }
+        //if money and value = 0, look at last element and use < 123
+        //if money format 123.2 M, or 12.43 B
+
+
+//        return format(value.get());
+    }
+
+    private String getValue(JSONObject itemData ){
         AtomicLong value = new AtomicLong(0);
-        ((JSONArray) obj).forEach(o -> {
-            JSONObject franchise = (JSONObject) o;
-            if (franchise.get("tag").toString().equals("OUI")) {
+
+        JSONArray franchiseList = ((JSONArray) itemData.get("users"));
+        for (Object object : franchiseList) {
+            JSONObject franchise = (JSONObject) object;
+            if (franchise.get("id").toString().equals("OUI")) {
                 value.set(Long.parseLong(franchise.get("value").toString()));
             }
-        });
-        if (money && value.get() == 0) {
-            value.set(Long.parseLong(((JSONObject) ((JSONArray) obj).get(99)).get("value").toString()));
+        }
+        if (value.get() == 0) {
+            value.set(Long.parseLong(((JSONObject) ((JSONArray) franchiseList).get(24)).get("value").toString()));
             String formatted = format(value.get());
             return "< " + formatted;
         }
