@@ -146,7 +146,11 @@ public class UpdateAlerts extends Action implements EmbedAction {
                                 int totalSauce = totalSauces.get(sauce);
                                 int totalSell = currentPrice * totalSauce;
                                 int profit = totalSell - payedPrice;
-                                embedBuilder.addField(sauce.getUppercaseName(), " - Profit if you sell now **$" +String.format("%,d",profit)+ "**\n - Total if you sell now **$" + String.format("%,d",totalSell) +"**", false);
+                                String emote = "<a:reddown:1015028786292592701>";
+                                if (profit > 0) {
+                                    emote = "<a:greenup:1015028862368878723>";
+                                }
+                                embedBuilder.addField(sauce.getUppercaseName(), " "+ emote +" Profit if you sell now **$" +String.format("%,d",profit)+ "**\n :small_blue_diamond: Total if you sell now **$" + String.format("%,d",totalSell) +"**", false);
                             });
 
                             message.getChannel().block().createMessage(embedBuilder.build()).block();
@@ -162,7 +166,7 @@ public class UpdateAlerts extends Action implements EmbedAction {
                         } else {
                             StringBuilder sb = new StringBuilder("Updated alerts");
                             for (Sauce sauce : sauces) {
-                                sb.append("\r\n - " + sauce);
+                                sb.append("\n :small_orange_diamond: " + sauce);
                             }
                             message.getChannel().block().createMessage(sb.toString()).block();
                         }
