@@ -194,6 +194,9 @@ public abstract class Action {
                 username = footer[footer.length-1];
             }
             username = username.split(" \\| ")[0];
+            if (username.endsWith("#0")) {
+                username = username.replace("#0", "");
+            }
             Profile profile = ReminderUtils.loadProfileByUserName(username);
 
             if (profile != null) {
@@ -308,6 +311,13 @@ public abstract class Action {
 //            }
 
 
+            // this may break again in the future
+            Message result = gateway.getMessageById(Snowflake.of(message.getChannelId().asString()), message.getId()).block();
+            if (result != null) {
+                return result.getData().embeds();
+            }
+
+
             List<MessageData> history = getMessagesOfChannel(message);
             for (MessageData messageData : history) {
                 if (messageData.id().asLong() == message.getId().asLong()) {
@@ -330,7 +340,13 @@ public abstract class Action {
 
     public static List<MessageData> getMessagesOfChannel(Message message, int time) {
         Snowflake snowflakeTime = Snowflake.of(message.getTimestamp().minus(time, ChronoUnit.SECONDS));
-        return message.getRestChannel().getMessagesAfter(snowflakeTime).collectList().block();
+        try {
+            return message.getRestChannel().getMessagesAfter(snowflakeTime).collectList().block();
+        } catch (Throwable e ) {
+            logger.error(e.getMessage());
+            e.printStackTrace();
+        }
+        return new ArrayList<>();
     }
 
 }

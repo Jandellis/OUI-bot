@@ -42,9 +42,10 @@ public class GiveawayCommand extends SlashCommand {
         try {
             Boolean leaderboard = getParameter("leaderboard", false, event);
             String lookup = getParameter("lookup", "", event);
+            if (event.getInteraction().getData().member().toOptional().isPresent()) {
 
-            String name = event.getInteraction().getData().member().get().user().id().asString();
-
+                String name = event.getInteraction().getData().member().get().user().id().asString();
+            }
             if (leaderboard) {
                 List<GiveawayWinner> winners = ReminderUtils.loadGiveawayWins();
 
@@ -73,25 +74,27 @@ public class GiveawayCommand extends SlashCommand {
                 embed.description("**Winner - Count - Last Win**\n" +value.toString());
 //                embed.addField("test", "test", true);
             } else {
-                String id = event.getInteraction().getData().member().get().user().id().asString();
-                if (!lookup.isEmpty()) {
-                    id = lookup;
-                }
-                List<String> ids = new ArrayList<>();
-                ids.add(id);
-                List<FlexStats> stats = ReminderUtils.loadFlexStats(0, 7, ids);
-                FlexStats today = stats.get(stats.size() - 1);
-                FlexStats lastWeek = stats.get(0);
-                long votes = today.getVotes() - lastWeek.getVotes();
-                long ot = today.getOvertime() - lastWeek.getOvertime();
-                long work = today.getWork() - lastWeek.getWork();
+                if (event.getInteraction().getData().member().toOptional().isPresent()) {
+                    String id = event.getInteraction().getData().member().get().user().id().asString();
+                    if (!lookup.isEmpty()) {
+                        id = lookup;
+                    }
+                    List<String> ids = new ArrayList<>();
+                    ids.add(id);
+                    List<FlexStats> stats = ReminderUtils.loadFlexStats(0, 7, ids);
+                    FlexStats today = stats.get(stats.size() - 1);
+                    FlexStats lastWeek = stats.get(0);
+                    long votes = today.getVotes() - lastWeek.getVotes();
+                    long ot = today.getOvertime() - lastWeek.getOvertime();
+                    long work = today.getWork() - lastWeek.getWork();
 
-                embed.color(Color.SUMMER_SKY);
-                embed.title("Last 7 days");
-                embed.description("Stats for <@" + id + ">");
-                embed.addField("Votes", "**" + votes + "** (Need at least 7)", false);
-                embed.addField("Overtime", "**" + ot + "** (Need at least 30)", false);
-                embed.addField("Work", "**" + work + "** (Need at least 50)", false);
+                    embed.color(Color.SUMMER_SKY);
+                    embed.title("Last 7 days");
+                    embed.description("Stats for <@" + id + ">");
+                    embed.addField("Votes", "**" + votes + "** (Need at least 7)", false);
+                    embed.addField("Overtime", "**" + ot + "** (Need at least 30)", false);
+                    embed.addField("Work", "**" + work + "** (Need at least 50)", false);
+                }
             }
 
 

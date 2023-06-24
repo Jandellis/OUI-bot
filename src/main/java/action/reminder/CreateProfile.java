@@ -137,7 +137,7 @@ public class CreateProfile extends Action implements EmbedAction {
                             String userName = memberData.user().username();
                             String discriminator = memberData.user().discriminator();
                             boolean newProfile;
-                            if (discriminator == null) {
+                            if (discriminator.equals("0")) {
                                 newProfile = ReminderUtils.addProfile(id, shackName, status, userName);
                             } else {
                                 newProfile = ReminderUtils.addProfile(id, shackName, status, userName + "#" + discriminator);

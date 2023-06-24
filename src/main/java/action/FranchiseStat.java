@@ -154,8 +154,8 @@ public class FranchiseStat extends Action implements EmbedAction {
                         double otEstimate = ot / pecentage;
 
                         String msg = "I estimate you will get \n" +
-                                ":small_blue_diamond: **Votes** : " + new DecimalFormat("#.0#").format(voteEstimate) + "\n" +
-                                ":small_blue_diamond: **Ot** : " + new DecimalFormat("#.0#").format(otEstimate);
+                                ":small_blue_diamond: **Votes** : " + new DecimalFormat("#").format(voteEstimate) + "\n" +
+                                ":small_blue_diamond: **Ot** : " + new DecimalFormat("#").format(otEstimate);
 
                         client.getChannelById(message.getChannelId()).createMessage(msg).block();
                     }
