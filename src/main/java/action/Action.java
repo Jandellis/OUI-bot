@@ -230,7 +230,8 @@ public abstract class Action {
                         Message msg = gateway.getMessageById(Snowflake.of(message.getChannelId().asString()), Snowflake.of(message.getMessageReference().get().getMessageId().get().asLong())).block();
                         message = msg;
                         continue;
-                    } catch (ClientException e) {
+                    }
+                    catch (ClientException e) {
 
                         if (e.getErrorResponse().isPresent() &&
                                 e.getErrorResponse().get().getFields().get("code").equals(10008) &&
@@ -240,6 +241,8 @@ public abstract class Action {
                             printException(e);
                         }
                         return "";
+                    } catch (RuntimeException e){
+                        ;
                     }
                 }
                 return "";

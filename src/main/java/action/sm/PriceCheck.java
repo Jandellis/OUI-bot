@@ -100,7 +100,7 @@ public class PriceCheck extends Action {
             for (Sauce sauce : Sauce.values()) {
                 int price = Integer.parseInt(((JSONObject) ((JSONObject) obj).get(sauce.getName())).get("price").toString());
                 int price2 = price;
-                if (oldPrices != null)
+                if (oldPrices != null && oldPrices.size() > 0)
                      price2 = oldPrices.get(sauce);
                 //Integer.parseInt(((JSONArray) ((JSONObject) ((JSONObject) obj).get(sauce.getName())).get("history")).get(0).toString());
 
@@ -124,7 +124,7 @@ public class PriceCheck extends Action {
             for (Alert alert : Utils.loadAlerts()) {
                 logger.info(alert);
                 if (!alerts.containsKey(alert.getName())) {
-                    alerts.put(alert.getName(), new StringBuilder("__Your alerts <@" + alert.getName() + "> __\r\n"));
+                    alerts.put(alert.getName(), new StringBuilder("__Your alerts <@" + alert.getName() + "> __"));
 
                 }
 
@@ -183,7 +183,7 @@ public class PriceCheck extends Action {
 
 
                 if (!sleep) {
-                    if (sb.toString().equals("__Your alerts <@" + person + "> __\r\n")) {
+                    if (sb.toString().equals("__Your alerts <@" + person + "> __")) {
 
                         logger.info("No alerts for " + person);
                     } else {
@@ -410,7 +410,7 @@ public class PriceCheck extends Action {
             if (priceTrigger > price && price != -1 && sauce.getName().equals(sauceName)) {
                 logger.info("price is " + price);
 
-                sb.append(" <a:bluedown:1015028942358454353>  " + sauce.getName() + " is low $" + price + "\r\n");
+                sb.append("\n <a:bluedown:1015028942358454353>  " + sauce.getName() + " is low $" + price );
                 cheap.set(true);
             }
         });
@@ -433,7 +433,7 @@ public class PriceCheck extends Action {
         prices.forEach((sauce, price) -> {
             if (priceTrigger < price && price != -1 && sauce.getName().equals(sauceName)) {
                 logger.info("price is " + price);
-                sb.append(" <a:greenup:1015028862368878723>  " + sauce.getName() + " is high $" + price + "\r\n");
+                sb.append("\n <a:greenup:1015028862368878723>  " + sauce.getName() + " is high $" + price );
                 cheap.set(true);
             }
         });
@@ -451,7 +451,7 @@ public class PriceCheck extends Action {
 
         StringBuilder sb = new StringBuilder();
         AtomicBoolean dropping = new AtomicBoolean(false);
-        sb.append(" <a:reddown:1015028786292592701>  " + sauce + " is dropping");
+        sb.append("\n <a:reddown:1015028786292592701>  " + sauce + " is dropping");
 
         Integer now = prices.get(0);
         Integer hour1 = prices.get(1);
@@ -471,18 +471,18 @@ public class PriceCheck extends Action {
 
         if (dif < -9) {
             int drop = dif * -1;
-            sb.append("\r\n  -  down $" + drop + " last hour ");
+            sb.append("\n  :small_orange_diamond:  down $" + drop + " last hour ");
             dropping.set(true);
         }
         if (dif < 0 && dif2 < 0) {
             int drop2 = (now - hour2) * -1;
-            sb.append("\r\n  -  down $" + drop2 + " last 2 hours");
+            sb.append("\n  :small_orange_diamond:  down $" + drop2 + " last 2 hours");
             dropping.set(true);
         }
 
 
         if (dropping.get())
-            return sb.toString() + " \r\n";
+            return sb.toString() + " \n";
 //             client.getChannelById(Snowflake.of(smChannel)).createMessage(sb.toString()).block();
         else {
             logger.info("No dropping sauce");
@@ -494,7 +494,7 @@ public class PriceCheck extends Action {
 
         StringBuilder sb = new StringBuilder();
         AtomicBoolean rising = new AtomicBoolean(false);
-        sb.append(" <a:greenup:1015028862368878723>  " + sauce + " is rising");
+        sb.append("\n <a:greenup:1015028862368878723>  " + sauce + " is rising");
 
         Integer now = prices.get(0);
         Integer hour1 = prices.get(1);
@@ -514,7 +514,7 @@ public class PriceCheck extends Action {
 
         if (dif > 9) {
             int rise = dif;
-            sb.append("\r\n  -  up $" + rise + " last hour ");
+            sb.append("\n  :small_orange_diamond:  up $" + rise + " last hour ");
             rising.set(true);
         }
 //        if (dif < 0 && dif2 < 0) {

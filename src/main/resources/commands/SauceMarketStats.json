@@ -1,0 +1,38 @@
+{
+    "name": "saucemarket",
+    "description": "Shows the chance of the next hour price going up or down based on the current price change",
+    "options": [
+        {
+            "name": "type",
+            "description": "What type of data do you want see?",
+            "type": 3,
+            "required": false,
+            "choices": [
+                {
+                    "name": "All",
+                    "value": "all"
+                },
+                {
+                    "name": "Salsa",
+                    "value": "salsa"
+                },
+                {
+                    "name": "Hotsauce",
+                    "value": "hotsauce"
+                },
+                {
+                    "name": "Guacamole",
+                    "value": "guacamole"
+                },
+                {
+                    "name": "Pico",
+                    "value": "pico"
+                },
+                {
+                    "name": "Chipotle",
+                    "value": "chipotle"
+                }
+            ]
+        }
+    ]
+}

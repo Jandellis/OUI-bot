@@ -9,7 +9,6 @@ import action.upgrades.model.LocationEnum;
 import action.upgrades.model.Upgrade;
 import action.upgrades.model.UserUpgrades;
 import discord4j.core.event.domain.message.ReactionAddEvent;
-import discord4j.core.object.Embed;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.reaction.ReactionEmoji;
 import discord4j.core.spec.EmbedCreateSpec;
@@ -481,6 +480,24 @@ public class BuyUpgrade extends Action implements EmbedAction {
                             message.getChannel().block().createMessage(embed.build()).block();
                             return Mono.empty();
                         }
+
+                        // if list is missing something, try and add it at 0;
+                        if (location.getUpgrades().size() != list.size()) {
+                            location.getUpgrades().forEach((name, upgrade) -> {
+                                AtomicBoolean found = new AtomicBoolean(false);
+                                list.forEach(userUpgrades -> {
+                                    if (userUpgrades.getUpgrade().equals(upgrade.getName())) {
+                                        found.set(true);
+                                    }
+                                });
+
+                                if (found.get() == false) {
+                                    list.add(new UserUpgrades(name, location.getName().getName(), upgrade.getName(), 0));
+                                }
+                            });
+                            logger.info("Adding missing items into the list");
+                        }
+
                         List<UserUpgrades> total = new ArrayList<>();
                         list.forEach(userUpgrades -> {
                             Upgrade up = location.getUpgrades().get(userUpgrades.getUpgrade());
@@ -573,9 +590,9 @@ public class BuyUpgrade extends Action implements EmbedAction {
                             message.getChannel().block().createMessage("missing number").block();
                             return Mono.empty();
                         }
-                        if (number > 30) {
+                        if (number > 51) {
 
-                            message.getChannel().block().createMessage("Max value is 30r").block();
+                            message.getChannel().block().createMessage("Max value is 30").block();
                             return Mono.empty();
                         }
 

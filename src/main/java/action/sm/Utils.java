@@ -3,6 +3,7 @@ package action.sm;
 import action.sm.model.Alert;
 import action.sm.model.AlertType;
 import action.sm.model.Drop;
+import action.sm.model.SauceMarketStats;
 import action.sm.model.SystemReminder;
 import action.sm.model.SystemReminderType;
 import action.sm.model.Trigger;
@@ -103,24 +104,28 @@ public class Utils {
             st.addBatch("insert into sm (name, price, age) " +
                     "VALUES ('chipotle', " + chipotle + ", 0);");
 
+            st.executeBatch();
+
             HashMap<Integer, Integer> picoHistory = loadLast5(Sauce.pico);
             HashMap<Integer, Integer> guacHistory = loadLast5(Sauce.guacamole);
             HashMap<Integer, Integer> salsaHistory = loadLast5(Sauce.salsa);
             HashMap<Integer, Integer> hotsauceHistory = loadLast5(Sauce.hotsauce);
             HashMap<Integer, Integer> chipotleHistory = loadLast5(Sauce.chipotle);
+            if (picoHistory.size() == 5) {
 
-            st.addBatch("insert into sm_history (name, price, update_time, change, change_1_to_2, change_1_to_3, change_1_to_4, change_1_to_5, change_0_to_1, change_0_to_2, change_0_to_3, change_0_to_4) " +
-                    "VALUES ('pico', " + pico + ", now() - interval '5 minutes', "+(pico - picoHistory.get(1))+", "+(picoHistory.get(1) - picoHistory.get(2))+", "+(picoHistory.get(1) - picoHistory.get(3))+", "+(picoHistory.get(1) - picoHistory.get(4))+", "+(picoHistory.get(1) - picoHistory.get(5))+", "+(pico - picoHistory.get(1))+", "+(pico - picoHistory.get(2))+", "+(pico - picoHistory.get(3))+", "+(pico - picoHistory.get(4))+");");
-            st.addBatch("insert into sm_history (name, price, update_time, change, change_1_to_2, change_1_to_3, change_1_to_4, change_1_to_5, change_0_to_1, change_0_to_2, change_0_to_3, change_0_to_4) " +
-                    "VALUES ('guac', " + guac + ", now() - interval '5 minutes', "+(guac - guacHistory.get(1))+", "+(guacHistory.get(1) - guacHistory.get(2))+", "+(guacHistory.get(1) - guacHistory.get(3))+", "+(guacHistory.get(1) - guacHistory.get(4))+", "+(guacHistory.get(1) - guacHistory.get(5))+", "+(guac - guacHistory.get(1))+", "+(guac - guacHistory.get(2))+", "+(guac - guacHistory.get(3))+", "+(guac - guacHistory.get(4))+");");
-            st.addBatch("insert into sm_history (name, price, update_time, change, change_1_to_2, change_1_to_3, change_1_to_4, change_1_to_5, change_0_to_1, change_0_to_2, change_0_to_3, change_0_to_4) " +
-                    "VALUES ('salsa', " + salsa + ", now() - interval '5 minutes', "+(salsa - salsaHistory.get(1))+", "+(salsaHistory.get(1) - salsaHistory.get(2))+", "+(salsaHistory.get(1) - salsaHistory.get(3))+", "+(salsaHistory.get(1) - salsaHistory.get(4))+", "+(salsaHistory.get(1) - salsaHistory.get(5))+", "+(salsa - salsaHistory.get(1))+", "+(salsa - salsaHistory.get(2))+", "+(salsa - salsaHistory.get(3))+", "+(salsa - salsaHistory.get(4))+");");
-            st.addBatch("insert into sm_history (name, price, update_time, change, change_1_to_2, change_1_to_3, change_1_to_4, change_1_to_5, change_0_to_1, change_0_to_2, change_0_to_3, change_0_to_4) " +
-                    "VALUES ('hotsauce', " + hotsauce + ", now() - interval '5 minutes', "+(hotsauce - hotsauceHistory.get(1))+", "+(hotsauceHistory.get(1) - hotsauceHistory.get(2))+", "+(hotsauceHistory.get(1) - hotsauceHistory.get(3))+", "+(hotsauceHistory.get(1) - hotsauceHistory.get(4))+", "+(hotsauceHistory.get(1) - hotsauceHistory.get(5))+", "+(hotsauce - hotsauceHistory.get(1))+", "+(hotsauce - hotsauceHistory.get(2))+", "+(hotsauce - hotsauceHistory.get(3))+", "+(hotsauce - hotsauceHistory.get(4))+");");
-            st.addBatch("insert into sm_history (name, price, update_time, change, change_1_to_2, change_1_to_3, change_1_to_4, change_1_to_5, change_0_to_1, change_0_to_2, change_0_to_3, change_0_to_4) " +
-                    "VALUES ('chipotle', " + chipotle + ", now() - interval '5 minutes', "+(chipotle - chipotleHistory.get(1))+", "+(chipotleHistory.get(1) - chipotleHistory.get(2))+", "+(chipotleHistory.get(1) - chipotleHistory.get(3))+", "+(chipotleHistory.get(1) - chipotleHistory.get(4))+", "+(chipotleHistory.get(1) - chipotleHistory.get(5))+", "+(chipotle - chipotleHistory.get(1))+", "+(chipotle - chipotleHistory.get(2))+", "+(chipotle - chipotleHistory.get(3))+", "+(chipotle - chipotleHistory.get(4))+");");
+                st.addBatch("insert into sm_history (name, price, update_time, change, change_1_to_2, change_1_to_3, change_1_to_4, change_1_to_5, change_0_to_1, change_0_to_2, change_0_to_3, change_0_to_4) " +
+                        "VALUES ('pico', " + pico + ", now() - interval '5 minutes', " + (pico - picoHistory.get(1)) + ", " + (picoHistory.get(1) - picoHistory.get(2)) + ", " + (picoHistory.get(1) - picoHistory.get(3)) + ", " + (picoHistory.get(1) - picoHistory.get(4)) + ", " + (picoHistory.get(1) - picoHistory.get(5)) + ", " + (pico - picoHistory.get(1)) + ", " + (pico - picoHistory.get(2)) + ", " + (pico - picoHistory.get(3)) + ", " + (pico - picoHistory.get(4)) + ");");
+                st.addBatch("insert into sm_history (name, price, update_time, change, change_1_to_2, change_1_to_3, change_1_to_4, change_1_to_5, change_0_to_1, change_0_to_2, change_0_to_3, change_0_to_4) " +
+                        "VALUES ('guac', " + guac + ", now() - interval '5 minutes', " + (guac - guacHistory.get(1)) + ", " + (guacHistory.get(1) - guacHistory.get(2)) + ", " + (guacHistory.get(1) - guacHistory.get(3)) + ", " + (guacHistory.get(1) - guacHistory.get(4)) + ", " + (guacHistory.get(1) - guacHistory.get(5)) + ", " + (guac - guacHistory.get(1)) + ", " + (guac - guacHistory.get(2)) + ", " + (guac - guacHistory.get(3)) + ", " + (guac - guacHistory.get(4)) + ");");
+                st.addBatch("insert into sm_history (name, price, update_time, change, change_1_to_2, change_1_to_3, change_1_to_4, change_1_to_5, change_0_to_1, change_0_to_2, change_0_to_3, change_0_to_4) " +
+                        "VALUES ('salsa', " + salsa + ", now() - interval '5 minutes', " + (salsa - salsaHistory.get(1)) + ", " + (salsaHistory.get(1) - salsaHistory.get(2)) + ", " + (salsaHistory.get(1) - salsaHistory.get(3)) + ", " + (salsaHistory.get(1) - salsaHistory.get(4)) + ", " + (salsaHistory.get(1) - salsaHistory.get(5)) + ", " + (salsa - salsaHistory.get(1)) + ", " + (salsa - salsaHistory.get(2)) + ", " + (salsa - salsaHistory.get(3)) + ", " + (salsa - salsaHistory.get(4)) + ");");
+                st.addBatch("insert into sm_history (name, price, update_time, change, change_1_to_2, change_1_to_3, change_1_to_4, change_1_to_5, change_0_to_1, change_0_to_2, change_0_to_3, change_0_to_4) " +
+                        "VALUES ('hotsauce', " + hotsauce + ", now() - interval '5 minutes', " + (hotsauce - hotsauceHistory.get(1)) + ", " + (hotsauceHistory.get(1) - hotsauceHistory.get(2)) + ", " + (hotsauceHistory.get(1) - hotsauceHistory.get(3)) + ", " + (hotsauceHistory.get(1) - hotsauceHistory.get(4)) + ", " + (hotsauceHistory.get(1) - hotsauceHistory.get(5)) + ", " + (hotsauce - hotsauceHistory.get(1)) + ", " + (hotsauce - hotsauceHistory.get(2)) + ", " + (hotsauce - hotsauceHistory.get(3)) + ", " + (hotsauce - hotsauceHistory.get(4)) + ");");
+                st.addBatch("insert into sm_history (name, price, update_time, change, change_1_to_2, change_1_to_3, change_1_to_4, change_1_to_5, change_0_to_1, change_0_to_2, change_0_to_3, change_0_to_4) " +
+                        "VALUES ('chipotle', " + chipotle + ", now() - interval '5 minutes', " + (chipotle - chipotleHistory.get(1)) + ", " + (chipotleHistory.get(1) - chipotleHistory.get(2)) + ", " + (chipotleHistory.get(1) - chipotleHistory.get(3)) + ", " + (chipotleHistory.get(1) - chipotleHistory.get(4)) + ", " + (chipotleHistory.get(1) - chipotleHistory.get(5)) + ", " + (chipotle - chipotleHistory.get(1)) + ", " + (chipotle - chipotleHistory.get(2)) + ", " + (chipotle - chipotleHistory.get(3)) + ", " + (chipotle - chipotleHistory.get(4)) + ");");
 
 
+            }
             st.executeBatch();
 
         } catch (SQLException ex) {
@@ -263,7 +268,7 @@ public class Utils {
                     // alert is low, or drop type
                     // for drop if its on watch list and both
                     // but not if they own the sauce
-                    if ((trigger.getType() == AlertType.low || trigger.getType() == AlertType.rise ) && !sauces.contains(watch.getSauce()) || (
+                    if ((trigger.getType() == AlertType.low || trigger.getType() == AlertType.rise) && !sauces.contains(watch.getSauce()) || (
                             trigger.getType() == AlertType.drop && (
                                     trigger.getDrop() == Drop.both || trigger.getDrop() == Drop.watchlist
                             )
@@ -519,6 +524,120 @@ public class Utils {
             st.addBatch("DELETE from system_reminder WHERE type='" + type.getName() + "'");
             st.executeBatch();
 //            con.commit();
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
+    }
+
+    public static List<SauceMarketStats> loadHistoryStats() {
+
+
+        List<SauceMarketStats> stats = new ArrayList<>();
+        try {
+            Connection con = DriverManager.getConnection(url, user, password);
+
+            String sql = "select change.change_1_to_2 as change, " +
+                    "to_char(z.total / change.total::float * 100, '990.99') as zero, " +
+                    "to_char(p.total / change.total::float * 100, '990.99') as positive, " +
+                    "to_char(n.total / change.total::float * 100, '990.99') as negative, " +
+                    "change.total as \"times occurred\" " +
+                    "from " +
+                    "(select change_1_to_2, count(*) as total from sm_history where change = 0 group by change_1_to_2) z, " +
+                    "(select change_1_to_2, count(*) as total from sm_history where change > 0 group by change_1_to_2) p, " +
+                    "(select change_1_to_2, count(*) as total from sm_history where change < 0 group by change_1_to_2) n, " +
+                    "(select change_1_to_2, count(*) as total from sm_history group by change_1_to_2) change " +
+                    "where z.change_1_to_2 = change.change_1_to_2 and " +
+                    "p.change_1_to_2 = change.change_1_to_2 and " +
+                    "n.change_1_to_2 = change.change_1_to_2 ";
+
+//            if (!sauce.equals("all")) {
+//                sql += " "
+//            }
+
+
+            PreparedStatement pst = con.prepareStatement(sql);
+            ResultSet rs = pst.executeQuery();
+
+            while (rs.next()) {
+                SauceMarketStats stat = new SauceMarketStats(rs.getInt(1), rs.getDouble(2), rs.getDouble(3), rs.getDouble(4), rs.getInt(5));
+                stats.add(stat);
+            }
+
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
+        return stats;
+
+    }
+
+
+    public static List<SauceMarketStats> loadHistoryStats(String sauce) {
+
+
+        List<SauceMarketStats> stats = new ArrayList<>();
+        try {
+            Connection con = DriverManager.getConnection(url, user, password);
+
+            String sql = "select change.change_1_to_2 as change, " +
+                    "to_char(z.total / change.total::float * 100, '990.99') as zero, " +
+                    "to_char(p.total / change.total::float * 100, '990.99') as positive, " +
+                    "to_char(n.total / change.total::float * 100, '990.99') as negative, " +
+                    "change.total as \"times occurred\" " +
+                    "from " +
+                    "(select change_1_to_2, count(*) as total from sm_history where change = 0 and name = ? group by change_1_to_2) z, " +
+                    "(select change_1_to_2, count(*) as total from sm_history where change > 0 and name = ? group by change_1_to_2) p, " +
+                    "(select change_1_to_2, count(*) as total from sm_history where change < 0 and name = ? group by change_1_to_2) n, " +
+                    "(select change_1_to_2, count(*) as total from sm_history where name = ? group by change_1_to_2) change " +
+                    "where z.change_1_to_2 = change.change_1_to_2 and " +
+                    "p.change_1_to_2 = change.change_1_to_2 and " +
+                    "n.change_1_to_2 = change.change_1_to_2 ";
+
+//            if (!sauce.equals("all")) {
+//                sql += " "
+//            }
+
+
+            PreparedStatement pst = con.prepareStatement(sql);
+            pst.setString(1, sauce);
+            pst.setString(2, sauce);
+            pst.setString(3, sauce);
+            pst.setString(4, sauce);
+            ResultSet rs = pst.executeQuery();
+
+            while (rs.next()) {
+                SauceMarketStats stat = new SauceMarketStats(rs.getInt(1), rs.getDouble(2), rs.getDouble(3), rs.getDouble(4), rs.getInt(5));
+                stats.add(stat);
+            }
+
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
+        return stats;
+
+    }
+
+
+    public static void addOldPrices(String sauce, int price, int change, int oldChange, Timestamp time) {
+
+        try {
+            Connection con = DriverManager.getConnection(url, user, password);
+
+//            Statement st = con.createStatement();
+//
+//            st.addBatch("insert into sm_history (name, price, update_time, change, change_1_to_2) " +
+//                    "VALUES (?, ?, ?, ?, ?);");
+//
+//            st.executeBatch();
+
+            PreparedStatement pst = con.prepareStatement("insert into sm_history (name, price, update_time, change, change_1_to_2) " +
+                    "VALUES (?, ?, ?, ?, ?);");
+            pst.setString(1, sauce);
+            pst.setInt(2, price);
+            pst.setTimestamp(3, time);
+            pst.setInt(4, change);
+            pst.setInt(5, oldChange);
+            pst.execute();
+
         } catch (SQLException ex) {
             logger.error("Exception", ex);
         }

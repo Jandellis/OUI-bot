@@ -13,6 +13,7 @@ import slash.commands.PingCommand;
 import slash.commands.PostAdCommand;
 import slash.commands.ProfileStatsCommand;
 import slash.commands.RemindersCommand;
+import slash.commands.SauceMarketStatsCommand;
 import slash.commands.SlashCommand;
 
 import java.util.ArrayList;
@@ -31,16 +32,33 @@ public class SlashCommandListener {
         commands.add(new FlexStatsCommand());
         commands.add(new GiveawayCommand());
         commands.add(new RemindersCommand());
+        commands.add(new SauceMarketStatsCommand());
     }
 
     public static Mono<Void> handle(ChatInputInteractionEvent event) {
+        Mono<Void> result;
+        try {
+            // Convert our array list to a flux that we can iterate through
+            return Flux.fromIterable(commands)
+                    //Filter out all commands that don't match the name of the command this event is for
+                    .filter(command -> command.getName().equals(event.getCommandName()))
+                    // Get the first (and only) item in the flux that matches our filter
+                    .next()
+                    //have our command class handle all the logic related to its specific command.
+                    .flatMap(command -> command.handle(event));
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+        return  null;
+
+
         // Convert our array list to a flux that we can iterate through
-        return Flux.fromIterable(commands)
-            //Filter out all commands that don't match the name of the command this event is for
-            .filter(command -> command.getName().equals(event.getCommandName()))
-            // Get the first (and only) item in the flux that matches our filter
-            .next()
-            //have our command class handle all the logic related to its specific command.
-            .flatMap(command -> command.handle(event));
+//        return Flux.fromIterable(commands)
+//            //Filter out all commands that don't match the name of the command this event is for
+//            .filter(command -> command.getName().equals(event.getCommandName()))
+//            // Get the first (and only) item in the flux that matches our filter
+//            .next()
+//            //have our command class handle all the logic related to its specific command.
+//            .flatMap(command -> command.handle(event));
     }
 }

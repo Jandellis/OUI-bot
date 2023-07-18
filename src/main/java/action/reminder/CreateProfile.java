@@ -19,6 +19,7 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -132,6 +133,9 @@ public class CreateProfile extends Action implements EmbedAction {
                                 } else {
                                     printException(e);
                                 }
+                                return Mono.empty();
+                            }catch (NoSuchElementException e) {
+                                    logger.info("Member not in server, not creating profile");
                                 return Mono.empty();
                             }
                             String userName = memberData.user().username();
