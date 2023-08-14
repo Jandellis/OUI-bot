@@ -1,12 +1,14 @@
 package action;
 
 import action.export.ExportUtils;
+import action.export.model.Franchise;
 import action.export.model.MemberDonations;
 import action.export.model.WarningData;
 import bot.Clean;
 import bot.KickMember;
 import discord4j.common.util.Snowflake;
 import discord4j.core.object.entity.Message;
+import discord4j.discordjson.Id;
 import discord4j.discordjson.json.MemberData;
 import discord4j.rest.http.client.ClientException;
 import reactor.core.publisher.Mono;
@@ -14,6 +16,7 @@ import reactor.core.publisher.Mono;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -48,6 +51,7 @@ public class Warn extends Action {
         //warn users in court and up the warning level
         String action = getAction(message);
         if (action != null && hasPermission(message, recruiter)) {
+            Franchise franchise = ExportUtils.getFranchise(message.getGuildId().get().asString());
 
             return message.getChannel().flatMap(channel -> {
                 try {
@@ -75,7 +79,7 @@ public class Warn extends Action {
                         ;//Integer.parseInt(action);
                     }
 
-                    doWarnings(level, max, odd);
+                    doWarnings(level, max, odd, franchise, null);
 
 
                 } catch (Exception e) {
@@ -91,13 +95,13 @@ public class Warn extends Action {
         return Mono.empty();
     }
 
-    public void doWarnings(int level, int max, boolean odd) {
+    public void doWarnings(int level, int max, boolean odd, Franchise franchise, HashMap<Long, List<Id>> userRoles) {
 
         try {
 
             List<KickMember> kickMemberList = new ArrayList<>();
             try {
-                kickMemberList = Clean.mainNoImport("historic.csv");
+                kickMemberList = Clean.mainNoImport(franchise.getName() + "historic.csv");
                 logger.info("processed data");
             } catch (Exception e) {
                 e.printStackTrace();
@@ -115,20 +119,21 @@ public class Warn extends Action {
                 boolean inServer = false;
                 AtomicInteger warning = new AtomicInteger();
                 AtomicBoolean imunity = new AtomicBoolean(false);
-                MemberData memberData = null;
+//                MemberData memberData = null;
                 try {
-                    memberData = client.getMemberById(Snowflake.of(guildId), Snowflake.of(kickMember.getId())).getData().block();
-
-                    memberData.roles().forEach(id -> {
-                        if (id.asLong() == immunityId)
-                            imunity.set(true);
-                        if (id.asLong() == firstWarning)
-                            warning.set(1);
-                        if (id.asLong() == secondWarning)
-                            warning.set(2);
-                        if (id.asLong() == finalWarning)
-                            warning.set(3);
-                    });
+//                    memberData = client.getMemberById(Snowflake.of(franchise.getGuild()), Snowflake.of(kickMember.getId())).getData().block();
+                    List<Id> roles = userRoles.get(kickMember.getId());
+                    if (roles != null && roles.size() > 0)
+                        roles.forEach(id -> {
+                            if (id.asLong() == Long.parseLong(franchise.getImmunity()))
+                                imunity.set(true);
+                            if (id.asLong() == Long.parseLong(franchise.getWarning()))
+                                warning.set(1);
+                            if (id.asLong() == Long.parseLong(franchise.getWarning2()))
+                                warning.set(2);
+                            if (id.asLong() == Long.parseLong(franchise.getWarning3()))
+                                warning.set(3);
+                        });
                     inServer = true;
                 } catch (ClientException e) {
                     //member left the server
@@ -175,31 +180,35 @@ public class Warn extends Action {
                             warnMember = false;
                             logger.info("user should be warned, but they have donated to ingore the warning " + kickMember.getId());
                         } else {
-                            client.getGuildById(Snowflake.of(guildId)).addMemberRole(
+                            client.getGuildById(Snowflake.of(franchise.getGuild())).addMemberRole(
                                     Snowflake.of(kickMember.getId()),
-                                    Snowflake.of(firstWarning),
+                                    Snowflake.of(franchise.getWarning()),
                                     "first warning").block();
                         }
                     }
                     if (warning.get() == 1) {
-                        client.getGuildById(Snowflake.of(guildId)).addMemberRole(
+                        client.getGuildById(Snowflake.of(franchise.getGuild())).addMemberRole(
                                 Snowflake.of(kickMember.getId()),
-                                Snowflake.of(secondWarning),
+                                Snowflake.of(franchise.getWarning2()),
                                 "second warning").block();
-                        client.getGuildById(Snowflake.of(guildId)).removeMemberRole(
+                        client.getGuildById(Snowflake.of(franchise.getGuild())).removeMemberRole(
                                 Snowflake.of(kickMember.getId()),
-                                Snowflake.of(firstWarning),
+                                Snowflake.of(franchise.getWarning()),
                                 "second warning").block();
                     }
-                    if (warning.get() == 2) {
-                        client.getGuildById(Snowflake.of(guildId)).addMemberRole(
-                                Snowflake.of(kickMember.getId()),
-                                Snowflake.of(finalWarning),
-                                "final warning").block();
-                        client.getGuildById(Snowflake.of(guildId)).removeMemberRole(
-                                Snowflake.of(kickMember.getId()),
-                                Snowflake.of(secondWarning),
-                                "final warning").block();
+                    if (warning.get() == 2 ) {
+                        if (hasRole(userRoles.get(kickMember.getId()), franchise.getWarning3())) {
+                            logger.info("Skipping user as they have final warning already " + kickMember.getId());
+                        } else {
+                            client.getGuildById(Snowflake.of(franchise.getGuild())).addMemberRole(
+                                    Snowflake.of(kickMember.getId()),
+                                    Snowflake.of(franchise.getWarning3()),
+                                    "final warning").block();
+                            client.getGuildById(Snowflake.of(franchise.getGuild())).removeMemberRole(
+                                    Snowflake.of(kickMember.getId()),
+                                    Snowflake.of(franchise.getWarning2()),
+                                    "final warning").block();
+                        }
                     }
                     LocalDateTime now = LocalDateTime.now();
                     warningData.setLastWarning(Timestamp.valueOf(now));
@@ -218,14 +227,14 @@ public class Warn extends Action {
                 count++;
                 display.append(line);
                 if (count == 30) {
-                    client.getChannelById(Snowflake.of(warnChannel)).createMessage(display.toString()).block();
+                    client.getChannelById(Snowflake.of(franchise.getCourt())).createMessage(display.toString()).block();
                     logger.info(display);
                     display = new StringBuilder();
                     count = 0;
                 }
             }
             if (count > 0) {
-                client.getChannelById(Snowflake.of(warnChannel)).createMessage(display.toString()).block();
+                client.getChannelById(Snowflake.of(franchise.getCourt())).createMessage(display.toString()).block();
                 logger.info(display);
                 display = new StringBuilder();
                 count = 0;

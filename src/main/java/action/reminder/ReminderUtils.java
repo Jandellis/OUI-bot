@@ -1,5 +1,6 @@
 package action.reminder;
 
+import action.giveaway.model.GiveawayLog;
 import action.giveaway.model.GiveawayWinner;
 import action.reminder.model.ReminderSettings;
 import action.reminder.model.FlexStats;
@@ -1007,7 +1008,14 @@ public class ReminderUtils {
                 p.setTimestamp(2, time);
                 p.execute();
             }
-            st.executeBatch();
+
+            String sql = "insert into giveaway_log (name, win_time) " +
+                    "VALUES (?, ?)";
+            PreparedStatement p = con.prepareStatement(sql);
+            p.setString(1, name);
+            p.setTimestamp(2, time);
+            p.execute();
+
         } catch (SQLException ex) {
             logger.error("Exception", ex);
         }
@@ -1025,6 +1033,30 @@ public class ReminderUtils {
             int id = -1;
             while (rs.next()) {
                 GiveawayWinner winner = new GiveawayWinner(rs.getString(1), rs.getInt(2), rs.getTimestamp(3));
+                winers.add(winner);
+
+            }
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
+        return winers;
+    }
+
+
+    public static List<GiveawayLog> loadGiveawayLog() {
+        List<GiveawayLog> winers = new ArrayList<>();
+
+        try {
+            Connection con = DriverManager.getConnection(url, user, password);
+            LocalDateTime now = LocalDateTime.now().minusDays(30);
+            Timestamp nowStamp = Timestamp.valueOf(now);
+
+            PreparedStatement pst = con.prepareStatement("SELECT name, win_time FROM giveaway_log Where win_time > ? Order by win_time DESC");
+            pst.setTimestamp(1, nowStamp);
+            ResultSet rs = pst.executeQuery();
+            int id = -1;
+            while (rs.next()) {
+                GiveawayLog winner = new GiveawayLog(rs.getString(1), rs.getTimestamp(2));
                 winers.add(winner);
 
             }

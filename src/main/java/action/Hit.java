@@ -60,7 +60,7 @@ public class Hit extends Action {
                 List<KickMember> kickMemberList = new ArrayList<>();
                 List<KickMember> exMembers = new ArrayList<>();
                 try {
-                    kickMemberList = Clean.mainNoImport("historic.csv");
+                    kickMemberList = Clean.mainNoImport("OUIhistoric.csv");
                     //exMembers = Clean.kickedMembers();
                     logger.info("processed data");
                 } catch (Exception e) {

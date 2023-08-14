@@ -1,9 +1,9 @@
 package action.export;
 
 import action.Action;
-import action.GiveAWay;
 import action.Warn;
 import action.export.model.Donations;
+import action.export.model.Franchise;
 import action.export.model.GiveawayData;
 import action.export.model.WarningData;
 import action.export.model.WeeklyBestData;
@@ -67,24 +67,46 @@ public class Import extends Action {
     @Override
     public Mono<Object> doAction(Message message) {
         String actionData = getAction(message);
-        if (actionData != null && hasPermission(message, recruiter)) {
+
+//        Franchise franchise;
+//        if (message.getGuildId().isPresent()) {
+//
+//            logger.info("looking for " + message.getGuildId().get().asString());
+//            logger.info("Found franchise " + franchise.getName());
+//            if (message.getAuthor().isPresent()) {
+//                logger.info("Checking if user " + message.getAuthor().get().getId() + " has role " + franchise.getRecruiter());
+//            }
+//        } else {
+//            return null;
+//        }
+
+        if (actionData != null && hasPermission(message)) {
             Snowflake messageId = Snowflake.of(actionData);
             int worklimit = 5;
             int uncleanlimit = 7;
 
             return message.getChannel().flatMap(channel -> {
 
+                Franchise franchise = ExportUtils.getFranchise(message.getGuildId().get().asString());
+
                 channel.createMessage("Starting import").block();
+
+
+                // have franchise table, this has all the config for roles
 
                 Message data = channel.getMessageById(messageId).block();
 
                 //download file
                 String url = data.getData().attachments().get(0).url();
+                //get franchise name from url
+                String [] name = url.split("/");
+                String franchiseName = name[name.length -1 ].split("_")[0];
+
                 KickList kickList = new KickList();
                 try {
-                    kickList = Clean.main(url, "historic.csv", worklimit, uncleanlimit, Timestamp.from(data.getTimestamp()));
+                    kickList = Clean.main(url, franchiseName + "historic.csv", worklimit, uncleanlimit, Timestamp.from(data.getTimestamp()), franchiseName);
                     logger.info("processed data");
-                    HashMap<Long, List<ExportData>> history = ExportUtils.loadMemberHistory();
+                    HashMap<Long, List<ExportData>> history = ExportUtils.loadMemberHistory(franchiseName);
                     List<WeeklyBestData> work = new ArrayList<>();
                     List<WeeklyBestData> tips = new ArrayList<>();
                     List<WeeklyBestData> donations = new ArrayList<>();
@@ -116,7 +138,7 @@ public class Import extends Action {
 
                     });
 
-                    HashMap<Long, List<ExportData>> historyYesterday = ExportUtils.loadMemberHistoryYesterday();
+                    HashMap<Long, List<ExportData>> historyYesterday = ExportUtils.loadMemberHistoryYesterday(franchiseName);
                     HashMap<Long, WeeklyBestData> workYesterday = new HashMap<>();
                     HashMap<Long, WeeklyBestData> tipsYesterday = new HashMap<>();
                     HashMap<Long, WeeklyBestData> donationsYesterday = new HashMap<>();
@@ -153,7 +175,7 @@ public class Import extends Action {
                     WeeklyBestData.sort(votes);
                     EmbedCreateSpec.Builder embed = EmbedCreateSpec.builder();
                     embed.color(Color.SUMMER_SKY);
-                    embed.title("OUI Weekly Best");
+                    embed.title(franchiseName +" Weekly Best");
                     embed.addField("Top Work", getBest(work, workYesterday, false), true);
                     embed.addField("Top Tips", getBest(tips, tipsYesterday,false), false);
                     embed.addField("Top Donations", getBest(donations, donationsYesterday,true), false);
@@ -163,12 +185,13 @@ public class Import extends Action {
 
                     EmbedCreateSpec.Builder embed2 = EmbedCreateSpec.builder();
                     embed2.color(Color.SUMMER_SKY);
-                    embed2.title("OUI Weekly Best");
+                    embed2.title(franchiseName +" Weekly Best");
                     embed2.addField("Top Overtime", getBest(overtime, overtimeYesterday, false), true);
                     embed2.addField("Top Votes", getBest(votes, votesYesterday,false), false);
 
 
-                    client.getChannelById(Snowflake.of(flex)).createMessage(embed.build().asRequest()).block();
+                    //load flex channel??
+                    client.getChannelById(Snowflake.of(franchise.getFlex())).createMessage(embed.build().asRequest()).block();
 
                     channel.createMessage(embed.build()).block();
 
@@ -176,9 +199,35 @@ public class Import extends Action {
 //
 //                    channel.createMessage(embed2.build()).block();
 
+                    HashMap<Long, List<Id>> userRoles = new HashMap<>();
+                    logger.info("size = " + history.size());
+
+                    for(Long id : history.keySet()) {
+                        logger.info("loading roles for id " + id);
+                        try {
+                            List<Id> roles = client.getGuildById(Snowflake.of(guildId)).getMember(Snowflake.of(id)).block().roles();
+                            userRoles.put(id, roles);
+                        } catch (ClientException e) {
+                            //member left the server
+                            logger.info("user left the server " + id);
+                        }
+                    }
+                    logger.info("size = " + history.size());
+
+//                    history.forEach((id, dataList) -> {
+//                        logger.info("loading roles for id " + id);
+//                        try {
+//                            List<Id> roles = client.getGuildById(Snowflake.of(guildId)).getMember(Snowflake.of(id)).block().roles();
+//                            userRoles.put(id, roles);
+//                        } catch (ClientException e) {
+//                            //member left the server
+//                            logger.info("user left the server " + id);
+//                        }
+//                    });
+
                     channel.createMessage("Checking Roles").block();
 
-                    checkRoles(history);
+                    checkRoles(history, franchiseName, userRoles);
 
                     channel.createMessage("Doing Warnings").block();
                     //be able to skip warning if in downtime like over xmas
@@ -188,7 +237,7 @@ public class Import extends Action {
                     if (!skipWarnings) {
                         Warn warn = new Warn();
                         warn.action(gateway, client);
-                        warn.doWarnings(5, 300, true);
+                        warn.doWarnings(5, 300, true, franchise, userRoles);
                     }
 
                     channel.createMessage("Removing Mercy").block();
@@ -199,7 +248,7 @@ public class Import extends Action {
                         try {
                         client.getGuildById(Snowflake.of(guildId)).removeMemberRole(
                                 Snowflake.of(warningData.getName()),
-                                Snowflake.of(immunityId),
+                                Snowflake.of(franchise.getImmunity()),
                                 "Mercy has expired").block();
 
                         } catch (ClientException e) {
@@ -232,9 +281,12 @@ public class Import extends Action {
                         if (match >= 2) {
 
                             try {
-                                client.getGuildById(Snowflake.of(guildId)).addMemberRole(
+                                //check if user has this role
+
+                                if(!hasRole(userRoles.get(member.getId()), franchise.getGiveawayRole()))
+                                    client.getGuildById(Snowflake.of(guildId)).addMemberRole(
                                         Snowflake.of(member.getId()),
-                                        Snowflake.of(giveawayRole),
+                                        Snowflake.of(franchise.getGiveawayRole()),
                                         "Add Giveaway role").block();
 
                             } catch (ClientException e) {
@@ -251,10 +303,11 @@ public class Import extends Action {
 
                     for (WarningData warningData : ExportUtils.loadWarningDataAfterGiveaway()) {
                         try {
-                            client.getGuildById(Snowflake.of(guildId)).removeMemberRole(
-                                    Snowflake.of(warningData.getName()),
-                                    Snowflake.of(giveawayRole),
-                                    "Giveaway role has expired").block();
+                            if(hasRole(userRoles.get(Long.parseLong(warningData.getName())), franchise.getGiveawayRole()))
+                                client.getGuildById(Snowflake.of(guildId)).removeMemberRole(
+                                        Snowflake.of(warningData.getName()),
+                                        Snowflake.of(franchise.getGiveawayRole()),
+                                        "Giveaway role has expired").block();
 
                         } catch (ClientException e) {
                             //member left the server
@@ -264,33 +317,37 @@ public class Import extends Action {
                         warningData.setGiveawayUntil(null);
                         ExportUtils.updateWarningData(warningData);
                     }
+                    if (franchiseName.equals("OUI")) {
 
-                    channel.createMessage("Doing vote check").block();
+                        channel.createMessage("Doing vote check").block();
 
-                    for (GiveawayData member : giveawayData) {
+                        for (GiveawayData member : giveawayData) {
 
-                        try {
-                        if (member.getVotes() == 0) {
-                            //give user the 0 vote roles
-                            client.getGuildById(Snowflake.of(guildId)).addMemberRole(
-                                    Snowflake.of(member.getId()),
-                                    Snowflake.of(zeroVotes),
-                                    "Add 0 Vote role").block();
-                        } else {
-                            //remove the 0 vote role
-                            client.getGuildById(Snowflake.of(guildId)).removeMemberRole(
-                                    Snowflake.of(member.getId()),
-                                    Snowflake.of(zeroVotes),
-                                    "User has voted").block();
+                            try {
+                                if (member.getVotes() == 0) {
+                                    //give user the 0 vote roles
+                                    if(!hasRole(userRoles.get(member.getId()), zeroVotes))
+                                        client.getGuildById(Snowflake.of(guildId)).addMemberRole(
+                                                Snowflake.of(member.getId()),
+                                                Snowflake.of(zeroVotes),
+                                                "Add 0 Vote role").block();
+                                } else {
+                                    //remove the 0 vote role
+                                    if(hasRole(userRoles.get(member.getId()), zeroVotes))
+                                        client.getGuildById(Snowflake.of(guildId)).removeMemberRole(
+                                                Snowflake.of(member.getId()),
+                                                Snowflake.of(zeroVotes),
+                                                "User has voted").block();
+                                }
+
+                            } catch (ClientException e) {
+                                //member left the server
+                                logger.info("user left the server " + member.getId());
+
+                            }
                         }
-
-                        } catch (ClientException e) {
-                            //member left the server
-                            logger.info("user left the server " + member.getId());
-
-                        }
+                        channel.createMessage("Vote check done").block();
                     }
-                    channel.createMessage("Vote check done").block();
 
 
                     Instant reminderTime = message.getTimestamp().plus(23, ChronoUnit.HOURS);
@@ -311,44 +368,64 @@ public class Import extends Action {
         return Mono.empty();
     }
 
-    private void checkRoles(HashMap<Long, List<ExportData>> history) {
-        List<Donations> donations = ExportUtils.loadDonations();
-        history.forEach((id, dataList) -> {
+//    private boolean hasRole(List<Id> roles, String role) {
+//        if (roles == null) {
+//            return false;
+//        }
+//        AtomicBoolean found = new AtomicBoolean(false);
+//        roles.forEach(id -> {
+//            if (id.asLong() == Long.parseLong(role)) {
+//                found.set(true);
+//            }
+//        });
+//
+//        return found.get();
+//    }
+
+    private void checkRoles(HashMap<Long, List<ExportData>> history, String franchise, HashMap<Long, List<Id>> userRoles) {
+        logger.info("size = " + history.size());
+        logger.info("size = " + history);
+        List<Donations> donations = ExportUtils.loadDonations(franchise);
+//        history.forEach((id, dataList) -> {
+        for(Map.Entry<Long, List<ExportData>> entry : history.entrySet()) {
+            Long id = entry.getKey();
+            List<ExportData> dataList = entry.getValue();
             //get current donation amount
             long amount = dataList.get(dataList.size()-1).getMember().getDonations();
             logger.info("checking  id " + id + " has " + amount);
             try {
-                List<Id> roles = client.getGuildById(Snowflake.of(guildId)).getMember(Snowflake.of(id)).block().roles();
-                donations.forEach((donate) -> {
-                    AtomicBoolean hasRole = new AtomicBoolean(false);
-                    roles.forEach((roleId) -> {
-                        if (roleId.asLong() == Long.parseLong(donate.getRole())) {
-                            hasRole.set(true);
+                List<Id> roles = userRoles.get(id);
+                if (roles != null && roles.size() > 0)
+                    donations.forEach((donate) -> {
+                        AtomicBoolean hasRole = new AtomicBoolean(false);
+                        roles.forEach((roleId) -> {
+                            if (roleId.asLong() == Long.parseLong(donate.getRole())) {
+                                hasRole.set(true);
+                            }
+                        });
+                        if (donate.getMaxDonation() >= amount && donate.getMinDonation() <= amount) {
+                            if (!hasRole.get()) {
+                                client.getGuildById(Snowflake.of(guildId)).addMemberRole(
+                                        Snowflake.of(id),
+                                        Snowflake.of(donate.getRole()),
+                                        "donation role").block();
+                                logger.info("giving user role " + donate.getRole());
+                            }
+                        } else {
+                            if (hasRole.get()) {
+                                client.getGuildById(Snowflake.of(guildId)).removeMemberRole(
+                                        Snowflake.of(id),
+                                        Snowflake.of(donate.getRole()),
+                                        "donation role").block();
+                            }
                         }
-                    });
-                    if (donate.getMaxDonation() >= amount && donate.getMinDonation() <= amount) {
-                        if (!hasRole.get()) {
-                            client.getGuildById(Snowflake.of(guildId)).addMemberRole(
-                                    Snowflake.of(id),
-                                    Snowflake.of(donate.getRole()),
-                                    "donation role").block();
-                            logger.info("giving user role " + donate.getRole());
-                        }
-                    } else {
-                        if (hasRole.get()) {
-                            client.getGuildById(Snowflake.of(guildId)).removeMemberRole(
-                                    Snowflake.of(id),
-                                    Snowflake.of(donate.getRole()),
-                                    "donation role").block();
-                        }
-                    }
 
-                });
+                    });
             } catch (ClientException e) {
                 //member left the server
                 logger.info("user left the server " + id);
             }
-        });
+        }
     }
 
     private String getBest(List<WeeklyBestData> weeklyBestData, HashMap<Long, WeeklyBestData> weeklyBestDataYesterday,  boolean money) {

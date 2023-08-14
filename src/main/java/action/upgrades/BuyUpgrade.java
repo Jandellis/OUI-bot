@@ -145,11 +145,11 @@ public class BuyUpgrade extends Action implements EmbedAction {
         shack.addUpgrade("head", "Head Chef", 65, 2000, 30);
         shack.addUpgrade("executive", "Executive Chef", 150, 5000, 35);
         //deco
-        shack.addUpgrade("flowers", "Flowers", 5, 150, 40);
-        shack.addUpgrade("ornaments", "Ornaments", 10, 500, 35);
-        shack.addUpgrade("lights", "Fancy Lights", 30, 2500, 30);
+        shack.addUpgrade("flowers", "Flowers", 5, 100, 40);
+        shack.addUpgrade("ornaments", "Ornaments", 10, 200, 35);
+        shack.addUpgrade("lights", "Fancy Lights", 30, 1000, 30);
         shack.addUpgrade("mural", "Mural", 100, 15000, 5);
-        shack.addUpgrade("statue", "Taco Statue", 500, 5000000, 3);
+        shack.addUpgrade("statue", "Taco Statue", 500, 500000, 3);
         //truck
         shack.addUpgrade("register", "Register", 50, 5000, 20, true);
         shack.addUpgrade("assistant", "Assistant", 100, 10000, 15, true);

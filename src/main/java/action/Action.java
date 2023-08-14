@@ -1,5 +1,7 @@
 package action;
 
+import action.export.ExportUtils;
+import action.export.model.Franchise;
 import action.reminder.ReminderUtils;
 import action.reminder.model.Profile;
 import bot.Config;
@@ -30,6 +32,7 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 
 public abstract class Action {
@@ -126,6 +129,28 @@ public abstract class Action {
             }
 
             return hasPermission(message.getAuthor().get().getId().asString(), role);
+
+        } catch (Exception e) {
+            printException(e);
+        }
+        return false;
+    }
+    protected boolean hasPermission(Message message) {
+        try {
+            if (!message.getAuthor().isPresent()) {
+                return false;
+            }
+
+            if (!message.getGuildId().isPresent()) {
+                return false;
+            }
+            Franchise franchise = ExportUtils.getFranchise(message.getGuildId().get().asString());
+            if (franchise == null) {
+                return false;
+            }
+            logger.info("Found franchise " + franchise.getName());
+            logger.info("Checking if user " + message.getAuthor().get().getId() + " has role " + franchise.getRecruiter());
+            return hasPermission(message.getAuthor().get().getId().asString(), Long.parseLong(franchise.getRecruiter()));
 
         } catch (Exception e) {
             printException(e);
@@ -350,6 +375,20 @@ public abstract class Action {
             e.printStackTrace();
         }
         return new ArrayList<>();
+    }
+
+    public boolean hasRole(List<Id> roles, String role) {
+        if (roles == null) {
+            return false;
+        }
+        AtomicBoolean found = new AtomicBoolean(false);
+        roles.forEach(id -> {
+            if (id.asLong() == Long.parseLong(role)) {
+                found.set(true);
+            }
+        });
+
+        return found.get();
     }
 
 }

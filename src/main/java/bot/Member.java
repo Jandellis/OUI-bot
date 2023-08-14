@@ -12,7 +12,9 @@ public class Member {
     int overtime;
     int votes;
 
-    public Member(Long id, String name, int income, int shifts, int weeklyShifts, int tips, long donations, double happy, int overtime, int votes) {
+    String franchise;
+
+    public Member(Long id, String name, int income, int shifts, int weeklyShifts, int tips, long donations, double happy, int overtime, int votes, String franchise) {
         this.id = id;
         this.name = name;
         this.income = income;
@@ -23,9 +25,10 @@ public class Member {
         this.happy = happy;
         this.overtime = overtime;
         this.votes = votes;
+        this.franchise = franchise;
     }
 
-    public Member(String id, String name, String income, String shifts, String weeklyShifts, String tips, String donations, String happy, String overtime, String votes) {
+    public Member(String id, String name, String income, String shifts, String weeklyShifts, String tips, String donations, String happy, String overtime, String votes, String franchise) {
         this.id = Long.parseLong(id);
         this.name = name;
         this.income = Integer.parseInt(income);
@@ -34,8 +37,9 @@ public class Member {
         this.tips = Integer.parseInt(tips);
         this.donations = Long.parseLong(donations);
         this.happy = Double.parseDouble(happy);
-        this.overtime = Integer.parseInt(overtime);;
-        this.votes = Integer.parseInt(votes);;
+        this.overtime = Integer.parseInt(overtime);
+        this.votes = Integer.parseInt(votes);
+        this.franchise = franchise;
     }
 
     public Long getId() {
@@ -116,6 +120,18 @@ public class Member {
 
     public void setVotes(int votes) {
         this.votes = votes;
+    }
+
+    public void setDonations(long donations) {
+        this.donations = donations;
+    }
+
+    public String getFranchise() {
+        return franchise;
+    }
+
+    public void setFranchise(String franchise) {
+        this.franchise = franchise;
     }
 
     @Override

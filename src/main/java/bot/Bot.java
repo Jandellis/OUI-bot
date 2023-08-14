@@ -443,7 +443,7 @@ public class Bot {
 
                         List<KickMember> kickMemberList = new ArrayList<>();
                         try {
-                            kickMemberList = Clean.mainNoImport("historic.csv");
+                            kickMemberList = Clean.mainNoImport("OUIhistoric.csv");
                             logger.info("processed data");
                         } catch (Exception e) {
                             e.printStackTrace();

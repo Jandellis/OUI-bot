@@ -392,10 +392,14 @@ public class CreateReminder extends Action implements EmbedAction {
     private void createReminder(ReminderType type, Message message, String desc, EmbedData embed) {
 
         String name = desc.split("\\*\\*")[1];
-        Profile profile = ReminderUtils.loadProfileByName(name);
+        Profile profile = null;
         if (profile == null) {
             String userId = getId(message, embed);
             profile = ReminderUtils.loadProfileById(userId);
+        }
+
+        if (profile == null) {
+            profile = ReminderUtils.loadProfileByName(name);
         }
         if (profile == null) {
             logger.info("No profile found for " + name);

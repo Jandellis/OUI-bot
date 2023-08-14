@@ -1,6 +1,7 @@
 package action.export;
 
 import action.export.model.Donations;
+import action.export.model.Franchise;
 import action.export.model.MemberDonations;
 import action.export.model.WarningData;
 import bot.Config;
@@ -30,23 +31,23 @@ public class ExportUtils {
     static String password = config.get("password");
 
 
-    public static HashMap<Long, List<ExportData>> loadMemberHistory() {
+    public static HashMap<Long, List<ExportData>> loadMemberHistory(String franchise) {
 
         LocalDateTime oneWeek = LocalDateTime.now().minusDays(7).minusHours(12);
         LocalDateTime now = LocalDateTime.now();
 
-        return loadMemberHistory(oneWeek, now);
+        return loadMemberHistory(oneWeek, now, franchise);
     }
 
-    public static HashMap<Long, List<ExportData>> loadMemberHistoryYesterday() {
+    public static HashMap<Long, List<ExportData>> loadMemberHistoryYesterday(String franchise) {
 
         LocalDateTime oneWeek = LocalDateTime.now().minusDays(8).minusHours(12);
         LocalDateTime now = LocalDateTime.now().minusHours(12);
 
-        return loadMemberHistory(oneWeek, now);
+        return loadMemberHistory(oneWeek, now, franchise);
     }
 
-    public static HashMap<Long, List<ExportData>> loadMemberHistory(LocalDateTime start, LocalDateTime end) {
+    public static HashMap<Long, List<ExportData>> loadMemberHistory(LocalDateTime start, LocalDateTime end, String franchise) {
         HashMap<Long, List<ExportData>> history = new HashMap<>();
 
         try {
@@ -54,12 +55,14 @@ public class ExportUtils {
             Statement st = con.createStatement();
 
 
-            PreparedStatement pst = con.prepareStatement("SELECT export_time, name, shack_name, income, shifts, weekly_shifts, tips, donations, happy, overtime, votes " +
+            PreparedStatement pst = con.prepareStatement("SELECT export_time, name, shack_name, income, shifts, weekly_shifts, tips, donations, happy, overtime, votes, franchise " +
                     "FROM member_data " +
                     "WHERE export_time > ? and " +
+                    "franchise = ? and " +
                     "export_time < ?  ORDER BY export_time ");
             pst.setTimestamp(1, Timestamp.valueOf(start));
-            pst.setTimestamp(2, Timestamp.valueOf(end));
+            pst.setString(2, franchise);
+            pst.setTimestamp(3, Timestamp.valueOf(end));
             ResultSet rs = pst.executeQuery();
             while (rs.next()) {
                 Timestamp exportTime = rs.getTimestamp(1);
@@ -73,7 +76,8 @@ public class ExportUtils {
                         rs.getLong(8),
                         rs.getDouble(9),
                         rs.getInt(10),
-                        rs.getInt(11)
+                        rs.getInt(11),
+                        rs.getString(12)
 
                 );
                 ExportData data = new ExportData(member, exportTime);
@@ -122,8 +126,8 @@ public class ExportUtils {
 
 
             if (id == -1) {
-                String sql = "insert into member_data (export_time, name, shack_name, income, shifts, weekly_shifts, tips, donations, happy, overtime, votes) " +
-                        "VALUES (?, ?, ?, ?,?,?,?,?,?,?,?)";
+                String sql = "insert into member_data (export_time, name, shack_name, income, shifts, weekly_shifts, tips, donations, happy, overtime, votes, franchise) " +
+                        "VALUES (?, ?, ?, ?,?,?,?,?,?,?,?, ?)";
                 PreparedStatement p = con.prepareStatement(sql);
                 p.setTimestamp(1, exportTime);
                 p.setString(2, member.getId().toString());
@@ -136,6 +140,7 @@ public class ExportUtils {
                 p.setDouble(9, member.getHappy());
                 p.setInt(10, member.getOvertime());
                 p.setInt(11, member.getVotes());
+                p.setString(12, member.getFranchise());
                 p.execute();
             }
             st.executeBatch();
@@ -145,7 +150,7 @@ public class ExportUtils {
     }
 
 
-    public static List<Donations> loadDonations() {
+    public static List<Donations> loadDonations(String franchise) {
         List<Donations> donations = new ArrayList<>();
 
         try {
@@ -153,7 +158,8 @@ public class ExportUtils {
             Statement st = con.createStatement();
 
 
-            PreparedStatement pst = con.prepareStatement("SELECT max_donation, min_donation, role FROM Donations");
+            PreparedStatement pst = con.prepareStatement("SELECT max_donation, min_donation, role FROM Donations where franchise = ?");
+            pst.setString(1, franchise);
             ResultSet rs = pst.executeQuery();
             while (rs.next()) {
 
@@ -399,5 +405,77 @@ public class ExportUtils {
             logger.error("Exception", ex);
         }
         return 0;
+    }
+    public static Franchise getFranchise(String guild) {
+
+        try {
+            Connection con = DriverManager.getConnection(url, user, password);
+            PreparedStatement pst = con.prepareStatement("SELECT guild," +
+                    " name," +
+                    " warning," +
+                    " warning_2," +
+                    " warning_3," +
+                    " flex," +
+                    " recruiter," +
+                    " immunity," +
+                    " giveawayRole, court FROM franchise_config " +
+                    "WHERE guild = ?");
+            pst.setString(1, guild);
+            ResultSet rs = pst.executeQuery();
+            while (rs.next()) {
+                return new Franchise(
+                        rs.getString(1),
+                        rs.getString(2),
+                        rs.getString(3),
+                        rs.getString(4),
+                        rs.getString(5),
+                        rs.getString(6),
+                        rs.getString(7),
+                        rs.getString(8),
+                        rs.getString(9),
+                        rs.getString(10)
+                );
+            }
+
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
+        return null;
+    }
+    public static Franchise getFranchiseByName(String name) {
+
+        try {
+            Connection con = DriverManager.getConnection(url, user, password);
+            PreparedStatement pst = con.prepareStatement("SELECT guild," +
+                    " name," +
+                    " warning," +
+                    " warning_2," +
+                    " warning_3," +
+                    " flex," +
+                    " recruiter," +
+                    " immunity," +
+                    " giveawayRole, court FROM franchise_config " +
+                    "WHERE name = ?");
+            pst.setString(1, name);
+            ResultSet rs = pst.executeQuery();
+            while (rs.next()) {
+                return new Franchise(
+                        rs.getString(1),
+                        rs.getString(2),
+                        rs.getString(3),
+                        rs.getString(4),
+                        rs.getString(5),
+                        rs.getString(6),
+                        rs.getString(7),
+                        rs.getString(8),
+                        rs.getString(9),
+                        rs.getString(10)
+                );
+            }
+
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
+        return null;
     }
 }

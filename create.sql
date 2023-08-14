@@ -238,3 +238,53 @@ CREATE TABLE IF NOT EXISTS reminder_settings (
     clean BOOLEAN,
     boost BOOLEAN
 );
+
+CREATE TABLE IF NOT EXISTS giveaway_log (
+    id serial PRIMARY KEY,
+    name VARCHAR(25),
+    win_time timestamp
+);
+
+
+ALTER TABLE member_data DROP COLUMN franchise ;
+ALTER TABLE Donations DROP COLUMN franchise ;
+
+ALTER TABLE member_data add franchise VARCHAR(25);
+ALTER TABLE Donations add franchise VARCHAR(25);
+
+CREATE TABLE IF NOT EXISTS franchise_config (
+    id serial PRIMARY KEY,
+    guild VARCHAR(25),
+    name VARCHAR(25),
+    warning VARCHAR(25),
+    warning_2 VARCHAR(25),
+    warning_3 VARCHAR(25),
+    flex VARCHAR(25),
+    recruiter VARCHAR(25),
+    immunity VARCHAR(25),
+    giveawayRole VARCHAR(25),
+    court VARCHAR(25)
+);
+
+
+insert into franchise_config (guild,
+    name,
+    warning,
+    warning_2 ,
+    warning_3 ,
+    flex ,
+    recruiter ,
+    immunity ,
+    giveawayRole ,
+    court )
+VALUES ('840395541791768599',
+'OUI',
+'937728752887144549',
+'937729131557322822',
+'937730070431277066',
+'932741586079588482',
+'841425869628899369',
+'1067324308323581952',
+'875882014606262282',
+'841173549871661056');
+

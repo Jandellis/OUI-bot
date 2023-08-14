@@ -9,6 +9,12 @@
             "required": false
         },
         {
+            "name": "history",
+            "description": "View past winners for the past 30 days",
+            "type": 5,
+            "required": false
+        },
+        {
             "name": "lookup",
             "description": "Id of person to look up stats for",
             "type": 3,

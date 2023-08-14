@@ -1,29 +1,21 @@
 package slash.commands;
 
+import action.giveaway.model.GiveawayLog;
 import action.giveaway.model.GiveawayWinner;
 import action.reminder.ReminderUtils;
 import action.reminder.model.FlexStats;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import discord4j.core.spec.EmbedCreateSpec;
-import discord4j.core.spec.MessageCreateFields;
 import discord4j.rest.util.Color;
-import org.knowm.xchart.BitmapEncoder;
-import org.knowm.xchart.XYChart;
-import org.knowm.xchart.XYChartBuilder;
-import org.knowm.xchart.XYSeries;
-import org.knowm.xchart.style.Styler;
 import reactor.core.publisher.Mono;
 
-import java.io.BufferedInputStream;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class GiveawayCommand extends SlashCommand {
     @Override
@@ -41,38 +33,96 @@ public class GiveawayCommand extends SlashCommand {
         EmbedCreateSpec.Builder embed = EmbedCreateSpec.builder();
         try {
             Boolean leaderboard = getParameter("leaderboard", false, event);
+            Boolean history = getParameter("history", false, event);
             String lookup = getParameter("lookup", "", event);
             if (event.getInteraction().getData().member().toOptional().isPresent()) {
 
                 String name = event.getInteraction().getData().member().get().user().id().asString();
             }
-            if (leaderboard) {
-                List<GiveawayWinner> winners = ReminderUtils.loadGiveawayWins();
+            if (leaderboard || history) {
+                if (leaderboard) {
+                    List<GiveawayWinner> winners = ReminderUtils.loadGiveawayWins();
 
-                embed.color(Color.SUMMER_SKY);
-                embed.title("OUI Giveaway Leaderboard");
+                    embed.color(Color.SUMMER_SKY);
+                    embed.title("OUI Giveaway Leaderboard");
 
-                StringBuilder value = new StringBuilder();
-                int count = 0;
-                for (GiveawayWinner winner : winners) {
-                    count++;
-                    LocalDateTime now = LocalDateTime.now();
-                    winner.getLastWin().toLocalDateTime();
-                    long days = Duration.between(winner.getLastWin().toLocalDateTime(), now).toDays();
+                    StringBuilder value = new StringBuilder();
+                    int count = 0;
+                    for (GiveawayWinner winner : winners) {
+                        count++;
+                        LocalDateTime now = LocalDateTime.now();
+                        winner.getLastWin().toLocalDateTime();
+                        long days = Duration.between(winner.getLastWin().toLocalDateTime(), now).toDays();
 
-                    value
-                            .append("**" + count + "** <@")
-                            .append(winner.getName())
-                            .append("> - ")
-                            .append(winner.getWins()).append(" - ").append(days).append(" days ago \n");
-                    if (count == 30) {
-                        break;
+                        value
+                                .append("**" + count + "** <@")
+                                .append(winner.getName())
+                                .append("> - ")
+                                .append(winner.getWins()).append(" - ").append(days).append(" days ago \n");
+                        if (count == 30) {
+                            break;
+                        }
+
+                    }
+//                embed.addField("Wins - Count - Last Win", value.toString(), true);
+                    embed.description("**Winner - Count - Last Win**\n" + value.toString());
+//                embed.addField("test", "test", true);
+                } else {
+
+                    List<GiveawayLog> winners = ReminderUtils.loadGiveawayLog();
+
+                    embed.color(Color.SUMMER_SKY);
+                    embed.title("OUI Giveaway Leaderboard Last 30 days");
+
+                    StringBuilder value = new StringBuilder();
+                    AtomicInteger count = new AtomicInteger();
+                    HashMap<String, GiveawayWinner> giveawayWinnerHashMap = new HashMap<>();
+
+                    for (GiveawayLog winner : winners) {
+                        if (giveawayWinnerHashMap.containsKey(winner.getName())) {
+                            giveawayWinnerHashMap.get(winner.getName()).addWin();
+                        } else {
+                            GiveawayWinner giveawayWinner = new GiveawayWinner(winner.getName(), 1, winner.getLastWin());
+                            giveawayWinnerHashMap.put(winner.getName(), giveawayWinner);
+                        }
                     }
 
-                }
+                    List <GiveawayWinner> sortedWinners = new ArrayList<>(giveawayWinnerHashMap.values());
+                    sortedWinners.sort((o1, o2) -> {
+
+                        if (o1.getWins() == o2.getWins()){
+
+                            if (o1.getLastWin().after(o2.getLastWin()) )
+                                return -1;
+                            else
+                                return 1;
+                        }
+
+                        if (o1.getWins() < o2.getWins())
+                            return 1;
+                        else
+                            return -1;
+                    });
+
+                    sortedWinners.forEach((winner) -> {
+                        count.getAndIncrement();
+
+                                LocalDateTime now = LocalDateTime.now();
+                                winner.getLastWin().toLocalDateTime();
+                                long days = Duration.between(winner.getLastWin().toLocalDateTime(), now).toDays();
+
+                                value
+                                        .append("**" + count + "** <@")
+                                        .append(winner.getName())
+                                        .append("> - ")
+                                        .append(winner.getWins()).append(" - ").append(days).append(" days ago \n");
+                            }
+
+                    );
 //                embed.addField("Wins - Count - Last Win", value.toString(), true);
-                embed.description("**Winner - Count - Last Win**\n" +value.toString());
+                    embed.description("**Winner - Count - Last Win**\n" + value.toString());
 //                embed.addField("test", "test", true);
+                }
             } else {
                 if (event.getInteraction().getData().member().toOptional().isPresent()) {
                     String id = event.getInteraction().getData().member().get().user().id().asString();

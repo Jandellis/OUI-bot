@@ -2,17 +2,15 @@ package action.giveaway.model;
 
 import java.sql.Timestamp;
 
-public class GiveawayWinner {
+public class GiveawayLog {
 
     Long id;
     String name;
-    int wins;
     Timestamp LastWin;
 
 
-    public GiveawayWinner(String name, int wins, Timestamp lastWin) {
+    public GiveawayLog(String name, Timestamp lastWin) {
         this.name = name;
-        this.wins = wins;
         LastWin = lastWin;
     }
 
@@ -32,13 +30,6 @@ public class GiveawayWinner {
         this.name = name;
     }
 
-    public int getWins() {
-        return wins;
-    }
-
-    public void setWins(int wins) {
-        this.wins = wins;
-    }
 
     public Timestamp getLastWin() {
         return LastWin;
@@ -46,9 +37,5 @@ public class GiveawayWinner {
 
     public void setLastWin(Timestamp lastWin) {
         LastWin = lastWin;
-    }
-
-    public void addWin() {
-        wins++;
     }
 }

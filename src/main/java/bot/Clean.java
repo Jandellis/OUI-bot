@@ -25,10 +25,10 @@ public class Clean {
 
 
     protected static final Logger logger = LogManager.getLogger("ouiBot");
-    public static KickList main(String url, String historyFile, int work, int unclean, Timestamp importTime) throws Exception {
+    public static KickList main(String url, String historyFile, int work, int unclean, Timestamp importTime, String franchiseName) throws Exception {
 
 
-        HashMap<Long, Member> current = parseCurrent(url, importTime);
+        HashMap<Long, Member> current = parseCurrent(url, franchiseName, importTime);
         HashMap<Long, MemberHistory> history = parseHistory(new File(historyFile));
 
         return writeHistory(new File(historyFile), current, history, work, unclean);
@@ -187,14 +187,14 @@ public class Clean {
     }
 
 
-    private static HashMap<Long, Member> parseCurrent(String url, Timestamp importTime) throws Exception {
+    private static HashMap<Long, Member> parseCurrent(String url, String franchiseName, Timestamp importTime) throws Exception {
 
         URLConnection hc = new URL(url).openConnection();
         hc.setRequestProperty("User-Agent", "Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10.4; en-US; rv:1.9.2.2) Gecko/20100316 Firefox/3.6.2");
 
 
         try (BufferedInputStream in = new BufferedInputStream(hc.getInputStream());
-             FileOutputStream fileOutputStream = new FileOutputStream("temp.csv")) {
+             FileOutputStream fileOutputStream = new FileOutputStream(franchiseName +"temp.csv")) {
             byte dataBuffer[] = new byte[1024];
             int bytesRead;
             while ((bytesRead = in.read(dataBuffer, 0, 1024)) != -1) {
@@ -205,7 +205,7 @@ public class Clean {
         }
 
 
-        BufferedReader br = new BufferedReader(new FileReader(new File("temp.csv")));
+        BufferedReader br = new BufferedReader(new FileReader(new File(franchiseName+"temp.csv")));
 //        BufferedReader br = new BufferedReader(new FileReader(new File("test data\\OUI_MemberData_123-4.csv")));
 
         String line;
@@ -219,7 +219,7 @@ public class Clean {
                 String[] data = line.split(",");
 
                 logger.info("line is " + line );
-                Member member = new Member(data[0], data[1], data[2], data[3], data[4], data[5], data[7], data[8], data[6], data[9]);
+                Member member = new Member(data[0], data[1], data[2], data[3], data[4], data[5], data[7], data[8], data[6], data[9], franchiseName);
 
                 logger.info("Member is " + member.toString() );
                 members.put(Long.parseLong(data[0]), member);
