@@ -32,6 +32,7 @@ public class BuyUpgrade extends Action implements EmbedAction {
     Location city = new Location(LocationEnum.city);
     Location shack = new Location(LocationEnum.shack);
     Location beach = new Location(LocationEnum.beach);
+    Location amusement = new Location(LocationEnum.amusement);
     Location hq = new Location(LocationEnum.hq);
     List<Location> locations = new ArrayList<>();
 
@@ -123,6 +124,45 @@ public class BuyUpgrade extends Action implements EmbedAction {
 
 
         //ad
+        amusement.addUpgrade("newspaper", "Newspaper Ad", 10, 350, 45);
+        amusement.addUpgrade("radio", "Radio Ad", 20, 650, 40);
+        amusement.addUpgrade("email", "Email Campaign", 30, 1000, 40);
+        amusement.addUpgrade("internet", "Internet Ad", 50, 2000, 45);
+        amusement.addUpgrade("tv", "TV Commercial", 160, 5500, 30);
+        amusement.addUpgrade("blimp", "Advertising Blimp", 200, 250000, 5);
+        //up
+        amusement.addUpgrade("paint", "New Paint", 10, 250, 45);
+        amusement.addUpgrade("furniture", "New Furniture", 20, 600, 40);
+        amusement.addUpgrade("bathrooms", "Nicer Bathrooms", 25, 800, 40);
+        amusement.addUpgrade("billboard", "Billboard", 35, 1000, 40);
+        amusement.addUpgrade("appliances", "Better Appliances", 90, 1200, 30);
+        amusement.addUpgrade("tipjar", "Cooler Tip Jar", 40, 500, 35);
+        //hire
+        amusement.addUpgrade("apprentice", "Apprentice Chef", 10, 250, 45);
+        amusement.addUpgrade("cook", "Cook", 20, 600, 45);
+        amusement.addUpgrade("advertiser", "Advertiser", 20, 700, 45);
+        amusement.addUpgrade("greeter", "Greeter", 25, 800, 45);
+        amusement.addUpgrade("sous", "Sous Chef", 40, 1200, 45);
+        amusement.addUpgrade("head", "Head Chef", 65, 2000, 40);
+        amusement.addUpgrade("executive", "Executive Chef", 150, 5000, 45);
+        //deco
+        amusement.addUpgrade("benches", "Benches", 5, 100, 50);
+        amusement.addUpgrade("speaker", "Speaker", 10, 250, 50);
+        amusement.addUpgrade("balloon", "Balloon Archway", 30, 1500, 45);
+        amusement.addUpgrade("fireworks", "Fireworks Display", 150, 20000, 8);
+        amusement.addUpgrade("plushies", "Taco Plushies", 500, 1500000, 5);
+        //Attractions
+        amusement.addUpgrade("toss", "Bottle Toss", 50, 5000, 20, true);
+        amusement.addUpgrade("arcade", "Arcade Games", 100, 8500, 15, true);
+        amusement.addUpgrade("carnival", "Carnival Games", 250, 25000, 10, true);
+        amusement.addUpgrade("carousel", "Carousel", 400, 150000, 5, true);
+        amusement.addUpgrade("coaster", "Roller Coaster", 2000, 750000, 10, true);
+        amusement.addUpgrade("ferris", "Ferris Wheel", 6000, 50000000, 1, true);
+
+        locations.add(amusement);
+
+
+        //ad
         shack.addUpgrade("newspaper", "Newspaper Ad", 10, 350, 35);
         shack.addUpgrade("radio", "Radio Ad", 20, 650, 30);
         shack.addUpgrade("email", "Email Campaign", 30, 1000, 30);
@@ -163,7 +203,7 @@ public class BuyUpgrade extends Action implements EmbedAction {
         beach.addUpgrade("newspaper", "Newspaper Ad", 10, 350, 40);
         beach.addUpgrade("radio", "Radio Ad", 20, 650, 35);
         beach.addUpgrade("email", "Email Campaign", 30, 1000, 35);
-        beach.addUpgrade("internet", "Internet Ad", 50, 2000, 10);
+        beach.addUpgrade("internet", "Internet Ad", 50, 2000, 40);
         beach.addUpgrade("tv", "TV Commercial", 160, 5500, 20);
         beach.addUpgrade("blimp", "Advertising Blimp", 200, 250000, 4);
         //up
@@ -297,6 +337,9 @@ public class BuyUpgrade extends Action implements EmbedAction {
                                     break;
                                 case hq:
                                     commands = "</hq upgrades:1018564197602295859>, </hq hire:1018564197602295859> ";
+                                    break;
+                                case amusement:
+                                    commands = commands + "</attractions:1150514355167821946>";
                                     break;
 
                             }
@@ -471,6 +514,9 @@ public class BuyUpgrade extends Action implements EmbedAction {
                                 case hq:
                                     commands = "</hq upgrades:1018564197602295859>, </hq hire:1018564197602295859> ";
                                     break;
+                                case amusement:
+                                    commands = commands + "</attractions:1150514355167821946>";
+                                    break;
 
                             }
 
@@ -625,6 +671,7 @@ public class BuyUpgrade extends Action implements EmbedAction {
                             title.contains("Mall Kiosk") ||
                             title.contains("Taco Truck") ||
                             title.contains("Hotdog Cart") ||
+                            title.contains("Amusement Park Attractions") ||
                             title.contains("Ice Cream Stand")) {
                         String id = getId(message, embed);
                         Location location = getLocation(title, embed.description().get());
@@ -696,6 +743,9 @@ public class BuyUpgrade extends Action implements EmbedAction {
         }
         if (name.contains("Hotdog Cart")) {
             name = "city";
+        }
+        if (name.contains("Amusement")) {
+            name = "amusement";
         }
         Location defaultLocation = null;
 

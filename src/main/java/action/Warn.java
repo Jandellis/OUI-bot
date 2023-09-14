@@ -123,7 +123,7 @@ public class Warn extends Action {
                 try {
 //                    memberData = client.getMemberById(Snowflake.of(franchise.getGuild()), Snowflake.of(kickMember.getId())).getData().block();
                     List<Id> roles = userRoles.get(kickMember.getId());
-                    if (roles != null && roles.size() > 0)
+                    if (roles != null && roles.size() > 0) {
                         roles.forEach(id -> {
                             if (id.asLong() == Long.parseLong(franchise.getImmunity()))
                                 imunity.set(true);
@@ -134,7 +134,8 @@ public class Warn extends Action {
                             if (id.asLong() == Long.parseLong(franchise.getWarning3()))
                                 warning.set(3);
                         });
-                    inServer = true;
+                        inServer = true;
+                    }
                 } catch (ClientException e) {
                     //member left the server
                     logger.info("user left the server " + kickMember.getId());
@@ -150,73 +151,76 @@ public class Warn extends Action {
                 // is not on the imunity list
                 // odd is false or number of days not worked is odd
 
+                try {
+                    if (inServer
+                            && kickMember.getDaysNoWork() >= level
+                            && kickMember.getDaysNoWork() <= max
+                            && !imunity.get()
+                            && (warningData.getLastWarning() == null || warningData.getLastWarning().toLocalDateTime().isBefore(twoDaysAgo))) {
+                //                    workList.add("<@" + kickMember.getId() + "> \r\n");
+                        warnMember = true;
 
-                if (inServer
-                        && kickMember.getDaysNoWork() >= level
-                        && kickMember.getDaysNoWork() <= max
-                        && !imunity.get()
-                        && (warningData.getLastWarning() == null || warningData.getLastWarning().toLocalDateTime().isBefore(twoDaysAgo))) {
-//                    workList.add("<@" + kickMember.getId() + "> \r\n");
-                    warnMember = true;
+                    }
 
-                }
+                //                if (inServer
+                //                        && kickMember.getDaysUnhappy() >= level
+                //                        && kickMember.getDaysUnhappy() <= max
+                //                        && !imunity.get()
+                //                        && (warningData.getLastWarning() == null || warningData.getLastWarning().toLocalDateTime().isBefore(twoDaysAgo))) {
+                //                    uncleanList.add("<@" + kickMember.getId() + "> \r\n");
+                //                    warnMember = true;
+                //                }
 
-//                if (inServer
-//                        && kickMember.getDaysUnhappy() >= level
-//                        && kickMember.getDaysUnhappy() <= max
-//                        && !imunity.get()
-//                        && (warningData.getLastWarning() == null || warningData.getLastWarning().toLocalDateTime().isBefore(twoDaysAgo))) {
-//                    uncleanList.add("<@" + kickMember.getId() + "> \r\n");
-//                    warnMember = true;
-//                }
-
-                if (inServer && warnMember) {
-                    if (warning.get() == 0) {
-                        //set donations to 0
-                        ExportUtils.resetMemberDonations(kickMember.getId().toString());
-                        MemberDonations donations = ExportUtils.loadMemberDonations(kickMember.getId().toString());
-                        if (donations.getDonation() >= 5000000) {
-                            ExportUtils.clearWarning(kickMember.getId().toString());
-                            warnMember = false;
-                            logger.info("user should be warned, but they have donated to ingore the warning " + kickMember.getId());
-                        } else {
-                            client.getGuildById(Snowflake.of(franchise.getGuild())).addMemberRole(
-                                    Snowflake.of(kickMember.getId()),
-                                    Snowflake.of(franchise.getWarning()),
-                                    "first warning").block();
+                    if (inServer && warnMember) {
+                        if (warning.get() == 0) {
+                            //set donations to 0
+                            ExportUtils.resetMemberDonations(kickMember.getId().toString());
+                            MemberDonations donations = ExportUtils.loadMemberDonations(kickMember.getId().toString());
+                            if (donations.getDonation() >= 5000000) {
+                                ExportUtils.clearWarning(kickMember.getId().toString());
+                                warnMember = false;
+                                logger.info("user should be warned, but they have donated to ingore the warning " + kickMember.getId());
+                            } else {
+                                client.getGuildById(Snowflake.of(franchise.getGuild())).addMemberRole(
+                                        Snowflake.of(kickMember.getId()),
+                                        Snowflake.of(franchise.getWarning()),
+                                        "first warning").block();
+                            }
                         }
-                    }
-                    if (warning.get() == 1) {
-                        client.getGuildById(Snowflake.of(franchise.getGuild())).addMemberRole(
-                                Snowflake.of(kickMember.getId()),
-                                Snowflake.of(franchise.getWarning2()),
-                                "second warning").block();
-                        client.getGuildById(Snowflake.of(franchise.getGuild())).removeMemberRole(
-                                Snowflake.of(kickMember.getId()),
-                                Snowflake.of(franchise.getWarning()),
-                                "second warning").block();
-                    }
-                    if (warning.get() == 2 ) {
-                        if (hasRole(userRoles.get(kickMember.getId()), franchise.getWarning3())) {
-                            logger.info("Skipping user as they have final warning already " + kickMember.getId());
-                        } else {
+                        if (warning.get() == 1) {
                             client.getGuildById(Snowflake.of(franchise.getGuild())).addMemberRole(
-                                    Snowflake.of(kickMember.getId()),
-                                    Snowflake.of(franchise.getWarning3()),
-                                    "final warning").block();
-                            client.getGuildById(Snowflake.of(franchise.getGuild())).removeMemberRole(
                                     Snowflake.of(kickMember.getId()),
                                     Snowflake.of(franchise.getWarning2()),
-                                    "final warning").block();
+                                    "second warning").block();
+                            client.getGuildById(Snowflake.of(franchise.getGuild())).removeMemberRole(
+                                    Snowflake.of(kickMember.getId()),
+                                    Snowflake.of(franchise.getWarning()),
+                                    "second warning").block();
                         }
+                        if (warning.get() == 2) {
+                            if (hasRole(userRoles.get(kickMember.getId()), franchise.getWarning3())) {
+                                logger.info("Skipping user as they have final warning already " + kickMember.getId());
+                            } else {
+                                client.getGuildById(Snowflake.of(franchise.getGuild())).addMemberRole(
+                                        Snowflake.of(kickMember.getId()),
+                                        Snowflake.of(franchise.getWarning3()),
+                                        "final warning").block();
+                                client.getGuildById(Snowflake.of(franchise.getGuild())).removeMemberRole(
+                                        Snowflake.of(kickMember.getId()),
+                                        Snowflake.of(franchise.getWarning2()),
+                                        "final warning").block();
+                            }
+                        }
+                        LocalDateTime now = LocalDateTime.now();
+                        warningData.setLastWarning(Timestamp.valueOf(now));
+                        ExportUtils.updateWarningData(warningData);
                     }
-                    LocalDateTime now = LocalDateTime.now();
-                    warningData.setLastWarning(Timestamp.valueOf(now));
-                    ExportUtils.updateWarningData(warningData);
-                }
 
-                if (inServer && warnMember) {
-                    workList.add("<@" + kickMember.getId() + "> \r\n");
+                    if (inServer && warnMember) {
+                        workList.add("<@" + kickMember.getId() + "> \r\n");
+                    }
+                } catch (Exception e) {
+                    printException(e);
                 }
             }
 

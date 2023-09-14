@@ -33,6 +33,13 @@ public enum ReminderType {
     Chairs("Beach Chairs"),
     Helicopter("Helicopter Tours"),
 
+    //Amusement
+    Gift("Gift Shop"),
+    Painting("Face Painting"),
+    Parade("Parade"),
+    Show("Live Show"),
+    Magic("Magic Show"),
+
     //mall
     Lunch("Lunch Discount"),
     special("Special"),

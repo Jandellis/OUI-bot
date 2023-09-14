@@ -96,7 +96,7 @@ public class SpeedJar extends Action {
 //        runUnlock(690);
 
 
-        LocalDateTime unlockTime = Timestamp.from(messageTime).toLocalDateTime().plusMinutes(690);
+        LocalDateTime unlockTime = Timestamp.from(messageTime).toLocalDateTime().plusMinutes(719);
         Utils.addReminder(SystemReminderType.speedJarUnlock, Timestamp.valueOf(unlockTime), "", "");
 
         LocalDateTime lockTime = Timestamp.from(messageTime).toLocalDateTime().plusMinutes(20);

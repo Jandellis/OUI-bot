@@ -63,6 +63,13 @@ public class CreateBoostReminder extends Action implements EmbedAction {
         boosts.add(new Boost("Takeout", 8));
         boosts.add(new Boost("Special", 24));
 
+        //Amusement
+        boosts.add(new Boost("Magic Show", 4));
+        boosts.add(new Boost("Parade", 4));
+        boosts.add(new Boost("Face Painting", 6));
+        boosts.add(new Boost("Gift Shop", 8));
+        boosts.add(new Boost("Live Show", 24));
+
         watchChannels = Arrays.asList(config.get("watchChannels").split(","));
     }
 

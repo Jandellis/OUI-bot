@@ -40,6 +40,7 @@ public class Hit extends Action {
     public Mono<Object> doAction(Message message) {
 
         String action = getAction(message);
+        String exclude = getAction(message, param, 1);
         if (action != null && hasPermission(message, recruiter)) {
             return message.getChannel().flatMap(channel -> {
                 int hitListSize = 10;
@@ -97,6 +98,18 @@ public class Hit extends Action {
                                 if (id.asLong() == finalWarning)
                                     serverMembers.add(kickMember);
                             });
+
+                            // remove members who have donated a lot
+                            if (exclude!= null && exclude.equals("exclude")) {
+                                memberData.roles().forEach(id -> {
+                                    if (id.asLong() == 931281334570197022L ||
+                                            id.asLong() == 931277539270344744L ||
+                                            id.asLong() == 931276083326771220L ||
+                                            id.asLong() == 931273576739405864L ||
+                                            id.asLong() == 931269453063266375L)
+                                        serverMembers.remove(kickMember);
+                                });
+                            }
 
                         } catch (ClientException e) {
                             //user left the server
