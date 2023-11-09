@@ -288,3 +288,19 @@ VALUES ('840395541791768599',
 '875882014606262282',
 '841173549871661056');
 
+
+
+
+ALTER TABLE franchise add balance bigint;
+ALTER TABLE franchise add sold bigint;
+ALTER TABLE franchise add income int;
+
+
+
+alter table profile add ignored_hidden BOOLEAN;
+update profile set ignored_hidden = false;
+alter table profile alter column ignored_hidden set default false;
+
+alter table profile add dnd BOOLEAN;
+update profile set dnd = false;
+alter table profile alter column dnd set default false;
