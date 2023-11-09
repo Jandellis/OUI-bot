@@ -46,6 +46,8 @@ public class Help extends Action {
                     sb.append("Then type `cyrm on`\n");
                     sb.append("Type `cyrm off` to turn me off\n");
                     sb.append("Type `cyrm dm` to toggle DM reminders\n");
+                    sb.append("Type `cyrm dnd` to toggle do not disturb mode\n");
+                    sb.append("Type `cyrm hide` to toggle ignored reminders after you do an action\n");
                     sb.append("\n");
 //                    sb.append("I can do reminders for work, tips, overtime, daily, clean, vote, boosts and gifts\n");
                     sb.append("When you do something that I will create a reminder for that and i will tell you if im missing any cooldowns by reacting with the first letter\n");

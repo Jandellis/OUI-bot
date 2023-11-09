@@ -8,6 +8,8 @@ public class Karen extends Action {
 
 
     String customerChannel;
+    String customerChannel2;
+    String customerChannel3;
     String customerPing;
     String customerBot = "526268502932455435";
 //    String customerBot = "292839877563908097";
@@ -28,6 +30,8 @@ public class Karen extends Action {
         param6 = "Unscramble Game";
         param7 = "Trivia Game";
         customerChannel = "840942880775471114";
+        customerChannel2 = "1162172605541920811";
+        customerChannel3 = "1165959960388190259";
         customerPing = "931599227824517151";
 
     }
@@ -35,7 +39,9 @@ public class Karen extends Action {
     @Override
     public Mono<Object> doAction(Message message) {
         try {
-            if (message.getChannelId().asString().equals(customerChannel)) {
+            if (message.getChannelId().asString().equals(customerChannel) ||
+                    message.getChannelId().asString().equals(customerChannel2)||
+                    message.getChannelId().asString().equals(customerChannel3) ){
                 if (message.getData().author().id().asString().equals(customerBot)) {
                     if (message.getContent().contains(param2) || message.getContent().contains(param3)) {
                         logger.info("got sell");

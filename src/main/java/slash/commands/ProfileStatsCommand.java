@@ -73,6 +73,8 @@ public class ProfileStatsCommand extends SlashCommand {
 //        }
 
         long days = getParameter("days", 30L, event);
+
+        long average = getParameter("average", 1L, event);
 //        Optional<Long> daysPresent = event.getOption("days")
 //                .flatMap(ApplicationCommandInteractionOption::getValue)
 //                .map(ApplicationCommandInteractionOptionValue::asLong);
@@ -115,6 +117,8 @@ public class ProfileStatsCommand extends SlashCommand {
     private String createChart(String name, Long days, LocationEnum location, String type, Boolean compressGraph) throws IOException {
 //        logger.info("getting chart data");
         List<ProfileStats> data = ReminderUtils.loadProfileStats(name, days.intValue(), location);
+        //if avg > 1 load data for days + avg
+
         XYChart chart = readData(data, location, type, compressGraph);
 //        logger.info("got chart data");
         String chartName = "./profile_stats" + name;

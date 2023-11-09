@@ -2,6 +2,7 @@ package action.export;
 
 import action.export.model.Donations;
 import action.export.model.Franchise;
+import action.export.model.FranchiseStatType;
 import action.export.model.MemberDonations;
 import action.export.model.WarningData;
 import bot.Config;
@@ -399,6 +400,37 @@ public class ExportUtils {
             ResultSet rs = pst.executeQuery();
             while (rs.next()) {
                 return rs.getInt(1);
+            }
+
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
+        return 0;
+    }
+
+
+    public static void updateFranchiseStat(FranchiseStatType type, Long value, String name) {
+        try {
+            Connection con = DriverManager.getConnection(url, user, password);
+            PreparedStatement pst = con.prepareStatement("UPDATE franchise SET " +type.getName()+ " = ? WHERE name = ?");
+            pst.setLong(1, value);
+            pst.setString(2, name);
+            int rs = pst.executeUpdate();
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
+    }
+
+    public static long getFranchiseStat(String name, FranchiseStatType type) {
+
+        try {
+            Connection con = DriverManager.getConnection(url, user, password);
+            PreparedStatement pst = con.prepareStatement("SELECT "+type.getName()+" FROM franchise " +
+                    "WHERE name = ?");
+            pst.setString(1, name);
+            ResultSet rs = pst.executeQuery();
+            while (rs.next()) {
+                return rs.getLong(1);
             }
 
         } catch (SQLException ex) {

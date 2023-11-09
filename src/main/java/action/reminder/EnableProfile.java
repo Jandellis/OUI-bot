@@ -126,6 +126,24 @@ public class EnableProfile extends Action {
                         return Mono.empty();
                     }
 
+                    if (action.equalsIgnoreCase("hide")) {
+                        Boolean toggled = ReminderUtils.toggleIgnoredHidden(message.getAuthor().get().getId().asString());
+                        if (toggled) {
+                            Profile profile = ReminderUtils.loadProfileById(message.getAuthor().get().getId().asString());
+                            message.getChannel().block().createMessage("Ignored reminders toggled, currently is " + (profile.getIgnoredHidden() ? "hidden":"shown")).block();
+                        }
+                        return Mono.empty();
+                    }
+
+                    if (action.equalsIgnoreCase("dnd")) {
+                        Boolean toggled = ReminderUtils.toggleDnd(message.getAuthor().get().getId().asString());
+                        if (toggled) {
+                            Profile profile = ReminderUtils.loadProfileById(message.getAuthor().get().getId().asString());
+                            message.getChannel().block().createMessage("Ignored do not disturb toggled, currently is " + (profile.getDnd() ? "enabled":"disabled")).block();
+                        }
+                        return Mono.empty();
+                    }
+
                     if (onOff) {
                         updated = ReminderUtils.enableProfile(message.getAuthor().get().getId().asString(), enable);
                         if (!updated) {

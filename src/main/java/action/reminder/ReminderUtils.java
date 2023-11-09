@@ -427,7 +427,7 @@ public class ReminderUtils {
             Connection con = DriverManager.getConnection(url, user, password);
             Statement st = con.createStatement();
 
-            PreparedStatement pst = con.prepareStatement("SELECT name, shack_name, status, enabled, react, message, depth, upgrade, sleep_Start, sleep_End, dm_reminder, username " +
+            PreparedStatement pst = con.prepareStatement("SELECT name, shack_name, status, enabled, react, message, depth, upgrade, sleep_Start, sleep_End, dm_reminder, ignored_hidden, dnd, username " +
                     "FROM profile  WHERE shack_name = ?");
             pst.setString(1, shack);
             ResultSet rs = pst.executeQuery();
@@ -443,7 +443,9 @@ public class ReminderUtils {
                         rs.getTime(9),
                         rs.getTime(10),
                         rs.getBoolean(11),
-                        rs.getString(12));
+                        rs.getBoolean(12),
+                        rs.getBoolean(13),
+                        rs.getString(14));
 
             }
             st.executeBatch();
@@ -473,7 +475,7 @@ public class ReminderUtils {
     public static Profile loadProfileById(String id) {
         Profile profile = null;
         try (Connection con = DriverManager.getConnection(url, user, password);
-             PreparedStatement pst = con.prepareStatement("SELECT name, shack_name, status, enabled, react, message, depth, upgrade, sleep_Start, sleep_End, dm_reminder, username " +
+             PreparedStatement pst = con.prepareStatement("SELECT name, shack_name, status, enabled, react, message, depth, upgrade, sleep_Start, sleep_End, dm_reminder, ignored_hidden, dnd, username " +
                      "FROM profile  WHERE name = '" + id + "'");
              ResultSet rs = pst.executeQuery()) {
 
@@ -489,7 +491,9 @@ public class ReminderUtils {
                         rs.getTime(9),
                         rs.getTime(10),
                         rs.getBoolean(11),
-                        rs.getString(12));
+                        rs.getBoolean(12),
+                        rs.getBoolean(13),
+                        rs.getString(14));
             }
 
         } catch (SQLException ex) {
@@ -505,7 +509,7 @@ public class ReminderUtils {
             Connection con = DriverManager.getConnection(url, user, password);
             Statement st = con.createStatement();
 
-            PreparedStatement pst = con.prepareStatement("SELECT name, shack_name, status, enabled, react, message, depth, upgrade, sleep_Start, sleep_End, dm_reminder, username " +
+            PreparedStatement pst = con.prepareStatement("SELECT name, shack_name, status, enabled, react, message, depth, upgrade, sleep_Start, sleep_End, dm_reminder, ignored_hidden, dnd, username " +
                     "FROM profile  WHERE username = ?");
             pst.setString(1, username);
             ResultSet rs = pst.executeQuery();
@@ -521,7 +525,9 @@ public class ReminderUtils {
                         rs.getTime(9),
                         rs.getTime(10),
                         rs.getBoolean(11),
-                        rs.getString(12));
+                        rs.getBoolean(12),
+                        rs.getBoolean(13),
+                        rs.getString(14));
 
             }
             st.executeBatch();
@@ -816,6 +822,54 @@ public class ReminderUtils {
             while (rs.next()) {
                 id = rs.getInt(1);
                 String sql = "UPDATE profile SET dm_reminder = NOT dm_reminder  WHERE id = ?";
+                PreparedStatement p = con.prepareStatement(sql);
+                p.setInt(1, id);
+                p.execute();
+                updated = true;
+            }
+            st.executeBatch();
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
+        return updated;
+    }
+
+    public static boolean toggleIgnoredHidden(String name) {
+        boolean updated = false;
+        try {
+            Connection con = DriverManager.getConnection(url, user, password);
+            Statement st = con.createStatement();
+
+            PreparedStatement pst = con.prepareStatement("SELECT id FROM profile  WHERE name = '" + name + "'");
+            ResultSet rs = pst.executeQuery();
+            int id = -1;
+            while (rs.next()) {
+                id = rs.getInt(1);
+                String sql = "UPDATE profile SET ignored_hidden = NOT ignored_hidden  WHERE id = ?";
+                PreparedStatement p = con.prepareStatement(sql);
+                p.setInt(1, id);
+                p.execute();
+                updated = true;
+            }
+            st.executeBatch();
+        } catch (SQLException ex) {
+            logger.error("Exception", ex);
+        }
+        return updated;
+    }
+
+    public static boolean toggleDnd(String name) {
+        boolean updated = false;
+        try {
+            Connection con = DriverManager.getConnection(url, user, password);
+            Statement st = con.createStatement();
+
+            PreparedStatement pst = con.prepareStatement("SELECT id FROM profile  WHERE name = '" + name + "'");
+            ResultSet rs = pst.executeQuery();
+            int id = -1;
+            while (rs.next()) {
+                id = rs.getInt(1);
+                String sql = "UPDATE profile SET dnd = NOT dnd  WHERE id = ?";
                 PreparedStatement p = con.prepareStatement(sql);
                 p.setInt(1, id);
                 p.execute();

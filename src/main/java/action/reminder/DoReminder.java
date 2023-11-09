@@ -200,7 +200,11 @@ public class DoReminder extends Action {
             hasTask = true;
         }
 
-        msg = msg.replace("{ping}", "<@" + reminder.getName() + ">");
+        if (profile.getDnd()) {
+            msg = msg.replace("{ping}", profile.getUserName() );
+        } else {
+            msg = msg.replace("{ping}", "<@" + reminder.getName() + ">");
+        }
         msg = msg.replace("{task}", reminder.getType().getName());
 
         String command = "";

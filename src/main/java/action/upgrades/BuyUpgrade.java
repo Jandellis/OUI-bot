@@ -112,7 +112,7 @@ public class BuyUpgrade extends Action implements EmbedAction {
         city.addUpgrade("sign", "Neon Sign", 10, 500, 50);
         city.addUpgrade("glass", "Stained Glass", 30, 2500, 45);
         city.addUpgrade("artwork", "Artwork", 150, 100000, 8);
-        city.addUpgrade("chandelier", "Chandelier", 500, 5000000, 8);
+        city.addUpgrade("chandelier", "Chandelier", 1750, 5000000, 8);
         //cart
         city.addUpgrade("buns", "Buns", 50, 7500, 30, true);
         city.addUpgrade("condiments", "Condiments", 100, 10000, 25, true);
@@ -638,7 +638,7 @@ public class BuyUpgrade extends Action implements EmbedAction {
                         }
                         if (number > 51) {
 
-                            message.getChannel().block().createMessage("Max value is 30").block();
+                            message.getChannel().block().createMessage("Max value is 50").block();
                             return Mono.empty();
                         }
 

@@ -3,6 +3,7 @@ package action.reminder;
 import action.Action;
 import action.reminder.model.Profile;
 import action.reminder.model.Reminder;
+import action.reminder.model.ReminderSettings;
 import discord4j.common.util.Snowflake;
 import discord4j.core.object.Embed;
 import discord4j.core.object.entity.Message;
@@ -476,6 +477,12 @@ public class CreateReminder extends Action implements EmbedAction {
 
         Reminder reminder = ReminderUtils.addReminder(profile.getName(), type, Timestamp.from(reminderTime), message.getChannelId().asString());
 
+        profile.getIgnoredHidden();
+        ReminderSettings reminderSettings = ReminderUtils.loadReminderSettings(profile.getName());
+        if (reminderSettings == null) {
+            reminderSettings = new ReminderSettings(profile.getName(), true, true, true, true, true, true, true);
+        }
+
         List<Reminder> reminders = ReminderUtils.loadReminder(profile.getName());
         boolean tips = false;
         boolean work = false;
@@ -488,22 +495,22 @@ public class CreateReminder extends Action implements EmbedAction {
         //only put letter emotes or /commands if enabled
         if (profile.getEnabled()) {
             for (Reminder dbReminder : reminders) {
-                if (dbReminder.getType() == ReminderType.tips) {
+                if (dbReminder.getType() == ReminderType.tips || (profile.getIgnoredHidden() && !reminderSettings.isTip())) {
                     tips = true;
                 }
-                if (dbReminder.getType() == ReminderType.work) {
+                if (dbReminder.getType() == ReminderType.work || (profile.getIgnoredHidden() && !reminderSettings.isWork())) {
                     work = true;
                 }
-                if (dbReminder.getType() == ReminderType.ot) {
+                if (dbReminder.getType() == ReminderType.ot || (profile.getIgnoredHidden() && !reminderSettings.isOvertime())) {
                     ot = true;
                 }
-                if (dbReminder.getType() == ReminderType.vote) {
+                if (dbReminder.getType() == ReminderType.vote || (profile.getIgnoredHidden() && !reminderSettings.isVote())) {
                     vote = true;
                 }
-                if (dbReminder.getType() == ReminderType.clean) {
+                if (dbReminder.getType() == ReminderType.clean || (profile.getIgnoredHidden() && !reminderSettings.isClean())) {
                     clean = true;
                 }
-                if (dbReminder.getType() == ReminderType.daily) {
+                if (dbReminder.getType() == ReminderType.daily || (profile.getIgnoredHidden() && !reminderSettings.isDaily())) {
                     daily = true;
                 }
             }

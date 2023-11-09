@@ -150,6 +150,9 @@ public class UpdateAlerts extends Action implements EmbedAction {
                                 if (profit > 0) {
                                     emote = "<a:greenup:1015028862368878723>";
                                 }
+                                if (profit == 0) {
+                                    emote = "<a:orange_dots:1015118419047235585>";
+                                }
                                 embedBuilder.addField(sauce.getUppercaseName(), " "+ emote +" Profit if you sell now **$" +String.format("%,d",profit)+ "**\n :small_blue_diamond: Total if you sell now **$" + String.format("%,d",totalSell) +"**", false);
                             });
 

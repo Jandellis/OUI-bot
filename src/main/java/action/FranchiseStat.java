@@ -1,6 +1,7 @@
 package action;
 
 import action.export.ExportUtils;
+import action.export.model.FranchiseStatType;
 import action.reminder.EmbedAction;
 import action.sm.Utils;
 import action.sm.model.SystemReminder;
@@ -159,6 +160,25 @@ public class FranchiseStat extends Action implements EmbedAction {
 
                         client.getChannelById(message.getChannelId()).createMessage(msg).block();
                     }
+
+                    if (title.contains("...")) {
+                        //look for balance
+                        //look for sacos sold
+                        //look for income
+                    }
+                } else {
+                    if (embed.fields().toOptional().isPresent() && embed.fields().get().get(0).value().contains("[OUI] Oui Da Best Taco")){
+
+                        String balance = embed.fields().get().get(5).value().replace("\uD83D\uDCB5 $", "").replace(",", "");
+                        ExportUtils.updateFranchiseStat(FranchiseStatType.balance, Long.parseLong(balance), "oui");
+                        String sold = embed.fields().get().get(6).value().replace("\uD83C\uDF2E ", "").replace(",", "");
+                        ExportUtils.updateFranchiseStat(FranchiseStatType.sold, Long.parseLong(sold), "oui");
+                        String income = embed.fields().get().get(7).value().replace("\uD83D\uDCB8 $", "").replace(",", "");
+                        ExportUtils.updateFranchiseStat(FranchiseStatType.income, Long.parseLong(income), "oui");
+                        embed.fields().get().get(5).value();//💵 $5,072,587,412 "\uD83D\uDCB5"
+                        embed.fields().get().get(6).value();//🌮 14,774,858,494 "\uD83C\uDF2E "
+                        embed.fields().get().get(7).value();//💸 $9,900 "\uD83D\uDCB8"
+                    }
                 }
             }
 
@@ -259,15 +279,17 @@ public class FranchiseStat extends Action implements EmbedAction {
 
 
 
-                updateChannel(balanceChannel, "Balance: " + getValue((JSONObject)obj.get("richest")));
+//                updateChannel(balanceChannel, "Balance: " + getValue((JSONObject)obj.get("richest")));
+//
+//                updateChannel(tacosChannel, "Tacos Sold: " + getValue((JSONObject)obj.get("tacos")));
+//
+//                updateChannel(shiftsChannel, "Shifts Worked: " + getValue((JSONObject)obj.get("shifts")));
+//
+//        updateChannel(boostChannel, "Income Boost: " +getValue((JSONObject)obj.get("income")));
 
-                updateChannel(tacosChannel, "Tacos Sold: " + getValue((JSONObject)obj.get("tacos")));
-
-                updateChannel(shiftsChannel, "Shifts Worked: " + getValue((JSONObject)obj.get("shifts")));
-
-        updateChannel(boostChannel, "Income Boost: " +getValue((JSONObject)obj.get("income")));
-
-
+        updateChannel(balanceChannel, "Balance: " + format(ExportUtils.getFranchiseStat("oui", FranchiseStatType.balance)));
+        updateChannel(tacosChannel, "Tacos Sold: " + format(ExportUtils.getFranchiseStat("oui", FranchiseStatType.sold)));
+        updateChannel(boostChannel, "Income Boost: " + format(ExportUtils.getFranchiseStat("oui", FranchiseStatType.income)));
         updateChannel(membersChannel, "Franchise Members: " + ExportUtils.getMembers("oui"));
 
 
