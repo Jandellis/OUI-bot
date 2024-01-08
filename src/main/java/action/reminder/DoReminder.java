@@ -246,7 +246,7 @@ public class DoReminder extends Action {
                 break;
             default:
                 //boosts off cooldown
-                command = "</shop:1006354978153169007>";
+                command = "</shop:1006354978153169007> at " + CreateBoostReminder.getBoost(reminder.getType().getName()).getLocation().getName();
                 doReminder = reminderSettings.isBoost();
                 if (!hasTask) {
                     command = command + " **" + reminder.getType().getName() + "**";

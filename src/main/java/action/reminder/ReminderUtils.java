@@ -1098,11 +1098,16 @@ public class ReminderUtils {
 
 
     public static List<GiveawayLog> loadGiveawayLog() {
+        return loadGiveawayLog(30);
+    }
+
+
+    public static List<GiveawayLog> loadGiveawayLog(int days) {
         List<GiveawayLog> winers = new ArrayList<>();
 
         try {
             Connection con = DriverManager.getConnection(url, user, password);
-            LocalDateTime now = LocalDateTime.now().minusDays(30);
+            LocalDateTime now = LocalDateTime.now().minusDays(days);
             Timestamp nowStamp = Timestamp.valueOf(now);
 
             PreparedStatement pst = con.prepareStatement("SELECT name, win_time FROM giveaway_log Where win_time > ? Order by win_time DESC");

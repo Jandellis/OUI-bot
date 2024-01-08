@@ -113,7 +113,7 @@ public class SpeedJar extends Action {
 
         Utils.deleteReminder(SystemReminderType.speedJarLock);
         PermissionSet deined = PermissionSet.of(Permission.SEND_MESSAGES);
-        PermissionSet allowed = PermissionSet.none();
+        PermissionSet allowed = PermissionSet.of(Permission.VIEW_CHANNEL);
 
 
         PermissionOverwrite lock = PermissionOverwrite.forRole(Snowflake.of(everyone), allowed, deined);
@@ -137,7 +137,7 @@ public class SpeedJar extends Action {
     private void unlock() {
         Utils.deleteReminder(SystemReminderType.speedJarUnlock);
 
-        PermissionSet allowed = PermissionSet.of(Permission.SEND_MESSAGES);
+        PermissionSet allowed = PermissionSet.of(Permission.SEND_MESSAGES, Permission.VIEW_CHANNEL);
         PermissionSet deined = PermissionSet.none();
 
 

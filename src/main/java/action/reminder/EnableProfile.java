@@ -13,6 +13,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class EnableProfile extends Action {
 
@@ -61,13 +62,15 @@ public class EnableProfile extends Action {
                         EmbedCreateSpec.Builder embed = EmbedCreateSpec.builder();
                         embed.color(Color.SUMMER_SKY);
                         embed.title("Your Reminders");
+                        int count = 0;
 
                         List<Reminder> reminders = ReminderUtils.loadReminder(message.getAuthor().get().getId().asString());
                         if (reminders.isEmpty()) {
 
                             embed.description("No reminders, type /cooldown");
+                            count++;
                         } else {
-                            reminders.forEach(reminder -> {
+                            for (Reminder reminder : reminders) {
                                 LocalDateTime time = reminder.getTime().toLocalDateTime();
                                 LocalDateTime now = LocalDateTime.now();
                                 long hours = ChronoUnit.HOURS.between(now, time);
@@ -87,11 +90,22 @@ public class EnableProfile extends Action {
                                 }
                                 if (!display.equals("")) {
                                     embed.addField(reminder.getType().getName(), display, true);
+                                    count++;
+                                }
+                                if (count == 25) {
+                                    message.getChannel().block().createMessage(embed.build()).block();
+                                    count = 0;
+                                    embed = EmbedCreateSpec.builder();
+                                    embed.color(Color.SUMMER_SKY);
+                                    embed.title("Your Reminders");
                                 }
 
-                            });
+
+                            }
                         }
-                        message.getChannel().block().createMessage(embed.build()).block();
+                        if (count > 0) {
+                            message.getChannel().block().createMessage(embed.build()).block();
+                        }
                         return Mono.empty();
                     }
 

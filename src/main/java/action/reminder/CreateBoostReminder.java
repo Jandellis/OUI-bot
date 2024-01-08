@@ -4,6 +4,7 @@ import action.Action;
 import action.reminder.model.Boost;
 import action.reminder.model.Profile;
 import action.reminder.model.Reminder;
+import action.upgrades.model.LocationEnum;
 import discord4j.common.util.Snowflake;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.reaction.ReactionEmoji;
@@ -17,6 +18,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -28,47 +30,52 @@ public class CreateBoostReminder extends Action implements EmbedAction {
     String tacoBot = "490707751832649738";
     List<String> watchChannels;
     String defaultReact = "\uD83D\uDC4B";
-    List<Boost> boosts;
+    private static HashMap<String,Boost> boosts;
+
+    public static Boost getBoost(String name) {
+        return boosts.get(name);
+    }
+
     ScheduledExecutorService executorService = Executors.newScheduledThreadPool(5);
 
     public CreateBoostReminder() {
 
-        boosts = new ArrayList<>();
+        boosts = new HashMap<>();
         //city
-        boosts.add(new Boost("Happy Hour", 4));
-        boosts.add(new Boost("Samples", 4));
-        boosts.add(new Boost("Mascot", 6));
-        boosts.add(new Boost("Online Delivery", 8));
-        boosts.add(new Boost("Bus Sign", 24));
+        boosts.put("Happy Hour", new Boost("Happy Hour", 4, LocationEnum.city));
+        boosts.put("Samples",new Boost("Samples", 4, LocationEnum.city));
+        boosts.put("Mascot",new Boost("Mascot", 6, LocationEnum.city));
+        boosts.put("Online Delivery",new Boost("Online Delivery", 8, LocationEnum.city));
+        boosts.put("Bus Sign", new Boost("Bus Sign", 24, LocationEnum.city));
 
         //shack
-        boosts.add(new Boost("Rent-A-Chef", 4));
-        boosts.add(new Boost("Live Music", 4));
-        boosts.add(new Boost("Karaoke Night", 6));
-        boosts.add(new Boost("Sign Flipper", 8));
-        boosts.add(new Boost("Airplane Sign", 24));
+        boosts.put("Rent-A-Chef", new Boost("Rent-A-Chef", 4, LocationEnum.shack));
+        boosts.put("Live Music", new Boost("Live Music", 4, LocationEnum.shack));
+        boosts.put("Karaoke Night", new Boost("Karaoke Night", 6, LocationEnum.shack));
+        boosts.put("Sign Flipper", new Boost("Sign Flipper", 8, LocationEnum.shack));
+        boosts.put("Airplane Sign", new Boost("Airplane Sign", 24, LocationEnum.shack));
 
 
         //beach
-        boosts.add(new Boost("Concert", 4));
-        boosts.add(new Boost("Hammock", 4));
-        boosts.add(new Boost("Parasailing", 6));
-        boosts.add(new Boost("Beach Chairs", 8));
-        boosts.add(new Boost("Helicopter Tours", 24));
+        boosts.put("Concert", new Boost("Concert", 4, LocationEnum.beach));
+        boosts.put("Hammock", new Boost("Hammock", 4, LocationEnum.beach));
+        boosts.put("Parasailing", new Boost("Parasailing", 6, LocationEnum.beach));
+        boosts.put("Beach Chairs", new Boost("Beach Chairs", 8, LocationEnum.beach));
+        boosts.put("Helicopter Tours", new Boost("Helicopter Tours", 24, LocationEnum.beach));
 
         //mall
-        boosts.add(new Boost("Lunch Discount", 4));
-        boosts.add(new Boost("Sponsorship", 4));
-        boosts.add(new Boost("Gift Cards", 6));
-        boosts.add(new Boost("Takeout", 8));
-        boosts.add(new Boost("Special", 24));
+        boosts.put("Lunch Discount", new Boost("Lunch Discount", 4, LocationEnum.mall));
+        boosts.put("Sponsorship", new Boost("Sponsorship", 4, LocationEnum.mall));
+        boosts.put("Gift Cards", new Boost("Gift Cards", 6, LocationEnum.mall));
+        boosts.put("Takeout",new Boost("Takeout", 8, LocationEnum.mall));
+        boosts.put("Special",new Boost("Special", 24, LocationEnum.mall));
 
         //Amusement
-        boosts.add(new Boost("Magic Show", 4));
-        boosts.add(new Boost("Parade", 4));
-        boosts.add(new Boost("Face Painting", 6));
-        boosts.add(new Boost("Gift Shop", 8));
-        boosts.add(new Boost("Live Show", 24));
+        boosts.put("Magic Show", new Boost("Magic Show", 4, LocationEnum.amusement));
+        boosts.put("Parade",new Boost("Parade", 4, LocationEnum.amusement));
+        boosts.put("Face Painting", new Boost("Face Painting", 6, LocationEnum.amusement));
+        boosts.put("Gift Shop",new Boost("Gift Shop", 8, LocationEnum.amusement));
+        boosts.put("Live Show",new Boost("Live Show", 24, LocationEnum.amusement));
 
         watchChannels = Arrays.asList(config.get("watchChannels").split(","));
     }
@@ -143,7 +150,7 @@ public class CreateBoostReminder extends Action implements EmbedAction {
                         Profile profile = ReminderUtils.loadProfileById(userId.get());
                         if (profile != null) {
 
-                            for (Boost boost : boosts) {
+                            for (Boost boost : boosts.values()) {
                                 if (desc.contains(boost.getName())) {
 
                                     createReminder(boost, message, profile);
@@ -168,7 +175,7 @@ public class CreateBoostReminder extends Action implements EmbedAction {
                             List<Reminder> reminders = ReminderUtils.loadReminder(profile.getName());
 
                             for (String line : lines) {
-                                for (Boost boost : boosts) {
+                                for (Boost boost : boosts.values()) {
                                     if (line.contains(boost.getName())) {
                                         boolean found = false;
 

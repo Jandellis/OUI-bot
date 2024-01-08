@@ -153,11 +153,14 @@ public class CreateProfile extends Action implements EmbedAction {
                             profileStats.setImportTime(Timestamp.from(Instant.now()));
                             for (EmbedFieldData fieldData : embed.fields().get()) {
                                 if (fieldData.name().toLowerCase().contains("location")){
-                                    for (LocationEnum value : LocationEnum.values()) {
-                                        if (fieldData.value().toLowerCase().contains(value.getName())) {
-                                            profileStats.setLocation(value);
-                                        }
-                                    }
+
+                                    LocationEnum location = LocationEnum.getLocation(fieldData.value().split(" ")[1]);
+                                    profileStats.setLocation(location);
+//                                    for (LocationEnum value : LocationEnum.values()) {
+//                                        if (fieldData.value().toLowerCase().contains(value.getName())) {
+//                                            profileStats.setLocation(value);
+//                                        }
+//                                    }
                                 }
                                 if (fieldData.name().toLowerCase().contains("balance")){
                                     String balance = fieldData.value().split(" ")[1].replace(",", "").replace("$", "");

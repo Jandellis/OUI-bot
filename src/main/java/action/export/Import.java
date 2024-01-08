@@ -59,7 +59,7 @@ public class Import extends Action {
         flex = config.get("flex");
         recruiter = Long.parseLong(config.get("recruiter"));
         immunityId = Long.parseLong(config.get("immunityId"));
-        skipWarnings = Boolean.getBoolean(config.get("skipWarnings", "false"));
+        skipWarnings = Boolean.parseBoolean(config.get("skipWarnings", "false"));
         giveawayRole = config.get("giveawayRole");
         zeroVotes = "1102390411252744312";
     }

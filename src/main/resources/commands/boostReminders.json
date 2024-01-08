@@ -1,0 +1,42 @@
+{
+    "name": "boost_reminders",
+    "description": "What locations would you like boost reminders enabled for?",
+    "options": [
+        {
+            "name": "all",
+            "description": "Do you want all location reminders enabled?",
+            "type": 5,
+            "required": false
+        },
+        {
+            "name": "shack",
+            "description": "Do you want shack location reminders enabled?",
+            "type": 5,
+            "required": false
+        },
+        {
+            "name": "mall",
+            "description": "Do you want mall location reminders enabled?",
+            "type": 5,
+            "required": false
+        },
+        {
+            "name": "beach",
+            "description": "Do you want beach location reminders enabled?",
+            "type": 5,
+            "required": false
+        },
+        {
+            "name": "amusement",
+            "description": "Do you want amusement park location reminders enabled?",
+            "type": 5,
+            "required": false
+        },
+        {
+            "name": "city",
+            "description": "Do you want city location reminders enabled?",
+            "type": 5,
+            "required": false
+        }
+    ]
+}

@@ -282,10 +282,14 @@ public class FranchiseStat extends Action implements EmbedAction {
 //                updateChannel(balanceChannel, "Balance: " + getValue((JSONObject)obj.get("richest")));
 //
 //                updateChannel(tacosChannel, "Tacos Sold: " + getValue((JSONObject)obj.get("tacos")));
+        try {
 //
-//                updateChannel(shiftsChannel, "Shifts Worked: " + getValue((JSONObject)obj.get("shifts")));
-//
-//        updateChannel(boostChannel, "Income Boost: " +getValue((JSONObject)obj.get("income")));
+            updateChannel(shiftsChannel, "Shifts Worked: " + getValue((JSONObject) obj.get("shifts")));
+
+            updateChannel(boostChannel, "Income Boost: " + getValue((JSONObject) obj.get("income")));
+        } catch ( Exception e) {
+            printException(e);
+        }
 
         updateChannel(balanceChannel, "Balance: " + format(ExportUtils.getFranchiseStat("oui", FranchiseStatType.balance)));
         updateChannel(tacosChannel, "Tacos Sold: " + format(ExportUtils.getFranchiseStat("oui", FranchiseStatType.sold)));

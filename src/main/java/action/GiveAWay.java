@@ -1,5 +1,7 @@
 package action;
 
+import action.giveaway.model.GiveawayLog;
+import action.giveaway.model.GiveawayWinner;
 import action.reminder.ReminderUtils;
 import action.reminder.model.FlexStats;
 import action.reminder.model.Profile;
@@ -30,6 +32,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.Executors;
@@ -63,7 +66,7 @@ public class GiveAWay extends Action {
         react = "\uD83C\uDF89";
         recruiter = Long.parseLong(config.get("recruiter"));
         chefRole = Long.parseLong(config.get("chefRole"));
-        openGiveaway = Boolean.getBoolean(config.get("openGiveaway", "false"));
+        openGiveaway = Boolean.parseBoolean(config.get("openGiveaway", "false"));
 
     }
 
@@ -276,10 +279,40 @@ public class GiveAWay extends Action {
                 logger.info("assuming user has left the server " + user.getId().asString() + ", " + user.getUsername());
             }
         });
-        // roll a random number and pick a user at random
-        Random rand = new Random();
-        int randomNumber = rand.nextInt(enteredList.size());
-        String winner = enteredList.get(randomNumber);
+        String winner = "409346530277851136";
+        try {
+            List<GiveawayLog> winners = ReminderUtils.loadGiveawayLog(7);
+
+            HashMap<String, GiveawayWinner> giveawayWinnerHashMap = new HashMap<>();
+            for (GiveawayLog winnerEntry : winners) {
+                if (giveawayWinnerHashMap.containsKey(winnerEntry.getName())) {
+                    giveawayWinnerHashMap.get(winnerEntry.getName()).addWin();
+                } else {
+                    GiveawayWinner giveawayWinner = new GiveawayWinner(winnerEntry.getName(), 1, winnerEntry.getLastWin());
+                    giveawayWinnerHashMap.put(winnerEntry.getName(), giveawayWinner);
+                }
+            }
+
+            winner = "";
+            Random rand = new Random();
+
+            for (int i = 0; i < 10; i++) {
+                // roll a random number and pick a user at random
+                int randomNumber = rand.nextInt(enteredList.size());
+                winner = enteredList.get(randomNumber);
+                // see if they have won in the past 7 days
+                if (giveawayWinnerHashMap.containsKey(winner)) {
+                    // make sure they have won 2 or less times
+                    if (giveawayWinnerHashMap.get(winner).getWins() <= 2) {
+                        break;
+                    }
+                    logger.info(winner + " has won too many times, rerolling! ");
+                }
+            }
+        } catch (Exception e) {
+            printException(e);
+        }
+
         return winner;
     }
 

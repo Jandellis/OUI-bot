@@ -614,7 +614,7 @@ public class BuyUpgrade extends Action implements EmbedAction {
                         sb.append("Upgrades Purchased     " + (totalUpgrades.get() - countLeft) + " \n");
                         sb.append("Upgrades Remaining     " + countLeft + " \n");
                         sb.append("Income Purchased       $" + String.format("%,d", (totalBoost.get() - boostLeft)) + " \n");
-                        sb.append("Income Remaining       $" + String.format("%,d", boostLeft) + " \n");
+                        sb.append("Income Remaining       $" + String.format("%,d", boostLeft) + " ("+String.format("%.02f", ((boostLeft * 1.0 / totalBoost.get()) * 100)) + "%) \n");
                         sb.append("```");
 
 

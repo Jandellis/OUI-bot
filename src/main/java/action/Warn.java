@@ -75,7 +75,7 @@ public class Warn extends Action {
                     if (oddString.equals("")) {
                         odd = false;
                     } else {
-                        odd = Boolean.getBoolean(getAction(messageContent, param, 2));
+                        odd = Boolean.parseBoolean(getAction(messageContent, param, 2));
                         ;//Integer.parseInt(action);
                     }
 

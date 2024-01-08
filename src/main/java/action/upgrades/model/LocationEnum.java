@@ -26,6 +26,9 @@ public enum LocationEnum {
         if (name.equalsIgnoreCase("taco")) {
             return shack;
         }
+        if (name.equalsIgnoreCase("p") || name.equalsIgnoreCase("park") ) {
+            return amusement;
+        }
         for (LocationEnum value : values()) {
             if (value.name.startsWith(name.toLowerCase()))
                 return value;
