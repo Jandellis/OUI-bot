@@ -2,7 +2,7 @@ CREATE TABLE IF NOT EXISTS sm_alerts (
     id serial PRIMARY KEY,
     name VARCHAR(25),
     alert_type VARCHAR(25),
-    trigger VARCHAR(25),
+    sm_trigger VARCHAR(25),
     price int
 );
 
@@ -43,10 +43,10 @@ CREATE TABLE IF NOT EXISTS reminder (
     channel  VARCHAR(25)
 );
 
-alter table profile add enabled BOOLBOOLEAN ;
-alter table profile add react VARCHAR(25) ;
+alter table profile add enabled boolean ;
+alter table profile add react VARCHAR(255) ;
 
-ALTER TABLE profile ALTER COLUMN react TYPE VARCHAR(255);
+#ALTER TABLE profile ALTER COLUMN react TYPE VARCHAR(255);
 
 ALTER TABLE profile add  message VARCHAR(255);
 
@@ -92,13 +92,13 @@ VALUES ('931277539270344744', 500000000, 999999999);
 insert into donations (role, min_donation, max_donation)
 VALUES ('931281334570197022', 1000000000, 100000000000);
 
---$0 to $19999999 - @Styrofoam (931846572851986492)
---$20000000 to $49999999 - @Copper (931845256889126922)
---$50000000 to $99999999 - @Bronze (931269453063266375)
---$100000000 to $249999999 - @Silver (931273576739405864)
---$250000000 to $499999999 - @Gold (931276083326771220)
---$500000000 to $999999999 - @Diamond (931277539270344744)
---$1,000000000 to ∞ - @Platinum (931281334570197022)
+#$0 to $19999999 - @Styrofoam (931846572851986492)
+#--$20000000 to $49999999 - @Copper (931845256889126922)
+#--$50000000 to $99999999 - @Bronze (931269453063266375)
+#--$100000000 to $249999999 - @Silver (931273576739405864)
+#--$250000000 to $499999999 - @Gold (931276083326771220)
+#--$500000000 to $999999999 - @Diamond (931277539270344744)
+#--$1,000000000 to ∞ - @Platinum (931281334570197022)
 
 
 
@@ -188,7 +188,7 @@ CREATE TABLE IF NOT EXISTS sm_history (
     update_time timestamp
 );
 
-alter table sm_history add change int;
+alter table sm_history add last_change int;
 alter table sm_history add change_1_to_2 int;
 alter table sm_history add change_1_to_3 int;
 alter table sm_history add change_1_to_4 int;
@@ -246,11 +246,11 @@ CREATE TABLE IF NOT EXISTS giveaway_log (
 );
 
 
-ALTER TABLE member_data DROP COLUMN franchise ;
-ALTER TABLE Donations DROP COLUMN franchise ;
+#ALTER TABLE member_data DROP COLUMN franchise ;
+#ALTER TABLE Donations DROP COLUMN franchise ;
 
 ALTER TABLE member_data add franchise VARCHAR(25);
-ALTER TABLE Donations add franchise VARCHAR(25);
+ALTER TABLE donations add franchise VARCHAR(25);
 
 CREATE TABLE IF NOT EXISTS franchise_config (
     id serial PRIMARY KEY,

@@ -10,6 +10,7 @@ import action.sm.model.Trigger;
 import action.sm.model.Watch;
 import bot.Config;
 import bot.Sauce;
+import database.DatabaseUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -28,10 +29,8 @@ public class Utils {
 
     protected static final Logger logger = LogManager.getLogger("ouiBot");
 
-    static Config config = Config.getInstance();
-    static String url = config.get("url");
-    static String user = config.get("user");
-    static String password = config.get("password");
+    
+    static DatabaseUtils databaseUtils = DatabaseUtils.getInstance();
 
 
     public static HashMap<Integer, Integer> loadLast3(Sauce sauce) {
@@ -42,7 +41,7 @@ public class Utils {
 
 
         HashMap<Integer, Integer> prices = new HashMap<>();
-        try (Connection con = DriverManager.getConnection(url, user, password);
+        try (Connection con = databaseUtils.getConnection();
              PreparedStatement pst = con.prepareStatement("SELECT price, age FROM sm WHERE age < 3 and name = '" + sauceName + "' ORDER BY age ");
              ResultSet rs = pst.executeQuery()) {
 
@@ -51,7 +50,7 @@ public class Utils {
             }
 
         } catch (SQLException ex) {
-            logger.error("Exception", ex);
+            databaseUtils.printException(ex);
         }
         return prices;
 
@@ -66,7 +65,7 @@ public class Utils {
 
 
         HashMap<Integer, Integer> prices = new HashMap<>();
-        try (Connection con = DriverManager.getConnection(url, user, password);
+        try (Connection con = databaseUtils.getConnection();
              PreparedStatement pst = con.prepareStatement("SELECT price, update_time FROM sm_history WHERE name = '" + sauceName + "' ORDER BY update_time desc LIMIT 5 ");
              ResultSet rs = pst.executeQuery()) {
 
@@ -77,7 +76,7 @@ public class Utils {
             }
 
         } catch (SQLException ex) {
-            logger.error("Exception", ex);
+            databaseUtils.printException(ex);
         }
         return prices;
 
@@ -86,7 +85,7 @@ public class Utils {
     public static void updatePrices(int pico, int guac, int salsa, int hotsauce, int chipotle) {
 
         try {
-            Connection con = DriverManager.getConnection(url, user, password);
+            Connection con = databaseUtils.getConnection();
 
             Statement st = con.createStatement();
             st.executeUpdate("UPDATE sm set age = age + 1");
@@ -113,29 +112,30 @@ public class Utils {
             HashMap<Integer, Integer> chipotleHistory = loadLast5(Sauce.chipotle);
             if (picoHistory.size() == 5) {
 
-                st.addBatch("insert into sm_history (name, price, update_time, change, change_1_to_2, change_1_to_3, change_1_to_4, change_1_to_5, change_0_to_1, change_0_to_2, change_0_to_3, change_0_to_4) " +
-                        "VALUES ('pico', " + pico + ", now() - interval '5 minutes', " + (pico - picoHistory.get(1)) + ", " + (picoHistory.get(1) - picoHistory.get(2)) + ", " + (picoHistory.get(1) - picoHistory.get(3)) + ", " + (picoHistory.get(1) - picoHistory.get(4)) + ", " + (picoHistory.get(1) - picoHistory.get(5)) + ", " + (pico - picoHistory.get(1)) + ", " + (pico - picoHistory.get(2)) + ", " + (pico - picoHistory.get(3)) + ", " + (pico - picoHistory.get(4)) + ");");
-                st.addBatch("insert into sm_history (name, price, update_time, change, change_1_to_2, change_1_to_3, change_1_to_4, change_1_to_5, change_0_to_1, change_0_to_2, change_0_to_3, change_0_to_4) " +
-                        "VALUES ('guac', " + guac + ", now() - interval '5 minutes', " + (guac - guacHistory.get(1)) + ", " + (guacHistory.get(1) - guacHistory.get(2)) + ", " + (guacHistory.get(1) - guacHistory.get(3)) + ", " + (guacHistory.get(1) - guacHistory.get(4)) + ", " + (guacHistory.get(1) - guacHistory.get(5)) + ", " + (guac - guacHistory.get(1)) + ", " + (guac - guacHistory.get(2)) + ", " + (guac - guacHistory.get(3)) + ", " + (guac - guacHistory.get(4)) + ");");
-                st.addBatch("insert into sm_history (name, price, update_time, change, change_1_to_2, change_1_to_3, change_1_to_4, change_1_to_5, change_0_to_1, change_0_to_2, change_0_to_3, change_0_to_4) " +
-                        "VALUES ('salsa', " + salsa + ", now() - interval '5 minutes', " + (salsa - salsaHistory.get(1)) + ", " + (salsaHistory.get(1) - salsaHistory.get(2)) + ", " + (salsaHistory.get(1) - salsaHistory.get(3)) + ", " + (salsaHistory.get(1) - salsaHistory.get(4)) + ", " + (salsaHistory.get(1) - salsaHistory.get(5)) + ", " + (salsa - salsaHistory.get(1)) + ", " + (salsa - salsaHistory.get(2)) + ", " + (salsa - salsaHistory.get(3)) + ", " + (salsa - salsaHistory.get(4)) + ");");
-                st.addBatch("insert into sm_history (name, price, update_time, change, change_1_to_2, change_1_to_3, change_1_to_4, change_1_to_5, change_0_to_1, change_0_to_2, change_0_to_3, change_0_to_4) " +
-                        "VALUES ('hotsauce', " + hotsauce + ", now() - interval '5 minutes', " + (hotsauce - hotsauceHistory.get(1)) + ", " + (hotsauceHistory.get(1) - hotsauceHistory.get(2)) + ", " + (hotsauceHistory.get(1) - hotsauceHistory.get(3)) + ", " + (hotsauceHistory.get(1) - hotsauceHistory.get(4)) + ", " + (hotsauceHistory.get(1) - hotsauceHistory.get(5)) + ", " + (hotsauce - hotsauceHistory.get(1)) + ", " + (hotsauce - hotsauceHistory.get(2)) + ", " + (hotsauce - hotsauceHistory.get(3)) + ", " + (hotsauce - hotsauceHistory.get(4)) + ");");
-                st.addBatch("insert into sm_history (name, price, update_time, change, change_1_to_2, change_1_to_3, change_1_to_4, change_1_to_5, change_0_to_1, change_0_to_2, change_0_to_3, change_0_to_4) " +
-                        "VALUES ('chipotle', " + chipotle + ", now() - interval '5 minutes', " + (chipotle - chipotleHistory.get(1)) + ", " + (chipotleHistory.get(1) - chipotleHistory.get(2)) + ", " + (chipotleHistory.get(1) - chipotleHistory.get(3)) + ", " + (chipotleHistory.get(1) - chipotleHistory.get(4)) + ", " + (chipotleHistory.get(1) - chipotleHistory.get(5)) + ", " + (chipotle - chipotleHistory.get(1)) + ", " + (chipotle - chipotleHistory.get(2)) + ", " + (chipotle - chipotleHistory.get(3)) + ", " + (chipotle - chipotleHistory.get(4)) + ");");
+                st.addBatch("insert into sm_history (name, price, update_time, last_change, change_1_to_2, change_1_to_3, change_1_to_4, change_1_to_5, change_0_to_1, change_0_to_2, change_0_to_3, change_0_to_4) " +
+                        "VALUES ('pico', " + pico + ", DATE_SUB(NOW(), INTERVAL 10 MINUTE), " + (pico - picoHistory.get(1)) + ", " + (picoHistory.get(1) - picoHistory.get(2)) + ", " + (picoHistory.get(1) - picoHistory.get(3)) + ", " + (picoHistory.get(1) - picoHistory.get(4)) + ", " + (picoHistory.get(1) - picoHistory.get(5)) + ", " + (pico - picoHistory.get(1)) + ", " + (pico - picoHistory.get(2)) + ", " + (pico - picoHistory.get(3)) + ", " + (pico - picoHistory.get(4)) + ");");
+                st.addBatch("insert into sm_history (name, price, update_time, last_change, change_1_to_2, change_1_to_3, change_1_to_4, change_1_to_5, change_0_to_1, change_0_to_2, change_0_to_3, change_0_to_4) " +
+                        "VALUES ('guac', " + guac + ", DATE_SUB(NOW(), INTERVAL 10 MINUTE), " + (guac - guacHistory.get(1)) + ", " + (guacHistory.get(1) - guacHistory.get(2)) + ", " + (guacHistory.get(1) - guacHistory.get(3)) + ", " + (guacHistory.get(1) - guacHistory.get(4)) + ", " + (guacHistory.get(1) - guacHistory.get(5)) + ", " + (guac - guacHistory.get(1)) + ", " + (guac - guacHistory.get(2)) + ", " + (guac - guacHistory.get(3)) + ", " + (guac - guacHistory.get(4)) + ");");
+                st.addBatch("insert into sm_history (name, price, update_time, last_change, change_1_to_2, change_1_to_3, change_1_to_4, change_1_to_5, change_0_to_1, change_0_to_2, change_0_to_3, change_0_to_4) " +
+                        "VALUES ('salsa', " + salsa + ", DATE_SUB(NOW(), INTERVAL 10 MINUTE), " + (salsa - salsaHistory.get(1)) + ", " + (salsaHistory.get(1) - salsaHistory.get(2)) + ", " + (salsaHistory.get(1) - salsaHistory.get(3)) + ", " + (salsaHistory.get(1) - salsaHistory.get(4)) + ", " + (salsaHistory.get(1) - salsaHistory.get(5)) + ", " + (salsa - salsaHistory.get(1)) + ", " + (salsa - salsaHistory.get(2)) + ", " + (salsa - salsaHistory.get(3)) + ", " + (salsa - salsaHistory.get(4)) + ");");
+                st.addBatch("insert into sm_history (name, price, update_time, last_change, change_1_to_2, change_1_to_3, change_1_to_4, change_1_to_5, change_0_to_1, change_0_to_2, change_0_to_3, change_0_to_4) " +
+                        "VALUES ('hotsauce', " + hotsauce + ", DATE_SUB(NOW(), INTERVAL 10 MINUTE), " + (hotsauce - hotsauceHistory.get(1)) + ", " + (hotsauceHistory.get(1) - hotsauceHistory.get(2)) + ", " + (hotsauceHistory.get(1) - hotsauceHistory.get(3)) + ", " + (hotsauceHistory.get(1) - hotsauceHistory.get(4)) + ", " + (hotsauceHistory.get(1) - hotsauceHistory.get(5)) + ", " + (hotsauce - hotsauceHistory.get(1)) + ", " + (hotsauce - hotsauceHistory.get(2)) + ", " + (hotsauce - hotsauceHistory.get(3)) + ", " + (hotsauce - hotsauceHistory.get(4)) + ");");
+                st.addBatch("insert into sm_history (name, price, update_time, last_change, change_1_to_2, change_1_to_3, change_1_to_4, change_1_to_5, change_0_to_1, change_0_to_2, change_0_to_3, change_0_to_4) " +
+                        "VALUES ('chipotle', " + chipotle + ", DATE_SUB(NOW(), INTERVAL 10 MINUTE), " + (chipotle - chipotleHistory.get(1)) + ", " + (chipotleHistory.get(1) - chipotleHistory.get(2)) + ", " + (chipotleHistory.get(1) - chipotleHistory.get(3)) + ", " + (chipotleHistory.get(1) - chipotleHistory.get(4)) + ", " + (chipotleHistory.get(1) - chipotleHistory.get(5)) + ", " + (chipotle - chipotleHistory.get(1)) + ", " + (chipotle - chipotleHistory.get(2)) + ", " + (chipotle - chipotleHistory.get(3)) + ", " + (chipotle - chipotleHistory.get(4)) + ");");
 
 
             }
             st.executeBatch();
+            con.close();
 
         } catch (SQLException ex) {
-            logger.error("Exception", ex);
+            databaseUtils.printException(ex);
         }
     }
 
     public static HashMap<Sauce, Integer> loadPrices() {
 
-        try (Connection con = DriverManager.getConnection(url, user, password);
+        try (Connection con = databaseUtils.getConnection();
              PreparedStatement pst = con.prepareStatement("SELECT name, price FROM sm WHERE age = 0 ORDER BY age ");
              ResultSet rs = pst.executeQuery()) {
             HashMap<Sauce, Integer> prices = new HashMap<>();
@@ -143,10 +143,11 @@ public class Utils {
             while (rs.next()) {
                 prices.put(Sauce.getSauce(rs.getString(1)), rs.getInt(2));
             }
+            con.close();
             return prices;
 
         } catch (SQLException ex) {
-            logger.error("Exception", ex);
+            databaseUtils.printException(ex);
         }
         return null;
 
@@ -155,8 +156,8 @@ public class Utils {
 
     public static List<Alert> loadAlerts() {
         List<Alert> alerts = new ArrayList<>();
-        try (Connection con = DriverManager.getConnection(url, user, password);
-             PreparedStatement pst = con.prepareStatement("SELECT name, alert_type, trigger, price, channel FROM sm_alerts");
+        try (Connection con = databaseUtils.getConnection();
+             PreparedStatement pst = con.prepareStatement("SELECT name, alert_type, sm_trigger, price, channel FROM sm_alerts");
              ResultSet rs = pst.executeQuery()) {
 
             while (rs.next()) {
@@ -165,15 +166,15 @@ public class Utils {
             }
 
         } catch (SQLException ex) {
-            logger.error("Exception", ex);
+            databaseUtils.printException(ex);
         }
         return alerts;
     }
 
     public static List<Alert> loadAlerts(String id) {
         List<Alert> alerts = new ArrayList<>();
-        try (Connection con = DriverManager.getConnection(url, user, password);
-             PreparedStatement pst = con.prepareStatement("SELECT name, alert_type, trigger, price, channel FROM sm_alerts  WHERE name = '" + id + "'");
+        try (Connection con = databaseUtils.getConnection();
+             PreparedStatement pst = con.prepareStatement("SELECT name, alert_type, sm_trigger, price, channel FROM sm_alerts  WHERE name = '" + id + "'");
              ResultSet rs = pst.executeQuery()) {
 
             while (rs.next()) {
@@ -182,7 +183,7 @@ public class Utils {
             }
 
         } catch (SQLException ex) {
-            logger.error("Exception", ex);
+            databaseUtils.printException(ex);
         }
         return alerts;
     }
@@ -191,25 +192,26 @@ public class Utils {
 //        deleteAlert(name);
         //delete alert if same one already exists
         try {
-            Connection con = DriverManager.getConnection(url, user, password);
+            Connection con = databaseUtils.getConnection();
 
             Statement st = con.createStatement();
 
 //            con.setAutoCommit(false);
 
-            st.addBatch("insert into sm_alerts (name, alert_type, trigger, price, channel) " +
+            st.addBatch("insert into sm_alerts (name, alert_type, sm_trigger, price, channel) " +
                     "VALUES ('" + name + "', '" + type.getName() + "', '" + trigger + "', " + price + ", '" + channel + "')");
             st.executeBatch();
+            con.close();
 //            con.commit();
         } catch (SQLException ex) {
-            logger.error("Exception", ex);
+            databaseUtils.printException(ex);
         }
 
     }
 
     public static void deleteAlert(String name) {
         try {
-            Connection con = DriverManager.getConnection(url, user, password);
+            Connection con = databaseUtils.getConnection();
 
             Statement st = con.createStatement();
 
@@ -217,9 +219,10 @@ public class Utils {
 
             st.addBatch("DELETE from sm_alerts WHERE name = '" + name + "'");
             st.executeBatch();
+            con.close();
 //            con.commit();
         } catch (SQLException ex) {
-            logger.error("Exception", ex);
+            databaseUtils.printException(ex);
         }
     }
 
@@ -228,7 +231,7 @@ public class Utils {
         deleteAlert(name);
         //delete all old alerts before adding new ones
         try {
-            Connection con = DriverManager.getConnection(url, user, password);
+            Connection con = databaseUtils.getConnection();
 
             Statement st = con.createStatement();
             con.setAutoCommit(false);
@@ -258,7 +261,7 @@ public class Utils {
                         if (trigger.getType() == AlertType.drop) {
                             dropAlerts.add(sauce);
                         }
-                        st.addBatch("insert into sm_alerts (name, alert_type, trigger, price, channel) " +
+                        st.addBatch("insert into sm_alerts (name, alert_type, sm_trigger, price, channel) " +
                                 "VALUES ('" + name + "', '" + trigger.getType() + "', '" + sauce + "', " + trigger.getPrice() + ", '" + channel + "')");
                     }
                 }
@@ -280,7 +283,7 @@ public class Utils {
 //                                sauces.add(watch.getSauce());
 //                            }
 
-                            st.addBatch("insert into sm_alerts (name, alert_type, trigger, price, channel) " +
+                            st.addBatch("insert into sm_alerts (name, alert_type, sm_trigger, price, channel) " +
                                     "VALUES ('" + name + "', '" + trigger.getType() + "', '" + watch.getSauce().getName() + "', " + trigger.getPrice() + ", '" + channel + "')");
                         }
                     }
@@ -289,8 +292,9 @@ public class Utils {
 
             st.executeBatch();
             con.commit();
+            con.close();
         } catch (SQLException ex) {
-            logger.error("Exception", ex);
+            databaseUtils.printException(ex);
         }
         return sauces;
 
@@ -300,7 +304,7 @@ public class Utils {
 
         //delete all old alerts before adding new ones
         try {
-            Connection con = DriverManager.getConnection(url, user, password);
+            Connection con = databaseUtils.getConnection();
 
             Statement st = con.createStatement();
             con.setAutoCommit(false);
@@ -324,7 +328,7 @@ public class Utils {
                             )
                     )) {
 
-                        st.addBatch("insert into sm_alerts (name, alert_type, trigger, price, channel) " +
+                        st.addBatch("insert into sm_alerts (name, alert_type, sm_trigger, price, channel) " +
                                 "VALUES ('" + name + "', '" + trigger.getType() + "', '" + watch.getSauce().getName() + "', " + trigger.getPrice() + ", '" + channel + "')");
                     }
                 }
@@ -332,15 +336,16 @@ public class Utils {
 
             st.executeBatch();
             con.commit();
+            con.close();
         } catch (SQLException ex) {
-            logger.error("Exception", ex);
+            databaseUtils.printException(ex);
         }
     }
 
 
     public static void addTrigger(String name, AlertType type, int price) {
         try {
-            Connection con = DriverManager.getConnection(url, user, password);
+            Connection con = databaseUtils.getConnection();
             Statement st = con.createStatement();
 
             PreparedStatement pst = con.prepareStatement("SELECT id FROM sm_triggers  WHERE name = '" + name + "' AND alert_type='" + type + "'");
@@ -356,14 +361,15 @@ public class Utils {
                         "VALUES ('" + name + "', '" + type.getName() + "', " + price + ")");
             }
             st.executeBatch();
+            con.close();
         } catch (SQLException ex) {
-            logger.error("Exception", ex);
+            databaseUtils.printException(ex);
         }
     }
 
     public static void deleteTrigger(String name) {
         try {
-            Connection con = DriverManager.getConnection(url, user, password);
+            Connection con = databaseUtils.getConnection();
 
             Statement st = con.createStatement();
 
@@ -371,16 +377,17 @@ public class Utils {
 
             st.addBatch("DELETE from sm_triggers WHERE name = '" + name + "'");
             st.executeBatch();
+            con.close();
 //            con.commit();
         } catch (SQLException ex) {
-            logger.error("Exception", ex);
+            databaseUtils.printException(ex);
         }
     }
 
 
     public static List<Trigger> loadTriggers(String id) {
         List<Trigger> alerts = new ArrayList<>();
-        try (Connection con = DriverManager.getConnection(url, user, password);
+        try (Connection con = databaseUtils.getConnection();
              PreparedStatement pst = con.prepareStatement("SELECT name, alert_type, price FROM sm_triggers  WHERE name = '" + id + "'");
              ResultSet rs = pst.executeQuery()) {
 
@@ -390,7 +397,7 @@ public class Utils {
             }
 
         } catch (SQLException ex) {
-            logger.error("Exception", ex);
+            databaseUtils.printException(ex);
         }
         return alerts;
     }
@@ -398,7 +405,7 @@ public class Utils {
 
     public static void addWatch(String name, Sauce sauce) {
         try {
-            Connection con = DriverManager.getConnection(url, user, password);
+            Connection con = databaseUtils.getConnection();
             Statement st = con.createStatement();
 
             PreparedStatement pst = con.prepareStatement("SELECT id FROM sm_watch  WHERE name = '" + name + "' AND sauce='" + sauce.getName() + "'");
@@ -412,14 +419,15 @@ public class Utils {
                         "VALUES ('" + name + "', '" + sauce.getName() + "')");
             }
             st.executeBatch();
+            con.close();
         } catch (SQLException ex) {
-            logger.error("Exception", ex);
+            databaseUtils.printException(ex);
         }
     }
 
     public static void deleteWatch(String name) {
         try {
-            Connection con = DriverManager.getConnection(url, user, password);
+            Connection con = databaseUtils.getConnection();
 
             Statement st = con.createStatement();
 
@@ -427,16 +435,17 @@ public class Utils {
 
             st.addBatch("DELETE from sm_watch WHERE name = '" + name + "'");
             st.executeBatch();
+            con.close();
 //            con.commit();
         } catch (SQLException ex) {
-            logger.error("Exception", ex);
+            databaseUtils.printException(ex);
         }
     }
 
 
     public static List<Watch> loadWatch(String id) {
         List<Watch> watches = new ArrayList<>();
-        try (Connection con = DriverManager.getConnection(url, user, password);
+        try (Connection con = databaseUtils.getConnection();
              PreparedStatement pst = con.prepareStatement("SELECT name, sauce FROM sm_watch  WHERE name = '" + id + "'");
              ResultSet rs = pst.executeQuery()) {
 
@@ -446,7 +455,7 @@ public class Utils {
             }
 
         } catch (SQLException ex) {
-            logger.error("Exception", ex);
+            databaseUtils.printException(ex);
         }
         return watches;
     }
@@ -454,7 +463,7 @@ public class Utils {
 
     public static List<SystemReminder> loadReminder(SystemReminderType rem) {
         List<SystemReminder> reminders = new ArrayList<>();
-        try (Connection con = DriverManager.getConnection(url, user, password);
+        try (Connection con = databaseUtils.getConnection();
              PreparedStatement pst = con.prepareStatement("SELECT type, reminder_time, message_id, name FROM system_reminder  WHERE type = '" + rem.getName() + "'");
              ResultSet rs = pst.executeQuery()) {
 
@@ -464,14 +473,14 @@ public class Utils {
             }
 
         } catch (SQLException ex) {
-            logger.error("Exception", ex);
+            databaseUtils.printException(ex);
         }
         return reminders;
     }
 
     public static List<SystemReminder> loadReminder() {
         List<SystemReminder> reminders = new ArrayList<>();
-        try (Connection con = DriverManager.getConnection(url, user, password);
+        try (Connection con = databaseUtils.getConnection();
              PreparedStatement pst = con.prepareStatement("SELECT type, reminder_time, message_id, name FROM system_reminder ");
              ResultSet rs = pst.executeQuery()) {
 
@@ -481,7 +490,7 @@ public class Utils {
             }
 
         } catch (SQLException ex) {
-            logger.error("Exception", ex);
+            databaseUtils.printException(ex);
         }
         return reminders;
     }
@@ -490,7 +499,7 @@ public class Utils {
     public static SystemReminder addReminder(SystemReminderType type, Timestamp time, String messageId, String name) {
         SystemReminder reminder = new SystemReminder(type, time, messageId, name);
         try {
-            Connection con = DriverManager.getConnection(url, user, password);
+            Connection con = databaseUtils.getConnection();
             Statement st = con.createStatement();
 
             PreparedStatement pst = con.prepareStatement("SELECT id FROM system_reminder  WHERE type='" + type.getName() + "'");
@@ -506,8 +515,9 @@ public class Utils {
                         "VALUES ('" + type.getName() + "', '" + time + "', '" + messageId + "', '" + name + "')");
             }
             st.executeBatch();
+            con.close();
         } catch (SQLException ex) {
-            logger.error("Exception", ex);
+            databaseUtils.printException(ex);
         }
         return reminder;
     }
@@ -515,7 +525,7 @@ public class Utils {
 
     public static void deleteReminder(SystemReminderType type) {
         try {
-            Connection con = DriverManager.getConnection(url, user, password);
+            Connection con = databaseUtils.getConnection();
 
             Statement st = con.createStatement();
 
@@ -523,9 +533,10 @@ public class Utils {
 
             st.addBatch("DELETE from system_reminder WHERE type='" + type.getName() + "'");
             st.executeBatch();
+            con.close();
 //            con.commit();
         } catch (SQLException ex) {
-            logger.error("Exception", ex);
+            databaseUtils.printException(ex);
         }
     }
 
@@ -534,21 +545,21 @@ public class Utils {
 
         List<SauceMarketStats> stats = new ArrayList<>();
         try {
-            Connection con = DriverManager.getConnection(url, user, password);
+            Connection con = databaseUtils.getConnection();
 
-            String sql = "select change.change_1_to_2 as change, " +
-                    "to_char(z.total / change.total::float * 100, '990.99') as zero, " +
-                    "to_char(p.total / change.total::float * 100, '990.99') as positive, " +
-                    "to_char(n.total / change.total::float * 100, '990.99') as negative, " +
-                    "change.total as \"times occurred\" " +
+            String sql = "select change_data.change_1_to_2 as change_data, " +
+                    "round(z.total / change_data.total * 100, 2) as zero, " +
+                    "round(p.total / change_data.total * 100, 2) as positive, " +
+                    "round(n.total / change_data.total * 100, 2) as negative, " +
+                    "change_data.total as \"times occurred\" " +
                     "from " +
-                    "(select change_1_to_2, count(*) as total from sm_history where change = 0 group by change_1_to_2) z, " +
-                    "(select change_1_to_2, count(*) as total from sm_history where change > 0 group by change_1_to_2) p, " +
-                    "(select change_1_to_2, count(*) as total from sm_history where change < 0 group by change_1_to_2) n, " +
-                    "(select change_1_to_2, count(*) as total from sm_history group by change_1_to_2) change " +
-                    "where z.change_1_to_2 = change.change_1_to_2 and " +
-                    "p.change_1_to_2 = change.change_1_to_2 and " +
-                    "n.change_1_to_2 = change.change_1_to_2 ";
+                    "(select change_1_to_2, count(*) as total from sm_history where last_change = 0 group by change_1_to_2) z, " +
+                    "(select change_1_to_2, count(*) as total from sm_history where last_change > 0 group by change_1_to_2) p, " +
+                    "(select change_1_to_2, count(*) as total from sm_history where last_change < 0 group by change_1_to_2) n, " +
+                    "(select change_1_to_2, count(*) as total from sm_history group by change_1_to_2) change_data " +
+                    "where z.change_1_to_2 = change_data.change_1_to_2 and " +
+                    "p.change_1_to_2 = change_data.change_1_to_2 and " +
+                    "n.change_1_to_2 = change_data.change_1_to_2 ";
 
 //            if (!sauce.equals("all")) {
 //                sql += " "
@@ -562,9 +573,10 @@ public class Utils {
                 SauceMarketStats stat = new SauceMarketStats(rs.getInt(1), rs.getDouble(2), rs.getDouble(3), rs.getDouble(4), rs.getInt(5));
                 stats.add(stat);
             }
+            con.close();
 
         } catch (SQLException ex) {
-            logger.error("Exception", ex);
+            databaseUtils.printException(ex);
         }
         return stats;
 
@@ -576,21 +588,21 @@ public class Utils {
 
         List<SauceMarketStats> stats = new ArrayList<>();
         try {
-            Connection con = DriverManager.getConnection(url, user, password);
+            Connection con = databaseUtils.getConnection();
 
-            String sql = "select change.change_1_to_2 as change, " +
-                    "to_char(z.total / change.total::float * 100, '990.99') as zero, " +
-                    "to_char(p.total / change.total::float * 100, '990.99') as positive, " +
-                    "to_char(n.total / change.total::float * 100, '990.99') as negative, " +
-                    "change.total as \"times occurred\" " +
+            String sql = "select change_data.change_1_to_2 as change_data, " +
+                    "round(z.total / change_data.total * 100, 2) as zero, " +
+                    "round(p.total / change_data.total * 100, 2) as positive, " +
+                    "round(n.total / change_data.total * 100, 2) as negative, " +
+                    "change_data.total as \"times occurred\" " +
                     "from " +
-                    "(select change_1_to_2, count(*) as total from sm_history where change = 0 and name = ? group by change_1_to_2) z, " +
-                    "(select change_1_to_2, count(*) as total from sm_history where change > 0 and name = ? group by change_1_to_2) p, " +
-                    "(select change_1_to_2, count(*) as total from sm_history where change < 0 and name = ? group by change_1_to_2) n, " +
-                    "(select change_1_to_2, count(*) as total from sm_history where name = ? group by change_1_to_2) change " +
-                    "where z.change_1_to_2 = change.change_1_to_2 and " +
-                    "p.change_1_to_2 = change.change_1_to_2 and " +
-                    "n.change_1_to_2 = change.change_1_to_2 ";
+                    "(select change_1_to_2, count(*) as total from sm_history where last_change = 0 and name = ? group by change_1_to_2) z, " +
+                    "(select change_1_to_2, count(*) as total from sm_history where last_change > 0 and name = ? group by change_1_to_2) p, " +
+                    "(select change_1_to_2, count(*) as total from sm_history where last_change < 0 and name = ? group by change_1_to_2) n, " +
+                    "(select change_1_to_2, count(*) as total from sm_history where name = ? group by change_1_to_2) change_data " +
+                    "where z.change_1_to_2 = change_data.change_1_to_2 and " +
+                    "p.change_1_to_2 = change_data.change_1_to_2 and " +
+                    "n.change_1_to_2 = change_data.change_1_to_2 ";
 
 //            if (!sauce.equals("all")) {
 //                sql += " "
@@ -608,9 +620,10 @@ public class Utils {
                 SauceMarketStats stat = new SauceMarketStats(rs.getInt(1), rs.getDouble(2), rs.getDouble(3), rs.getDouble(4), rs.getInt(5));
                 stats.add(stat);
             }
+            con.close();
 
         } catch (SQLException ex) {
-            logger.error("Exception", ex);
+            databaseUtils.printException(ex);
         }
         return stats;
 
@@ -620,7 +633,7 @@ public class Utils {
     public static void addOldPrices(String sauce, int price, int change, int oldChange, Timestamp time) {
 
         try {
-            Connection con = DriverManager.getConnection(url, user, password);
+            Connection con = databaseUtils.getConnection();
 
 //            Statement st = con.createStatement();
 //
@@ -629,7 +642,7 @@ public class Utils {
 //
 //            st.executeBatch();
 
-            PreparedStatement pst = con.prepareStatement("insert into sm_history (name, price, update_time, change, change_1_to_2) " +
+            PreparedStatement pst = con.prepareStatement("insert into sm_history (name, price, update_time, last_change, change_1_to_2) " +
                     "VALUES (?, ?, ?, ?, ?);");
             pst.setString(1, sauce);
             pst.setInt(2, price);
@@ -637,9 +650,10 @@ public class Utils {
             pst.setInt(4, change);
             pst.setInt(5, oldChange);
             pst.execute();
+            con.close();
 
         } catch (SQLException ex) {
-            logger.error("Exception", ex);
+            databaseUtils.printException(ex);
         }
     }
 }

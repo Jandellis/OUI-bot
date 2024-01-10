@@ -35,6 +35,12 @@ public class EmbedMessage extends Action {
     String tacoBot = "490707751832649738";
     List<EmbedAction> embedActions = new ArrayList<>();
 
+    /**
+     * This deals with all messages from tacoshack. They need to be dealt with a bit differently as they are embed messages.
+     * When we first get the embed it is empty, so looking at it again a tiny bit in the future will fix this
+     * @param gateway
+     * @param client
+     */
     public EmbedMessage(GatewayDiscordClient gateway, DiscordClient client) {
 
         CreateReminder createReminder = new CreateReminder();

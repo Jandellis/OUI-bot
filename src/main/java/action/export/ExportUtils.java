@@ -7,6 +7,7 @@ import action.export.model.MemberDonations;
 import action.export.model.WarningData;
 import bot.Config;
 import bot.Member;
+import database.DatabaseUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -29,7 +30,8 @@ public class ExportUtils {
     static Config config = Config.getInstance();
     static String url = config.get("url");
     static String user = config.get("user");
-    static String password = config.get("password");
+        static String password = config.get("password");
+        static DatabaseUtils databaseUtils = DatabaseUtils.getInstance();
 
 
     public static HashMap<Long, List<ExportData>> loadMemberHistory(String franchise) {
@@ -52,7 +54,7 @@ public class ExportUtils {
         HashMap<Long, List<ExportData>> history = new HashMap<>();
 
         try {
-            Connection con = DriverManager.getConnection(url, user, password);
+            Connection con = databaseUtils.getConnection();
             Statement st = con.createStatement();
 
 
@@ -93,16 +95,18 @@ public class ExportUtils {
 
 
             st.executeBatch();
+            con.close();
         } catch (SQLException ex) {
-            logger.error("Exception", ex);
+            databaseUtils.printException(ex);
         }
         return history;
     }
 
 
     public static void addMember(Member member, Timestamp exportTime) {
+        Connection con;
         try {
-            Connection con = DriverManager.getConnection(url, user, password);
+            con = databaseUtils.getConnection();
             Statement st = con.createStatement();
 
             PreparedStatement pst = con.prepareStatement("SELECT id FROM member_data  WHERE export_time = ? and name = ?");
@@ -145,8 +149,9 @@ public class ExportUtils {
                 p.execute();
             }
             st.executeBatch();
+            con.close();
         } catch (SQLException ex) {
-            logger.error("Exception", ex);
+            databaseUtils.printException(ex);
         }
     }
 
@@ -155,7 +160,7 @@ public class ExportUtils {
         List<Donations> donations = new ArrayList<>();
 
         try {
-            Connection con = DriverManager.getConnection(url, user, password);
+            Connection con = databaseUtils.getConnection();
             Statement st = con.createStatement();
 
 
@@ -173,8 +178,9 @@ public class ExportUtils {
 
 
             st.executeBatch();
+            con.close();
         } catch (SQLException ex) {
-            logger.error("Exception", ex);
+            databaseUtils.printException(ex);
         }
         return donations;
     }
@@ -182,12 +188,13 @@ public class ExportUtils {
 
     public static boolean updateMemberDonations(String id, long donation) {
         try {
-            Connection con = DriverManager.getConnection(url, user, password);
+            Connection con = databaseUtils.getConnection();
             PreparedStatement pst = con.prepareStatement("UPDATE member_donations SET donation = donation + ? WHERE name = ?");
             pst.setLong(1, donation);
             pst.setString(2, id);
             int rs = pst.executeUpdate();
             if (rs == 1) {
+                con.close();
                 return true;
             } else {
 
@@ -197,22 +204,23 @@ public class ExportUtils {
                 return pst.execute();
             }
         } catch (SQLException ex) {
-            logger.error("Exception", ex);
+            databaseUtils.printException(ex);
         }
         return false;
     }
 
     public static boolean clearWarning(String id) {
         try {
-            Connection con = DriverManager.getConnection(url, user, password);
+            Connection con = databaseUtils.getConnection();
             PreparedStatement pst = con.prepareStatement("UPDATE member_donations SET donation = donation - 5000000 WHERE name = ?");
             pst.setString(1, id);
             int rs = pst.executeUpdate();
             if (rs == 1) {
+                con.close();
                 return true;
             }
         } catch (SQLException ex) {
-            logger.error("Exception", ex);
+            databaseUtils.printException(ex);
         }
         return false;
     }
@@ -220,32 +228,35 @@ public class ExportUtils {
 
     public static boolean resetMemberDonations(String id) {
         try {
-            Connection con = DriverManager.getConnection(url, user, password);
+            Connection con = databaseUtils.getConnection();
             PreparedStatement pst = con.prepareStatement("UPDATE member_donations SET donation = ? WHERE name = ?");
             pst.setLong(1, 0);
             pst.setString(2, id);
             int rs = pst.executeUpdate();
             if (rs == 1) {
+                con.close();
                 return true;
             }
         } catch (SQLException ex) {
-            logger.error("Exception", ex);
+            databaseUtils.printException(ex);
         }
         return false;
     }
 
     public static MemberDonations loadMemberDonations(String id) {
         try {
-            Connection con = DriverManager.getConnection(url, user, password);
+            Connection con = databaseUtils.getConnection();
             PreparedStatement pst = con.prepareStatement("SELECT name, donation FROM member_donations WHERE name = ?");
             pst.setString(1, id);
             ResultSet rs = pst.executeQuery();
             while (rs.next()) {
                 MemberDonations memberDonations = new MemberDonations(rs.getLong(2), rs.getString(1));
+                con.close();
                 return memberDonations;
             }
+            con.close();
         } catch (SQLException ex) {
-            logger.error("Exception", ex);
+            databaseUtils.printException(ex);
         }
         return new MemberDonations(0, id);
     }
@@ -253,13 +264,14 @@ public class ExportUtils {
 
     public static boolean updateWarningData(WarningData warningData) {
         try {
-            Connection con = DriverManager.getConnection(url, user, password);
+            Connection con = databaseUtils.getConnection();
             PreparedStatement pst = con.prepareStatement("UPDATE warning_data SET immunity_until = ?,  last_warning = ? WHERE name = ?");
             pst.setTimestamp(1, warningData.getImmunityUntil());
             pst.setTimestamp(2, warningData.getLastWarning());
             pst.setString(3, warningData.getName());
             int rs = pst.executeUpdate();
             if (rs == 1) {
+                con.close();
                 return true;
             } else {
 
@@ -270,7 +282,7 @@ public class ExportUtils {
                 return pst.execute();
             }
         } catch (SQLException ex) {
-            logger.error("Exception", ex);
+            databaseUtils.printException(ex);
         }
         return false;
     }
@@ -278,12 +290,13 @@ public class ExportUtils {
 
     public static boolean updateWarningData(String id, Timestamp giveawayUntil) {
         try {
-            Connection con = DriverManager.getConnection(url, user, password);
+            Connection con = databaseUtils.getConnection();
             PreparedStatement pst = con.prepareStatement("UPDATE warning_data SET giveaway_until = ? WHERE name = ?");
             pst.setTimestamp(1,giveawayUntil);
             pst.setString(2, id);
             int rs = pst.executeUpdate();
             if (rs == 1) {
+                con.close();
                 return true;
             } else {
 
@@ -293,7 +306,7 @@ public class ExportUtils {
                 return pst.execute();
             }
         } catch (SQLException ex) {
-            logger.error("Exception", ex);
+            databaseUtils.printException(ex);
         }
         return false;
     }
@@ -301,7 +314,7 @@ public class ExportUtils {
 
     public static WarningData loadWarningData(String id) {
         try {
-            Connection con = DriverManager.getConnection(url, user, password);
+            Connection con = databaseUtils.getConnection();
             PreparedStatement pst = con.prepareStatement("SELECT name, immunity_until, last_warning, giveaway_until FROM warning_data WHERE name = ?");
             pst.setString(1, id);
             ResultSet rs = pst.executeQuery();
@@ -311,10 +324,12 @@ public class ExportUtils {
                         rs.getTimestamp(2),
                         rs.getTimestamp(3),
                         rs.getTimestamp(4));
+                con.close();
                 return warningData;
             }
+            con.close();
         } catch (SQLException ex) {
-            logger.error("Exception", ex);
+            databaseUtils.printException(ex);
         }
         return new WarningData(id, null, null, null);
     }
@@ -322,7 +337,7 @@ public class ExportUtils {
     public static List<WarningData> loadWarningDataAfterImmunity() {
         List<WarningData> warningDataList = new ArrayList<>();
         try {
-            Connection con = DriverManager.getConnection(url, user, password);
+            Connection con = databaseUtils.getConnection();
 
 
             PreparedStatement pst = con.prepareStatement("SELECT name, immunity_until, last_warning, giveaway_until FROM warning_data " +
@@ -336,9 +351,10 @@ public class ExportUtils {
                         rs.getTimestamp(4));
                 warningDataList.add(warningData);
             }
+            con.close();
 
         } catch (SQLException ex) {
-            logger.error("Exception", ex);
+            databaseUtils.printException(ex);
         }
         return warningDataList;
     }
@@ -347,7 +363,7 @@ public class ExportUtils {
     public static List<WarningData> loadWarningDataAfterGiveaway() {
         List<WarningData> warningDataList = new ArrayList<>();
         try {
-            Connection con = DriverManager.getConnection(url, user, password);
+            Connection con = databaseUtils.getConnection();
 
 
             PreparedStatement pst = con.prepareStatement("SELECT name, immunity_until, last_warning, giveaway_until FROM warning_data " +
@@ -361,39 +377,42 @@ public class ExportUtils {
                         rs.getTimestamp(4));
                 warningDataList.add(warningData);
             }
+            con.close();
 
         } catch (SQLException ex) {
-            logger.error("Exception", ex);
+            databaseUtils.printException(ex);
         }
         return warningDataList;
     }
 
     public static void removeMember(String name) {
         try {
-            Connection con = DriverManager.getConnection(url, user, password);
+            Connection con = databaseUtils.getConnection();
             PreparedStatement pst = con.prepareStatement("UPDATE franchise SET members = members - 1 WHERE name = ?");
             pst.setString(1, name);
             int rs = pst.executeUpdate();
+            con.close();
         } catch (SQLException ex) {
-            logger.error("Exception", ex);
+            databaseUtils.printException(ex);
         }
     }
 
     public static void addMember(String name) {
         try {
-            Connection con = DriverManager.getConnection(url, user, password);
+            Connection con = databaseUtils.getConnection();
             PreparedStatement pst = con.prepareStatement("UPDATE franchise SET members = members + 1 WHERE name = ?");
             pst.setString(1, name);
             int rs = pst.executeUpdate();
+            con.close();
         } catch (SQLException ex) {
-            logger.error("Exception", ex);
+            databaseUtils.printException(ex);
         }
     }
 
     public static int getMembers(String name) {
 
         try {
-            Connection con = DriverManager.getConnection(url, user, password);
+            Connection con = databaseUtils.getConnection();
             PreparedStatement pst = con.prepareStatement("SELECT members FROM franchise " +
                     "WHERE name = ?");
             pst.setString(1, name);
@@ -401,9 +420,10 @@ public class ExportUtils {
             while (rs.next()) {
                 return rs.getInt(1);
             }
+            con.close();
 
         } catch (SQLException ex) {
-            logger.error("Exception", ex);
+            databaseUtils.printException(ex);
         }
         return 0;
     }
@@ -411,20 +431,21 @@ public class ExportUtils {
 
     public static void updateFranchiseStat(FranchiseStatType type, Long value, String name) {
         try {
-            Connection con = DriverManager.getConnection(url, user, password);
+            Connection con = databaseUtils.getConnection();
             PreparedStatement pst = con.prepareStatement("UPDATE franchise SET " +type.getName()+ " = ? WHERE name = ?");
             pst.setLong(1, value);
             pst.setString(2, name);
             int rs = pst.executeUpdate();
+            con.close();
         } catch (SQLException ex) {
-            logger.error("Exception", ex);
+            databaseUtils.printException(ex);
         }
     }
 
     public static long getFranchiseStat(String name, FranchiseStatType type) {
 
         try {
-            Connection con = DriverManager.getConnection(url, user, password);
+            Connection con = databaseUtils.getConnection();
             PreparedStatement pst = con.prepareStatement("SELECT "+type.getName()+" FROM franchise " +
                     "WHERE name = ?");
             pst.setString(1, name);
@@ -434,14 +455,14 @@ public class ExportUtils {
             }
 
         } catch (SQLException ex) {
-            logger.error("Exception", ex);
+            databaseUtils.printException(ex);
         }
         return 0;
     }
     public static Franchise getFranchise(String guild) {
 
         try {
-            Connection con = DriverManager.getConnection(url, user, password);
+            Connection con = databaseUtils.getConnection();
             PreparedStatement pst = con.prepareStatement("SELECT guild," +
                     " name," +
                     " warning," +
@@ -470,14 +491,14 @@ public class ExportUtils {
             }
 
         } catch (SQLException ex) {
-            logger.error("Exception", ex);
+            databaseUtils.printException(ex);
         }
         return null;
     }
     public static Franchise getFranchiseByName(String name) {
 
         try {
-            Connection con = DriverManager.getConnection(url, user, password);
+            Connection con = databaseUtils.getConnection();
             PreparedStatement pst = con.prepareStatement("SELECT guild," +
                     " name," +
                     " warning," +
@@ -506,7 +527,7 @@ public class ExportUtils {
             }
 
         } catch (SQLException ex) {
-            logger.error("Exception", ex);
+            databaseUtils.printException(ex);
         }
         return null;
     }

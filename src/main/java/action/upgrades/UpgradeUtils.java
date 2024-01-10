@@ -2,6 +2,7 @@ package action.upgrades;
 
 import action.upgrades.model.UserUpgrades;
 import bot.Config;
+import database.DatabaseUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -19,17 +20,14 @@ public class UpgradeUtils {
 
     protected static final Logger logger = LogManager.getLogger("ouiBot");
 
-    static Config config = Config.getInstance();
-    static String url = config.get("url");
-    static String user = config.get("user");
-    static String password = config.get("password");
+    static DatabaseUtils databaseUtils = DatabaseUtils.getInstance();
 
 
     public static List<UserUpgrades> loadUserUpgrades (String name, String location) {
 
         List<UserUpgrades> upgrades = new ArrayList<>();
         try {
-            Connection con = DriverManager.getConnection(url, user, password);
+            Connection con = databaseUtils.getConnection();
             Statement st = con.createStatement();
 
             LocalDateTime oneWeek = LocalDateTime.now().minusDays(7).minusHours(12);
@@ -51,7 +49,7 @@ public class UpgradeUtils {
 
             st.executeBatch();
         } catch (SQLException ex) {
-            logger.error("Exception", ex);
+            databaseUtils.printException(ex);
         }
         return upgrades;
     }
@@ -59,7 +57,7 @@ public class UpgradeUtils {
 
     public static void addUserUpgrades(UserUpgrades userUpgrades) {
         try {
-            Connection con = DriverManager.getConnection(url, user, password);
+            Connection con = databaseUtils.getConnection();
             Statement st = con.createStatement();
 
             PreparedStatement pst = con.prepareStatement("SELECT id, name, location, upgrade, progress FROM user_upgrades WHERE name = ? and location = ? and upgrade = ?");
@@ -93,7 +91,7 @@ public class UpgradeUtils {
             }
             st.executeBatch();
         } catch (SQLException ex) {
-            logger.error("Exception", ex);
+            databaseUtils.printException(ex);
         }
     }
 

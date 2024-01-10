@@ -444,7 +444,10 @@ public class Import extends Action {
             }
             value = value + String.format("%,d", data.getValue());
 //            builder.addField(count + start, "**"+ count + "**<@"+ data.getId() +"> - " + value, false);
-            long change = data.getValue() - weeklyBestDataYesterday.get(data.getId()).getValue();
+            long change = 0;
+            if (weeklyBestDataYesterday.size() > 0 && weeklyBestDataYesterday.containsKey(data.getId())) {
+                change = data.getValue() - weeklyBestDataYesterday.get(data.getId()).getValue();
+            }
 
             //<a:reddown:1015028786292592701>
             //<a:greenup:1015028862368878723>

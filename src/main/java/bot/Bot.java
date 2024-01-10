@@ -30,6 +30,7 @@ import action.sm.CleanUp;
 import action.sm.PriceCheck;
 import action.sm.UpdateAlerts;
 import action.upgrades.BuyUpgrade;
+import database.DatabaseUtils;
 import discord4j.common.util.Snowflake;
 import discord4j.core.DiscordClient;
 import discord4j.core.GatewayDiscordClient;
@@ -112,7 +113,7 @@ public class Bot {
 //        logger.fatal("Fatal log message");
 //        logger.trace("Trace log message");
 
-        try (Connection con = DriverManager.getConnection(url, user, password);
+        try (Connection con = DriverManager.getConnection(url);
              Statement st = con.createStatement();
              ResultSet rs = st.executeQuery("SELECT VERSION()")) {
 
@@ -266,12 +267,8 @@ public class Bot {
 //                            .block(); // We use .block() as there is not another non-daemon thread and the jvm would close otherwise.
 
 
-
-
-
-
-
-
+                    DatabaseUtils databaseUtils = DatabaseUtils.getInstance();
+                    databaseUtils.setGateway(gateway);
 
                     // combine them!
                     return printOnLogin.and(handlePingCommand)
