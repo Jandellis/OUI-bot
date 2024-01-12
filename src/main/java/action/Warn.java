@@ -1,7 +1,7 @@
 package action;
 
 import action.export.ExportUtils;
-import action.export.model.Franchise;
+import action.export.model.FranchiseConfig;
 import action.export.model.MemberDonations;
 import action.export.model.WarningData;
 import bot.Clean;
@@ -9,7 +9,6 @@ import bot.KickMember;
 import discord4j.common.util.Snowflake;
 import discord4j.core.object.entity.Message;
 import discord4j.discordjson.Id;
-import discord4j.discordjson.json.MemberData;
 import discord4j.rest.http.client.ClientException;
 import reactor.core.publisher.Mono;
 
@@ -51,7 +50,7 @@ public class Warn extends Action {
         //warn users in court and up the warning level
         String action = getAction(message);
         if (action != null && hasPermission(message, recruiter)) {
-            Franchise franchise = ExportUtils.getFranchise(message.getGuildId().get().asString());
+            FranchiseConfig franchiseConfig = ExportUtils.getFranchiseConfig(message.getGuildId().get().asString());
 
             return message.getChannel().flatMap(channel -> {
                 try {
@@ -79,7 +78,7 @@ public class Warn extends Action {
                         ;//Integer.parseInt(action);
                     }
 
-                    doWarnings(level, max, odd, franchise, null);
+                    doWarnings(level, max, odd, franchiseConfig, null);
 
 
                 } catch (Exception e) {
@@ -95,13 +94,13 @@ public class Warn extends Action {
         return Mono.empty();
     }
 
-    public void doWarnings(int level, int max, boolean odd, Franchise franchise, HashMap<Long, List<Id>> userRoles) {
+    public void doWarnings(int level, int max, boolean odd, FranchiseConfig franchiseConfig, HashMap<Long, List<Id>> userRoles) {
 
         try {
 
             List<KickMember> kickMemberList = new ArrayList<>();
             try {
-                kickMemberList = Clean.mainNoImport(franchise.getName() + "historic.csv");
+                kickMemberList = Clean.mainNoImport(franchiseConfig.getName() + "historic.csv");
                 logger.info("processed data");
             } catch (Exception e) {
                 e.printStackTrace();
@@ -125,13 +124,13 @@ public class Warn extends Action {
                     List<Id> roles = userRoles.get(kickMember.getId());
                     if (roles != null && roles.size() > 0) {
                         roles.forEach(id -> {
-                            if (id.asLong() == Long.parseLong(franchise.getImmunity()))
+                            if (id.asLong() == Long.parseLong(franchiseConfig.getImmunity()))
                                 imunity.set(true);
-                            if (id.asLong() == Long.parseLong(franchise.getWarning()))
+                            if (id.asLong() == Long.parseLong(franchiseConfig.getWarning()))
                                 warning.set(1);
-                            if (id.asLong() == Long.parseLong(franchise.getWarning2()))
+                            if (id.asLong() == Long.parseLong(franchiseConfig.getWarning2()))
                                 warning.set(2);
-                            if (id.asLong() == Long.parseLong(franchise.getWarning3()))
+                            if (id.asLong() == Long.parseLong(franchiseConfig.getWarning3()))
                                 warning.set(3);
                         });
                         inServer = true;
@@ -181,33 +180,33 @@ public class Warn extends Action {
                                 warnMember = false;
                                 logger.info("user should be warned, but they have donated to ingore the warning " + kickMember.getId());
                             } else {
-                                client.getGuildById(Snowflake.of(franchise.getGuild())).addMemberRole(
+                                client.getGuildById(Snowflake.of(franchiseConfig.getGuild())).addMemberRole(
                                         Snowflake.of(kickMember.getId()),
-                                        Snowflake.of(franchise.getWarning()),
+                                        Snowflake.of(franchiseConfig.getWarning()),
                                         "first warning").block();
                             }
                         }
                         if (warning.get() == 1) {
-                            client.getGuildById(Snowflake.of(franchise.getGuild())).addMemberRole(
+                            client.getGuildById(Snowflake.of(franchiseConfig.getGuild())).addMemberRole(
                                     Snowflake.of(kickMember.getId()),
-                                    Snowflake.of(franchise.getWarning2()),
+                                    Snowflake.of(franchiseConfig.getWarning2()),
                                     "second warning").block();
-                            client.getGuildById(Snowflake.of(franchise.getGuild())).removeMemberRole(
+                            client.getGuildById(Snowflake.of(franchiseConfig.getGuild())).removeMemberRole(
                                     Snowflake.of(kickMember.getId()),
-                                    Snowflake.of(franchise.getWarning()),
+                                    Snowflake.of(franchiseConfig.getWarning()),
                                     "second warning").block();
                         }
                         if (warning.get() == 2) {
-                            if (hasRole(userRoles.get(kickMember.getId()), franchise.getWarning3())) {
+                            if (hasRole(userRoles.get(kickMember.getId()), franchiseConfig.getWarning3())) {
                                 logger.info("Skipping user as they have final warning already " + kickMember.getId());
                             } else {
-                                client.getGuildById(Snowflake.of(franchise.getGuild())).addMemberRole(
+                                client.getGuildById(Snowflake.of(franchiseConfig.getGuild())).addMemberRole(
                                         Snowflake.of(kickMember.getId()),
-                                        Snowflake.of(franchise.getWarning3()),
+                                        Snowflake.of(franchiseConfig.getWarning3()),
                                         "final warning").block();
-                                client.getGuildById(Snowflake.of(franchise.getGuild())).removeMemberRole(
+                                client.getGuildById(Snowflake.of(franchiseConfig.getGuild())).removeMemberRole(
                                         Snowflake.of(kickMember.getId()),
-                                        Snowflake.of(franchise.getWarning2()),
+                                        Snowflake.of(franchiseConfig.getWarning2()),
                                         "final warning").block();
                             }
                         }
@@ -231,14 +230,14 @@ public class Warn extends Action {
                 count++;
                 display.append(line);
                 if (count == 30) {
-                    client.getChannelById(Snowflake.of(franchise.getCourt())).createMessage(display.toString()).block();
+                    client.getChannelById(Snowflake.of(franchiseConfig.getCourt())).createMessage(display.toString()).block();
                     logger.info(display);
                     display = new StringBuilder();
                     count = 0;
                 }
             }
             if (count > 0) {
-                client.getChannelById(Snowflake.of(franchise.getCourt())).createMessage(display.toString()).block();
+                client.getChannelById(Snowflake.of(franchiseConfig.getCourt())).createMessage(display.toString()).block();
                 logger.info(display);
                 display = new StringBuilder();
                 count = 0;

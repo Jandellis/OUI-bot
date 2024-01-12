@@ -1,7 +1,7 @@
 package action;
 
 import action.export.ExportUtils;
-import action.export.model.Franchise;
+import action.export.model.FranchiseConfig;
 import action.reminder.ReminderUtils;
 import action.reminder.model.Profile;
 import bot.Config;
@@ -144,13 +144,13 @@ public abstract class Action {
             if (!message.getGuildId().isPresent()) {
                 return false;
             }
-            Franchise franchise = ExportUtils.getFranchise(message.getGuildId().get().asString());
-            if (franchise == null) {
+            FranchiseConfig franchiseConfig = ExportUtils.getFranchiseConfig(message.getGuildId().get().asString());
+            if (franchiseConfig == null) {
                 return false;
             }
-            logger.info("Found franchise " + franchise.getName());
-            logger.info("Checking if user " + message.getAuthor().get().getId() + " has role " + franchise.getRecruiter());
-            return hasPermission(message.getAuthor().get().getId().asString(), Long.parseLong(franchise.getRecruiter()));
+            logger.info("Found franchise " + franchiseConfig.getName());
+            logger.info("Checking if user " + message.getAuthor().get().getId() + " has role " + franchiseConfig.getRecruiter());
+            return hasPermission(message.getAuthor().get().getId().asString(), Long.parseLong(franchiseConfig.getRecruiter()));
 
         } catch (Exception e) {
             printException(e);

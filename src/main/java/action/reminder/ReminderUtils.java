@@ -1011,7 +1011,7 @@ public class ReminderUtils {
                 or = " or ";
             }
             sql += ") ";
-            sql += "order by export_time";
+            sql += "order by export_time, name";
             logger.info(sql);
 
             PreparedStatement pst = con.prepareStatement(sql);

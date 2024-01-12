@@ -367,6 +367,26 @@ public class BuyUpgrade extends Action implements EmbedAction {
                         });
 
                         boolean cheapSort = message.getContent().toLowerCase().contains("cheap");
+                        String[] split = message.getContent().split(" ");
+                        int startPage = -1;
+                        int endPage = -1;
+                        for (String s : split) {
+                            try {
+                                int number = Integer.parseInt(s);
+                                if (startPage == -1)
+                                    startPage = number;
+                                else
+                                    endPage = number;
+                            } catch (NumberFormatException e) {
+
+                            }
+                        }
+                        //flip so end page is after start page
+                        if (endPage < startPage) {
+                            int temp = endPage;
+                            endPage = startPage;
+                            startPage = temp;
+                        }
                         String title = "";
 
                         if (cheapSort) {
@@ -402,60 +422,67 @@ public class BuyUpgrade extends Action implements EmbedAction {
                         int totalBoost = 0;
                         for (UserUpgrades upgrade : total) {
                             if (upgrade.getCurrentCost() > 0) {
-                                String value = "";
-                                value = String.format("%,d", upgrade.getCurrentCost());
-                                String boost = "";
-                                boost = String.format("%,d", upgrade.getBoost());
-                                String line = count + " - `" + upgrade.getUpgrade() + "` - **$" + value + "**";
-                                int space = 35;
-                                if (location.getName() == LocationEnum.hq) {
-                                    space = 60;
+                                //make the page
+                                if (startPage == -1 || endPage == -1 || (startPage <= count && endPage >= count)) {
+                                    String value = "";
+                                    value = String.format("%,d", upgrade.getCurrentCost());
+                                    String boost = "";
+                                    boost = String.format("%,d", upgrade.getBoost());
+                                    String line = count + " - `" + upgrade.getUpgrade() + "` - **$" + value + "**";
+                                    int space = 35;
+                                    if (location.getName() == LocationEnum.hq) {
+                                        space = 60;
+                                    }
+                                    int length = space - line.length();
+                                    sb.append(line);
+                                    sb.append(" ");
+                                    for (int i = 0; i < length; i++) {
+                                        sb.append("-");
+                                    }
+                                    Boolean fakeBoost = false;
+                                    if (upgrade.getUpgrade().equals("tipjar")) {
+                                        boost = " more tips";
+                                        fakeBoost = true;
+                                    }
+                                    if (upgrade.getUpgrade().equals("appliances")) {
+                                        boost = " more work";
+                                        fakeBoost = true;
+                                    }
+                                    if (upgrade.getUpgrade().equals("Customer Service Department")) {
+                                        boost = " 4% tip";
+                                        fakeBoost = true;
+                                    }
+                                    if (upgrade.getUpgrade().equals("Food Services Department")) {
+                                        boost = " 4% work";
+                                        fakeBoost = true;
+                                    }
+                                    if (upgrade.getUpgrade().equals("Overtime Management")) {
+                                        boost = " 100% overtime";
+                                        fakeBoost = true;
+                                    }
+                                    if (upgrade.getUpgrade().equals("Lunch Rush Initiative")) {
+                                        boost = " 1 Hour lunch rush";
+                                        fakeBoost = true;
+                                    }
+                                    if (upgrade.getUpgrade().equals("Task Booster")) {
+                                        boost = " 100% Daily task";
+                                        fakeBoost = true;
+                                    }
+                                    sb.append("*(+$" + boost + ")*\r\n");
+                                    totalCost = totalCost + upgrade.getCurrentCost();
+                                    if (!fakeBoost) {
+                                        totalBoost = totalBoost + upgrade.getBoost();
+                                    }
                                 }
-                                int length = space - line.length();
-                                sb.append(line);
-                                sb.append(" ");
-                                for (int i = 0; i < length; i++) {
-                                    sb.append("-");
-                                }
-                                Boolean fakeBoost = false;
-                                if (upgrade.getUpgrade().equals("tipjar")) {
-                                    boost = " more tips";
-                                    fakeBoost = true;
-                                }
-                                if (upgrade.getUpgrade().equals("appliances")) {
-                                    boost = " more work";
-                                    fakeBoost = true;
-                                }
-                                if (upgrade.getUpgrade().equals("Customer Service Department")) {
-                                    boost = " 4% tip";
-                                    fakeBoost = true;
-                                }
-                                if (upgrade.getUpgrade().equals("Food Services Department")) {
-                                    boost = " 4% work";
-                                    fakeBoost = true;
-                                }
-                                if (upgrade.getUpgrade().equals("Overtime Management")) {
-                                    boost = " 100% overtime";
-                                    fakeBoost = true;
-                                }
-                                if (upgrade.getUpgrade().equals("Lunch Rush Initiative")) {
-                                    boost = " 1 Hour lunch rush";
-                                    fakeBoost = true;
-                                }
-                                if (upgrade.getUpgrade().equals("Task Booster")) {
-                                    boost = " 100% Daily task";
-                                    fakeBoost = true;
-                                }
-
-                                sb.append("*(+$" + boost + ")*\r\n");
 
                                 count++;
-                                totalCost = totalCost + upgrade.getCurrentCost();
-                                if (!fakeBoost) {
-                                    totalBoost = totalBoost + upgrade.getBoost();
+                            }
+                            if (startPage == -1 || endPage == -1) {
+                                if (count == upgradeLimit + 1) {
+                                    break;
                                 }
                             }
-                            if (count == upgradeLimit + 1) {
+                            if (endPage < count) {
                                 break;
                             }
                         }

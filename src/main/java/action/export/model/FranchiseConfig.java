@@ -1,6 +1,6 @@
 package action.export.model;
 
-public class Franchise {
+public class FranchiseConfig {
     String guild;
     String name;
     String warning;
@@ -12,7 +12,7 @@ public class Franchise {
     String giveawayRole;
     String court;
 
-    public Franchise(String guild, String name, String warning, String warning2, String warning3, String flex, String recruiter, String immunity, String giveawayRole, String court) {
+    public FranchiseConfig(String guild, String name, String warning, String warning2, String warning3, String flex, String recruiter, String immunity, String giveawayRole, String court) {
         this.guild = guild;
         this.name = name;
         this.warning = warning;

@@ -3,7 +3,7 @@ package action.export;
 import action.Action;
 import action.Warn;
 import action.export.model.Donations;
-import action.export.model.Franchise;
+import action.export.model.FranchiseConfig;
 import action.export.model.GiveawayData;
 import action.export.model.WarningData;
 import action.export.model.WeeklyBestData;
@@ -87,7 +87,7 @@ public class Import extends Action {
 
             return message.getChannel().flatMap(channel -> {
 
-                Franchise franchise = ExportUtils.getFranchise(message.getGuildId().get().asString());
+                FranchiseConfig franchiseConfig = ExportUtils.getFranchiseConfig(message.getGuildId().get().asString());
 
                 channel.createMessage("Starting import").block();
 
@@ -191,7 +191,7 @@ public class Import extends Action {
 
 
                     //load flex channel??
-                    client.getChannelById(Snowflake.of(franchise.getFlex())).createMessage(embed.build().asRequest()).block();
+                    client.getChannelById(Snowflake.of(franchiseConfig.getFlex())).createMessage(embed.build().asRequest()).block();
 
                     channel.createMessage(embed.build()).block();
 
@@ -237,7 +237,7 @@ public class Import extends Action {
                     if (!skipWarnings) {
                         Warn warn = new Warn();
                         warn.action(gateway, client);
-                        warn.doWarnings(5, 300, true, franchise, userRoles);
+                        warn.doWarnings(5, 300, true, franchiseConfig, userRoles);
                     }
 
                     channel.createMessage("Removing Mercy").block();
@@ -248,7 +248,7 @@ public class Import extends Action {
                         try {
                         client.getGuildById(Snowflake.of(guildId)).removeMemberRole(
                                 Snowflake.of(warningData.getName()),
-                                Snowflake.of(franchise.getImmunity()),
+                                Snowflake.of(franchiseConfig.getImmunity()),
                                 "Mercy has expired").block();
 
                         } catch (ClientException e) {
@@ -283,10 +283,10 @@ public class Import extends Action {
                             try {
                                 //check if user has this role
 
-                                if(!hasRole(userRoles.get(member.getId()), franchise.getGiveawayRole()))
+                                if(!hasRole(userRoles.get(member.getId()), franchiseConfig.getGiveawayRole()))
                                     client.getGuildById(Snowflake.of(guildId)).addMemberRole(
                                         Snowflake.of(member.getId()),
-                                        Snowflake.of(franchise.getGiveawayRole()),
+                                        Snowflake.of(franchiseConfig.getGiveawayRole()),
                                         "Add Giveaway role").block();
 
                             } catch (ClientException e) {
@@ -303,10 +303,10 @@ public class Import extends Action {
 
                     for (WarningData warningData : ExportUtils.loadWarningDataAfterGiveaway()) {
                         try {
-                            if(hasRole(userRoles.get(Long.parseLong(warningData.getName())), franchise.getGiveawayRole()))
+                            if(hasRole(userRoles.get(Long.parseLong(warningData.getName())), franchiseConfig.getGiveawayRole()))
                                 client.getGuildById(Snowflake.of(guildId)).removeMemberRole(
                                         Snowflake.of(warningData.getName()),
-                                        Snowflake.of(franchise.getGiveawayRole()),
+                                        Snowflake.of(franchiseConfig.getGiveawayRole()),
                                         "Giveaway role has expired").block();
 
                         } catch (ClientException e) {

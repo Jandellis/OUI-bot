@@ -36,7 +36,7 @@
             "type": 4,
             "required": false,
             "min_value": 1,
-            "max_value": 90
+            "max_value": 400
         },
         {
             "name": "end",
@@ -44,13 +44,21 @@
             "type": 4,
             "required": false,
             "min_value": 1,
-            "max_value": 90
+            "max_value": 600
         },
         {
             "name": "compare",
             "description": "Id of the person you want to compare to and separated by , for multiple",
             "type": 3,
             "required": false
+        },
+        {
+            "name": "average",
+            "description": "Would you like a rolling average over a number of days",
+            "type": 4,
+            "required": false,
+            "min_value": 1,
+            "max_value": 7
         }
     ]
 }

@@ -1,8 +1,9 @@
 package action.export;
 
 import action.export.model.Donations;
-import action.export.model.Franchise;
+import action.export.model.FranchiseConfig;
 import action.export.model.FranchiseStatType;
+import action.export.model.FranchiseStats;
 import action.export.model.MemberDonations;
 import action.export.model.WarningData;
 import bot.Config;
@@ -12,7 +13,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -429,7 +429,7 @@ public class ExportUtils {
     }
 
 
-    public static void updateFranchiseStat(FranchiseStatType type, Long value, String name) {
+    public static void updateFranchise(FranchiseStatType type, Long value, String name) {
         try {
             Connection con = databaseUtils.getConnection();
             PreparedStatement pst = con.prepareStatement("UPDATE franchise SET " +type.getName()+ " = ? WHERE name = ?");
@@ -442,7 +442,7 @@ public class ExportUtils {
         }
     }
 
-    public static long getFranchiseStat(String name, FranchiseStatType type) {
+    public static long getFranchise(String name, FranchiseStatType type) {
 
         try {
             Connection con = databaseUtils.getConnection();
@@ -459,7 +459,7 @@ public class ExportUtils {
         }
         return 0;
     }
-    public static Franchise getFranchise(String guild) {
+    public static FranchiseConfig getFranchiseConfig(String guild) {
 
         try {
             Connection con = databaseUtils.getConnection();
@@ -476,7 +476,7 @@ public class ExportUtils {
             pst.setString(1, guild);
             ResultSet rs = pst.executeQuery();
             while (rs.next()) {
-                return new Franchise(
+                return new FranchiseConfig(
                         rs.getString(1),
                         rs.getString(2),
                         rs.getString(3),
@@ -495,7 +495,7 @@ public class ExportUtils {
         }
         return null;
     }
-    public static Franchise getFranchiseByName(String name) {
+    public static FranchiseConfig getFranchiseConfigByName(String name) {
 
         try {
             Connection con = databaseUtils.getConnection();
@@ -512,7 +512,7 @@ public class ExportUtils {
             pst.setString(1, name);
             ResultSet rs = pst.executeQuery();
             while (rs.next()) {
-                return new Franchise(
+                return new FranchiseConfig(
                         rs.getString(1),
                         rs.getString(2),
                         rs.getString(3),
@@ -530,5 +530,24 @@ public class ExportUtils {
             databaseUtils.printException(ex);
         }
         return null;
+    }
+
+
+    public static boolean insertFranchiseStats(FranchiseStats franchiseStats) {
+        try {
+            Connection con = databaseUtils.getConnection();
+            PreparedStatement pst = con.prepareStatement("INSERT INTO franchise_stats (name, income, sold, balance, import_time) VALUES (?, ?, ?, ?, ?)");
+                pst.setString(1, franchiseStats.getName());
+                pst.setLong(2, franchiseStats.getIncome());
+                pst.setLong(3, franchiseStats.getSold());
+                pst.setLong(4, franchiseStats.getBalance());
+                pst.setTimestamp(5, franchiseStats.getTime());
+                pst.execute();
+                con.close();
+                return true;
+        } catch (SQLException ex) {
+            databaseUtils.printException(ex);
+        }
+        return false;
     }
 }

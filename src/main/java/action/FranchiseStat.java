@@ -2,6 +2,7 @@ package action;
 
 import action.export.ExportUtils;
 import action.export.model.FranchiseStatType;
+import action.export.model.FranchiseStats;
 import action.reminder.EmbedAction;
 import action.sm.Utils;
 import action.sm.model.SystemReminder;
@@ -21,6 +22,7 @@ import java.io.IOException;
 import java.sql.Timestamp;
 import java.text.DecimalFormat;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -167,17 +169,28 @@ public class FranchiseStat extends Action implements EmbedAction {
                         //look for income
                     }
                 } else {
-                    if (embed.fields().toOptional().isPresent() && embed.fields().get().get(0).value().contains("[OUI] Oui Da Best Taco")){
+                    if (embed.fields().toOptional().isPresent()) {
+                        if (embed.fields().get().get(0).name().equals("Name")) {
+                            String franchise = embed.fields().get().get(0).value().split("\\[")[1].split("]")[0];
+                            Long balance = Long.parseLong(embed.fields().get().get(5).value().replace("\uD83D\uDCB5 $", "").replace(",", ""));
+                            Long sold = Long.parseLong(embed.fields().get().get(6).value().replace("\uD83C\uDF2E ", "").replace(",", ""));
+                            Long income = Long.parseLong(embed.fields().get().get(7).value().replace("\uD83D\uDCB8 $", "").replace(",", ""));
+                            FranchiseStats franchiseStats = new FranchiseStats(franchise, income, sold, balance, Timestamp.from(Instant.now()));
+                            ExportUtils.insertFranchiseStats(franchiseStats);
+                        }
 
-                        String balance = embed.fields().get().get(5).value().replace("\uD83D\uDCB5 $", "").replace(",", "");
-                        ExportUtils.updateFranchiseStat(FranchiseStatType.balance, Long.parseLong(balance), "oui");
-                        String sold = embed.fields().get().get(6).value().replace("\uD83C\uDF2E ", "").replace(",", "");
-                        ExportUtils.updateFranchiseStat(FranchiseStatType.sold, Long.parseLong(sold), "oui");
-                        String income = embed.fields().get().get(7).value().replace("\uD83D\uDCB8 $", "").replace(",", "");
-                        ExportUtils.updateFranchiseStat(FranchiseStatType.income, Long.parseLong(income), "oui");
-                        embed.fields().get().get(5).value();//💵 $5,072,587,412 "\uD83D\uDCB5"
-                        embed.fields().get().get(6).value();//🌮 14,774,858,494 "\uD83C\uDF2E "
-                        embed.fields().get().get(7).value();//💸 $9,900 "\uD83D\uDCB8"
+                        if (embed.fields().get().get(0).value().contains("[OUI] Oui Da Best Taco")) {
+
+                            String balance = embed.fields().get().get(5).value().replace("\uD83D\uDCB5 $", "").replace(",", "");
+                            ExportUtils.updateFranchise(FranchiseStatType.balance, Long.parseLong(balance), "oui");
+                            String sold = embed.fields().get().get(6).value().replace("\uD83C\uDF2E ", "").replace(",", "");
+                            ExportUtils.updateFranchise(FranchiseStatType.sold, Long.parseLong(sold), "oui");
+                            String income = embed.fields().get().get(7).value().replace("\uD83D\uDCB8 $", "").replace(",", "");
+                            ExportUtils.updateFranchise(FranchiseStatType.income, Long.parseLong(income), "oui");
+                            embed.fields().get().get(5).value();//💵 $5,072,587,412 "\uD83D\uDCB5"
+                            embed.fields().get().get(6).value();//🌮 14,774,858,494 "\uD83C\uDF2E "
+                            embed.fields().get().get(7).value();//💸 $9,900 "\uD83D\uDCB8"
+                        }
                     }
                 }
             }
@@ -291,9 +304,9 @@ public class FranchiseStat extends Action implements EmbedAction {
             printException(e);
         }
 
-        updateChannel(balanceChannel, "Balance: " + format(ExportUtils.getFranchiseStat("oui", FranchiseStatType.balance)));
-        updateChannel(tacosChannel, "Tacos Sold: " + format(ExportUtils.getFranchiseStat("oui", FranchiseStatType.sold)));
-        updateChannel(boostChannel, "Income Boost: " + format(ExportUtils.getFranchiseStat("oui", FranchiseStatType.income)));
+        updateChannel(balanceChannel, "Balance: " + format(ExportUtils.getFranchise("oui", FranchiseStatType.balance)));
+        updateChannel(tacosChannel, "Tacos Sold: " + format(ExportUtils.getFranchise("oui", FranchiseStatType.sold)));
+        updateChannel(boostChannel, "Income Boost: " + format(ExportUtils.getFranchise("oui", FranchiseStatType.income)));
         updateChannel(membersChannel, "Franchise Members: " + ExportUtils.getMembers("oui"));
 
 

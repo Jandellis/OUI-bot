@@ -304,3 +304,12 @@ alter table profile alter column ignored_hidden set default false;
 alter table profile add dnd BOOLEAN;
 update profile set dnd = false;
 alter table profile alter column dnd set default false;
+
+CREATE TABLE IF NOT EXISTS franchise_stats (
+    id serial PRIMARY KEY,
+    name VARCHAR(25),
+    income bigint,
+    balance bigint,
+    sold bigint,
+    import_time timestamp
+);

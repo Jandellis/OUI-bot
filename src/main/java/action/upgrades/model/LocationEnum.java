@@ -4,11 +4,11 @@ import bot.Sauce;
 
 public enum LocationEnum {
 
-    mall("mall"),
-    city("city"),
     shack("shack"),
+    mall("mall"),
     beach("beach"),
     amusement ("amusement"),
+    city("city"),
     hq("hq");
 
     private String name;

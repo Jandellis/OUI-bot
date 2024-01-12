@@ -24,6 +24,8 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class FlexStatsCommand extends SlashCommand {
     @Override
@@ -43,10 +45,11 @@ public class FlexStatsCommand extends SlashCommand {
             long days = getParameter("days", 30L, event);
             long daysAgoEnd = getParameter("end", 0L, event);
             String compare = getParameter("compare", "", event);
+            long average = getParameter("average", 1L, event);
 
             String name = event.getInteraction().getData().member().get().user().id().asString();
 
-            chartName = createChart(name, days, type, daysAgoEnd, compare);
+            chartName = createChart(name, days, type, daysAgoEnd, compare, average);
 
             inputStream = new BufferedInputStream(new FileInputStream(chartName + ".png"));
 
@@ -64,7 +67,7 @@ public class FlexStatsCommand extends SlashCommand {
     }
 
 
-    private String createChart(String name, Long days, String type, Long daysAgoEnd, String compare) throws IOException {
+    private String createChart(String name, Long days, String type, Long daysAgoEnd, String compare, Long average) throws IOException {
 //        logger.info("getting chart data");
         List<String> ids = new ArrayList<>();
         ids.add(name);
@@ -74,16 +77,84 @@ public class FlexStatsCommand extends SlashCommand {
         }
         logger.info("creating chart for " + ids.toString());
 
-        List<FlexStats> data = ReminderUtils.loadFlexStats(daysAgoEnd.intValue(), days.intValue(), ids);
-        XYChart chart = readData(data, type, ids);
+        List<FlexStats> dataEnd = ReminderUtils.loadFlexStats(daysAgoEnd.intValue(), days.intValue(), ids);
+        List<FlexStats> dataStart = ReminderUtils.loadFlexStats(daysAgoEnd.intValue() + average.intValue() + 1, days.intValue(), ids);
+
+        if (dataEnd.size() != dataStart.size()) {
+            //error!!
+            logger.info("lists not equal");
+        }
+        List<FlexStats> combined = combineData(dataStart, dataEnd, ids);
+        XYChart chart = readData(combined, type, ids, average);
 //        logger.info("got chart data");
         String chartName = "./flex_stats" + name;
         BitmapEncoder.saveBitmap(chart, chartName, BitmapEncoder.BitmapFormat.PNG);
         return chartName;
     }
 
+    private List<FlexStats> combineData(List<FlexStats> dataStart, List<FlexStats> dataEnd, List<String> ids) {
 
-    private XYChart readData(List<FlexStats> data, String type, List<String> ids) {
+        List<FlexStats> dataCombined = new ArrayList<>();
+
+
+
+
+//        List<FlexStats> dataStartPadded = padData(dataStart, ids);
+//        List<FlexStats> EndStartPadded = padData(dataEnd, ids);
+
+        Map<String, List<FlexStats>> mapDataStart = dataStart.stream().collect(Collectors.groupingBy(FlexStats::getName));
+        Map<String, List<FlexStats>> mapDataEnd = dataEnd.stream().collect(Collectors.groupingBy(FlexStats::getName));
+
+        for (String id : mapDataEnd.keySet()) {
+            int offset = mapDataEnd.get(id).size() - mapDataStart.get(id).size();
+            if (offset < 0)
+                offset = 0;
+
+
+            for (int i = 0; i + offset< mapDataEnd.get(id).size() && i < mapDataStart.get(id).size(); i++) {
+                FlexStats dataPointEnd = mapDataEnd.get(id).get(i + offset);
+                FlexStats dataPointStart = mapDataStart.get(id).get(i);
+                FlexStats dataPoint = new FlexStats(dataPointEnd.getName());
+                dataPoint.setDonations(dataPointEnd.getDonations() - dataPointStart.getDonations());
+                dataPoint.setTips(dataPointEnd.getTips() - dataPointStart.getTips());
+                dataPoint.setWork(dataPointEnd.getWork() - dataPointStart.getWork());
+                dataPoint.setOvertime(dataPointEnd.getOvertime() - dataPointStart.getOvertime());
+                dataPoint.setVotes(dataPointEnd.getVotes() - dataPointStart.getVotes());
+                dataPoint.setImportTime(dataPointEnd.getImportTime());
+                dataPoint.setShackName(dataPointEnd.getShackName());
+                dataCombined.add(dataPoint);
+            }
+        }
+        return dataCombined;
+    }
+
+    private List<FlexStats> padData(List<FlexStats> data, List<String> ids){
+
+        Map<Timestamp, List<FlexStats>> mapData = data.stream().collect(Collectors.groupingBy(FlexStats::getImportTime));
+        List<FlexStats> paddedData = new ArrayList<>();
+        for (Timestamp time : mapData.keySet()) {
+            for (String id : ids) {
+                boolean found = false;
+
+
+                for (FlexStats stats : mapData.get(time)) {
+                    if (stats.getName().equals(id)) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    FlexStats flexStats = new FlexStats(time, id, id, 0L, 0L, 0L, 0L, 0L);
+                    mapData.get(time).add(flexStats);
+                }
+            }
+            paddedData.addAll(mapData.get(time));
+        }
+        return paddedData;
+    }
+
+
+    private XYChart readData(List<FlexStats> data, String type, List<String> ids, Long average) {
         // Create Chart
 //        logger.info("getting builder");
         String title = "Flex stats for " + type;
@@ -107,8 +178,6 @@ public class FlexStatsCommand extends SlashCommand {
             List<Timestamp> xData = new ArrayList<>();
             List<Long> yData = new ArrayList<>();
             String name = id;
-            Long lastValue = 0L;
-            Boolean first = true;
             for (FlexStats dataPoint : data) {
                 if (dataPoint.getName().equalsIgnoreCase(id)) {
                     Long value = dataPoint.getWork();
@@ -126,13 +195,9 @@ public class FlexStatsCommand extends SlashCommand {
                     }
 
                     Timestamp position = dataPoint.getImportTime();
-                    if (value > 0 && !first) {
-                        xData.add(position);
-                        yData.add(value - lastValue);
-                    }
+                    xData.add(position);
+                    yData.add(value/average);
                     name = dataPoint.getShackName();
-                    first = false;
-                    lastValue = value;
                 }
             }
             if (xData.size() > 0) {

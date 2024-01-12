@@ -67,14 +67,6 @@
             "required": false,
             "min_value": 1,
             "max_value": 200
-        },
-        {
-            "name": "average",
-            "description": "Would you like a rolling average",
-            "type": 4,
-            "required": false,
-            "min_value": 2,
-            "max_value": 7
         }
     ]
 }

@@ -74,7 +74,6 @@ public class ProfileStatsCommand extends SlashCommand {
 
         long days = getParameter("days", 30L, event);
 
-        long average = getParameter("average", 1L, event);
 //        Optional<Long> daysPresent = event.getOption("days")
 //                .flatMap(ApplicationCommandInteractionOption::getValue)
 //                .map(ApplicationCommandInteractionOptionValue::asLong);

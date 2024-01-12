@@ -71,8 +71,13 @@ public class Help extends Action {
                     sb.append(":small_orange_diamond: For shack, do </hire:1006354977847001159>, </advertisements:1006354977721176137>, </upgrades:1006354978274820107>, </decorations:1006354977788268620>, </truck:1006354978153169014>, then  type cyup s.\n" +
                             ":small_orange_diamond: For mall, do </hire:1006354977847001159>, </advertisements:1006354977721176137>, </upgrades:1006354978274820107>, </decorations:1006354977788268620>, </kiosk:1010956257588428840> and then type cyup m.\n" +
                             ":small_orange_diamond: For beach, do </hire:1006354977847001159>, </advertisements:1006354977721176137>, </upgrades:1006354978274820107>, </decorations:1006354977788268620>, </stand:1006354978153169010> and then type cyup b. \n" +
-                            ":small_orange_diamond: For city, do </hire:1006354977847001159>, </advertisements:1006354977721176137>, </upgrades:1006354978274820107>, </decorations:1006354977788268620>, </cart:1006354977721176142> and then type cyup c.\n");
+                            ":small_orange_diamond: For amusement park, do </hire:1006354977847001159>, </advertisements:1006354977721176137>, </upgrades:1006354978274820107>, </decorations:1006354977788268620>, </attractions:1150514355167821946> and then type cyup a. \n" +
+                            ":small_orange_diamond: For city, do </hire:1006354977847001159>, </advertisements:1006354977721176137>, </upgrades:1006354978274820107>, </decorations:1006354977788268620>, </cart:1006354977721176142> and then type cyup c.\n" +
+                            ":small_orange_diamond: For hq, do </hq upgrades:1018564197602295859>, </hq hire:1018564197602295859> and then type cyup h.\n");
+                    message.getChannel().block().createMessage(sb.toString()).block();
+                    sb = new StringBuilder();
                     sb.append("You can also add the `cheap` flag to list the upgrades in order from cheapest to most expensive\n");
+                    sb.append("You can view a page by including 2 numbers at the end. For example `cyup m 25 35` would show upgrade from the mall from upgrade 25 to upgrade 35 \n");
                     sb.append("Type `cyLimitUp <number>` to set how many upgrades listed\n");
                     sb.append("Type `cyStats <location>` to see stats about your upgrade status\n");
                     sb.append("Click on :arrows_counterclockwise: to get Cylon to recheck your upgrade list again\n");
