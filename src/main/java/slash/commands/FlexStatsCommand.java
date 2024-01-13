@@ -77,14 +77,14 @@ public class FlexStatsCommand extends SlashCommand {
         }
         logger.info("creating chart for " + ids.toString());
 
-        List<FlexStats> dataEnd = ReminderUtils.loadFlexStats(daysAgoEnd.intValue(), days.intValue(), ids);
-        List<FlexStats> dataStart = ReminderUtils.loadFlexStats(daysAgoEnd.intValue() + average.intValue() + 1, days.intValue(), ids);
+//        List<FlexStats> dataEnd = ReminderUtils.loadFlexStats(daysAgoEnd.intValue(), days.intValue()+ average.intValue(), ids);
+        List<FlexStats> dataStart = ReminderUtils.loadFlexStats(daysAgoEnd.intValue(),days.intValue()+ average.intValue() , ids);
 
-        if (dataEnd.size() != dataStart.size()) {
-            //error!!
-            logger.info("lists not equal");
-        }
-        List<FlexStats> combined = combineData(dataStart, dataEnd, ids);
+//        if (dataEnd.size() != dataStart.size()) {
+//            //error!!
+//            logger.info("lists not equal");
+//        }
+        List<FlexStats> combined = combineData(dataStart, ids, average);
         XYChart chart = readData(combined, type, ids, average);
 //        logger.info("got chart data");
         String chartName = "./flex_stats" + name;
@@ -92,7 +92,7 @@ public class FlexStatsCommand extends SlashCommand {
         return chartName;
     }
 
-    private List<FlexStats> combineData(List<FlexStats> dataStart, List<FlexStats> dataEnd, List<String> ids) {
+    private List<FlexStats> combineData(List<FlexStats> dataStart, List<String> ids, Long average) {
 
         List<FlexStats> dataCombined = new ArrayList<>();
 
@@ -103,16 +103,16 @@ public class FlexStatsCommand extends SlashCommand {
 //        List<FlexStats> EndStartPadded = padData(dataEnd, ids);
 
         Map<String, List<FlexStats>> mapDataStart = dataStart.stream().collect(Collectors.groupingBy(FlexStats::getName));
-        Map<String, List<FlexStats>> mapDataEnd = dataEnd.stream().collect(Collectors.groupingBy(FlexStats::getName));
+//        Map<String, List<FlexStats>> mapDataEnd = dataEnd.stream().collect(Collectors.groupingBy(FlexStats::getName));
 
-        for (String id : mapDataEnd.keySet()) {
-            int offset = mapDataEnd.get(id).size() - mapDataStart.get(id).size();
-            if (offset < 0)
-                offset = 0;
+        for (String id : mapDataStart.keySet()) {
+//            int offset = mapDataEnd.get(id).size() - mapDataStart.get(id).size();
+//            if (offset < 0)
+//                offset = 0;
 
 
-            for (int i = 0; i + offset< mapDataEnd.get(id).size() && i < mapDataStart.get(id).size(); i++) {
-                FlexStats dataPointEnd = mapDataEnd.get(id).get(i + offset);
+            for (int i = 0; i + average.intValue() < mapDataStart.get(id).size(); i++) {
+                FlexStats dataPointEnd = mapDataStart.get(id).get(i + average.intValue());
                 FlexStats dataPointStart = mapDataStart.get(id).get(i);
                 FlexStats dataPoint = new FlexStats(dataPointEnd.getName());
                 dataPoint.setDonations(dataPointEnd.getDonations() - dataPointStart.getDonations());
