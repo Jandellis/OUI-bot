@@ -77,7 +77,7 @@ public class DatabaseUtils {
 
             String finalSStackTrace = sStackTrace;
             gateway.getUserById(Snowflake.of("292839877563908097")).block().getPrivateChannel().flatMap(channel -> {
-                channel.createMessage("**something broke!!**\r\n\r\n " + finalSStackTrace).block();
+                channel.createMessage("**something broke in the DB!!**\r\n\r\n " + finalSStackTrace).block();
                 logger.info("sent DM");
                 return Mono.empty();
             }).block();

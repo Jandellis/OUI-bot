@@ -164,7 +164,7 @@ public class ExportUtils {
             Statement st = con.createStatement();
 
 
-            PreparedStatement pst = con.prepareStatement("SELECT max_donation, min_donation, role FROM Donations where franchise = ?");
+            PreparedStatement pst = con.prepareStatement("SELECT max_donation, min_donation, role FROM donations where franchise = ?");
             pst.setString(1, franchise);
             ResultSet rs = pst.executeQuery();
             while (rs.next()) {

@@ -302,8 +302,8 @@ public class GiveAWay extends Action {
                 winner = enteredList.get(randomNumber);
                 // see if they have won in the past 7 days
                 if (giveawayWinnerHashMap.containsKey(winner)) {
-                    // make sure they have won 2 or less times
-                    if (giveawayWinnerHashMap.get(winner).getWins() <= 2) {
+                    // if they have won 2 times this week reroll
+                    if (giveawayWinnerHashMap.get(winner).getWins() < 2) {
                         break;
                     }
                     logger.info(winner + " has won too many times, rerolling! ");

@@ -415,6 +415,10 @@ public class BuyUpgrade extends Action implements EmbedAction {
                         } else {
                             upgradeLimit = profile.getUpgrade();
                         }
+                        if (endPage == -1) {
+                            startPage = 1;
+                            endPage = upgradeLimit;
+                        }
 
                         StringBuilder sb = new StringBuilder();
                         int count = 1;
