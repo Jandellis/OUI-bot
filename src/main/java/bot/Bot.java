@@ -249,6 +249,7 @@ public class Bot {
 //                    commands.add("ping.json");
                     commands.add("postAd.json");
                     commands.add("ProfileStats.json");
+                    commands.add("FranchiseStats.json");
                     commands.add("SauceMarketStats.json");
                     commands.add("FlexStats.json");
                     commands.add("giveaway.json");

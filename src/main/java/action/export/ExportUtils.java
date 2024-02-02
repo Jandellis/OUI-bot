@@ -6,6 +6,8 @@ import action.export.model.FranchiseStatType;
 import action.export.model.FranchiseStats;
 import action.export.model.MemberDonations;
 import action.export.model.WarningData;
+import action.reminder.model.ProfileStats;
+import action.upgrades.model.LocationEnum;
 import bot.Config;
 import bot.Member;
 import database.DatabaseUtils;
@@ -549,5 +551,38 @@ public class ExportUtils {
             databaseUtils.printException(ex);
         }
         return false;
+    }
+
+
+    public static List<FranchiseStats> loadFranchiseStats(String name, int days) {
+        List<FranchiseStats> stats = new ArrayList<>();
+
+
+        try {
+
+
+            LocalDateTime now = LocalDateTime.now().minusDays(days);
+            Timestamp timestamp = Timestamp.valueOf(now);
+            Connection con = databaseUtils.getConnection();
+            String sql = "SELECT name, income, sold, balance, import_time FROM franchise_stats  " +
+                    "WHERE name = ? " +
+                    "and import_time > ? ";
+            sql += "order by import_time";
+            PreparedStatement pst = con.prepareStatement(sql);
+            pst.setString(1, name);
+
+            pst.setTimestamp(2, timestamp);
+            ResultSet rs = pst.executeQuery();
+
+            while (rs.next()) {
+                FranchiseStats stat = new FranchiseStats(rs.getString(1), rs.getLong(2), rs.getLong(3), rs.getLong(4), rs.getTimestamp(5));
+                stats.add(stat);
+            }
+            con.close();
+
+        } catch (SQLException ex) {
+            databaseUtils.printException(ex);
+        }
+        return stats;
     }
 }
