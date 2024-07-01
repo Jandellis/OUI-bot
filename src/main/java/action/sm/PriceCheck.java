@@ -24,6 +24,7 @@ import org.knowm.xchart.XYChart;
 import org.knowm.xchart.XYChartBuilder;
 import org.knowm.xchart.XYSeries;
 import org.knowm.xchart.style.Styler;
+import org.knowm.xchart.style.colors.XChartSeriesColors;
 import reactor.core.publisher.Mono;
 
 import java.io.BufferedInputStream;
@@ -36,6 +37,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Timestamp;
+import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
@@ -99,6 +101,22 @@ public class PriceCheck extends Action {
 
             for (Sauce sauce : Sauce.values()) {
                 int price = Integer.parseInt(((JSONObject) ((JSONObject) obj).get(sauce.getName())).get("price").toString());
+                JSONArray history = (JSONArray) ((JSONObject) ((JSONObject) obj).get(sauce.getName())).get("history");
+                int max = 0;
+                int min = 99999999;
+                double avg = 0;
+                double total = 0;
+                for (int i = 0; i < history.size(); i++) {
+                    int value = Integer.parseInt(history.get(i).toString());
+                    if (value > max) {
+                        max = value;
+                    }
+                    if (value < min) {
+                        min = value;
+                    }
+                    total += value;
+                    avg = total / (i+1);
+                }
                 int price2 = price;
                 if (oldPrices != null && oldPrices.size() > 0)
                      price2 = oldPrices.get(sauce);
@@ -108,6 +126,9 @@ public class PriceCheck extends Action {
                 logger.info(sauce + " at $" + price);
                 prices.put(sauce, price);
                 SauceObject sauceObject = new SauceObject(sauce, price2, price);
+                sauceObject.setAvg(avg);
+                sauceObject.setMax(max);
+                sauceObject.setMin(min);
                 SauceObjectPrices.put(sauce, sauceObject);
             }
 
@@ -116,7 +137,12 @@ public class PriceCheck extends Action {
                     prices.get(Sauce.guacamole),
                     prices.get(Sauce.salsa),
                     prices.get(Sauce.hotsauce),
-                    prices.get(Sauce.chipotle));
+                    prices.get(Sauce.chipotle),
+                    prices.get(Sauce.secret_sauce));
+
+            //load the last 24 hours of sauce prices, get the max, min and average.
+            //Add that to a SauceObject
+            //in addSauce get that to use that and add it to the embed
 
             logger.info("Loading alerts");
             HashMap<String, StringBuilder> alerts = new HashMap<>();
@@ -222,11 +248,12 @@ public class PriceCheck extends Action {
             addSauce(SauceObjectPrices.get(Sauce.guacamole), embed);
             addSauce(SauceObjectPrices.get(Sauce.pico), embed);
             addSauce(SauceObjectPrices.get(Sauce.chipotle), embed);
+            addSauce(SauceObjectPrices.get(Sauce.secret_sauce), embed);
 
             printCheap(SauceObjectPrices);
 
             logger.info("creating chart");
-            createChart(data);
+            createChart(data, "line_chart", null);
             logger.info("got chart");
             smUpdateChannels.forEach(channel -> {
                 try {
@@ -243,6 +270,23 @@ public class PriceCheck extends Action {
                 }
             });
 
+
+            logger.info("creating chart");
+            createChart(data, "ss_chart", Sauce.secret_sauce);
+            logger.info("got chart");
+            smUpdateChannels.forEach(channel -> {
+                try {
+                    InputStream inputStream = null;
+                    inputStream = new BufferedInputStream(new FileInputStream("ss_chart.png"));
+                    MessageCreateSpec msg = MessageCreateSpec.builder()
+                            .addFile("ss_chart.png", inputStream)
+                            .build();
+
+                    client.getChannelById(Snowflake.of(channel)).createMessage(msg.asRequest()).block();
+                } catch (Exception e) {
+                    printException(e);
+                }
+            });
 
             logger.info("Finished");
         } catch (Exception e) {
@@ -266,11 +310,13 @@ public class PriceCheck extends Action {
         if (change == 0) {
             direction = " | <a:orange_dots:1015118419047235585> No Change";
         }
+        DecimalFormat df = new DecimalFormat("#.##");
+        String stats = "\n**Max** $" + sauce.getMax() + ", **Min** $ " + sauce.getMin() + ", **Avg** $" + df.format(sauce.getAvg()) ;
 
-        String line = "\r\n------------------";
+        String line = "\n------------------------------------";
 
 
-        embed.addField(name, "$" + sauce.getPrice() + direction + line, false);
+        embed.addField(name, "$" + sauce.getPrice() + direction + stats + line, false);
 
 
 //        embed.addField(sauce.getSauce().getName(), "$" + sauce.getPrice(), true);
@@ -298,7 +344,7 @@ public class PriceCheck extends Action {
                     move = " :chart_with_upwards_trend: up " + difference;
                 }
 
-                sb.append(" - " + sauce.getName() + " $" + sauceObject.getPrice() + move + "\r\n");
+                sb.append("- " + sauce.getName() + " $" + sauceObject.getPrice() + move + "\n");
                 cheap.set(true);
             }
         });
@@ -410,7 +456,7 @@ public class PriceCheck extends Action {
             if (priceTrigger > price && price != -1 && sauce.getName().equals(sauceName)) {
                 logger.info("price is " + price);
 
-                sb.append("\n <a:bluedown:1015028942358454353>  " + sauce.getName() + " is low $" + price );
+                sb.append("\n <a:bluedown:1015028942358454353>  " + sauce.getUppercaseName() + " is low $" + price );
                 cheap.set(true);
             }
         });
@@ -433,7 +479,7 @@ public class PriceCheck extends Action {
         prices.forEach((sauce, price) -> {
             if (priceTrigger < price && price != -1 && sauce.getName().equals(sauceName)) {
                 logger.info("price is " + price);
-                sb.append("\n <a:greenup:1015028862368878723>  " + sauce.getName() + " is high $" + price );
+                sb.append("\n <a:greenup:1015028862368878723>  " + sauce.getUppercaseName() + " is high $" + price );
                 cheap.set(true);
             }
         });
@@ -451,7 +497,7 @@ public class PriceCheck extends Action {
 
         StringBuilder sb = new StringBuilder();
         AtomicBoolean dropping = new AtomicBoolean(false);
-        sb.append("\n <a:reddown:1015028786292592701>  " + sauce + " is dropping");
+        sb.append("\n <a:reddown:1015028786292592701>  " + sauce.getUppercaseName() + " is dropping");
 
         Integer now = prices.get(0);
         Integer hour1 = prices.get(1);
@@ -542,11 +588,11 @@ public class PriceCheck extends Action {
      *
      */
 
-    private void createChart(String data) throws IOException, ParseException {
+    private void createChart(String data, String name, Sauce sauce) throws IOException, ParseException {
         logger.info("getting chart data");
-        XYChart chart = readData(data);
+        XYChart chart = readData(data, sauce);
         logger.info("got chart data");
-        BitmapEncoder.saveBitmap(chart, "./line_chart", BitmapEncoder.BitmapFormat.PNG);
+        BitmapEncoder.saveBitmap(chart, "./"+name, BitmapEncoder.BitmapFormat.PNG);
 
 //        JFreeChart chart = ChartFactory.createXYLineChart(
 //                "Sauce Market last 24 hours",
@@ -601,11 +647,17 @@ public class PriceCheck extends Action {
     }
 
 
-    private XYChart readData(String data) throws ParseException {
+    private XYChart readData(String data, Sauce inputSauce) throws ParseException {
         // Create Chart
         logger.info("getting builder");
+        String title = "Sauce Market";
+        if (inputSauce != null ){
+            title = inputSauce.getUppercaseName();
+        }
+
+
         XYChart chart = new XYChartBuilder().width(900).height(600)
-                .title("Sauce Market last 24 hours")
+                .title(title + " last 24 hours")
                 .xAxisTitle("Hours ago")
                 .yAxisTitle("Price").build();
         logger.info("got builder");
@@ -616,7 +668,9 @@ public class PriceCheck extends Action {
 //        chart.getStyler().setYAxisLabelAlignment(Styler.TextAlignment.Right);
 //        chart.getStyler().setYAxisDecimalPattern("$ #,###.##");
         chart.getStyler().setPlotMargin(0);
-        chart.getStyler().setYAxisMin(0d);
+        if (inputSauce == null || !inputSauce.equals(Sauce.secret_sauce)) {
+            chart.getStyler().setYAxisMin(0d);
+        }
 //        chart.getStyler().setPlotContentSize(.95);
 
 
@@ -626,6 +680,12 @@ public class PriceCheck extends Action {
         Object obj = jsonParser.parse(data);
 
         for (Sauce sauce : Sauce.values()) {
+            if (inputSauce == null && sauce.equals(Sauce.secret_sauce)) {
+                continue;
+            }
+            if (inputSauce!= null && !inputSauce.equals(sauce)) {
+                continue;
+            }
 //            XYSeries series = new XYSeries(sauce.getUppercaseName());
 
             int price = Integer.parseInt(((JSONObject) ((JSONObject) obj).get(sauce.getName())).get("price").toString());
@@ -644,7 +704,12 @@ public class PriceCheck extends Action {
                 yData.add(value);
             }
 //            dataset.addSeries(series);
-            chart.addSeries(sauce.getUppercaseName(), xData, yData);
+            XYSeries series = chart.addSeries(sauce.getUppercaseName(), xData, yData);
+            if (sauce.equals(Sauce.secret_sauce)) {
+                series.setLineColor(XChartSeriesColors.MAGENTA);
+                series.setMarkerColor(XChartSeriesColors.MAGENTA);
+
+            }
         }
 
         return chart;

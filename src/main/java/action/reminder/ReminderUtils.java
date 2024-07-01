@@ -10,6 +10,7 @@ import action.reminder.model.Reminder;
 import action.reminder.model.Stats;
 import action.reminder.model.Status;
 import action.reminder.model.Team;
+import action.reminder.model.TeamEvent;
 import action.upgrades.model.LocationEnum;
 import bot.Config;
 import database.DatabaseUtils;
@@ -1242,6 +1243,82 @@ public class ReminderUtils {
             databaseUtils.printException(ex);
         }
         return newProfile;
+    }
+
+
+
+
+    public static boolean createTeamEvent(TeamEvent teamEvent) {
+        Boolean newProfile = false;
+        try {
+            Connection con = databaseUtils.getConnection();
+            Statement st = con.createStatement();
+
+            PreparedStatement pst = con.prepareStatement("SELECT id FROM team_event  WHERE id1 = ?");
+            pst.setString(1, teamEvent.getId1());
+            ResultSet rs = pst.executeQuery();
+            int id = -1;
+            while (rs.next()) {
+                id = rs.getInt(1);
+                String sql = "UPDATE team_event SET " +
+                        "reminder = ?, id1 = ?, id2 = ?, id3 = ?, id4 = ? WHERE id = ?";
+                PreparedStatement p = con.prepareStatement(sql);
+                p.setString(1, teamEvent.getReminder());
+                p.setString(2, teamEvent.getId1());
+                p.setString(3, teamEvent.getId2());
+                p.setString(4, teamEvent.getId3());
+                p.setString(5, teamEvent.getId4());
+                p.setInt(6, id);
+                p.executeUpdate();
+            }
+            if (id == -1) {
+                String sql = "insert into team_event (reminder, id1, id2, id3, id4) " +
+                        "VALUES (?,?,?,?,?)";
+                PreparedStatement p = con.prepareStatement(sql);
+                p.setString(1, teamEvent.getReminder());
+                p.setString(2, teamEvent.getId1());
+                p.setString(3, teamEvent.getId2());
+                p.setString(4, teamEvent.getId3());
+                p.setString(5, teamEvent.getId4());
+                p.execute();
+                newProfile = true;
+            }
+            st.executeBatch();
+            con.close();
+        } catch (SQLException ex) {
+            databaseUtils.printException(ex);
+        }
+        return newProfile;
+    }
+
+
+    public static TeamEvent loadTeamEvent(String id) {
+        Boolean newProfile = false;
+        try {
+            Connection con = databaseUtils.getConnection();
+            Statement st = con.createStatement();
+
+            PreparedStatement pst = con.prepareStatement("SELECT reminder, id1, id2, id3, id4 " +
+                    "FROM team_event  WHERE id1 = ? or id2 = ? or id3 = ? or id4 = ?");
+            pst.setString(1, id);
+            pst.setString(2, id);
+            pst.setString(3, id);
+            pst.setString(4, id);
+            ResultSet rs = pst.executeQuery();
+            while (rs.next()) {
+                TeamEvent teamEvent = new TeamEvent(rs.getString(1),
+                        rs.getString(2),
+                        rs.getString(3),
+                        rs.getString(4),
+                        rs.getString(5));
+                return teamEvent;
+            }
+            st.executeBatch();
+            con.close();
+        } catch (SQLException ex) {
+            databaseUtils.printException(ex);
+        }
+        return null;
     }
 
 }

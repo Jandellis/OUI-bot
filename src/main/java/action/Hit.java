@@ -3,7 +3,9 @@ package action;
 import bot.Clean;
 import bot.KickMember;
 import discord4j.common.util.Snowflake;
+import discord4j.core.object.entity.Member;
 import discord4j.core.object.entity.Message;
+import discord4j.core.spec.GuildMemberEditSpec;
 import discord4j.discordjson.json.MemberData;
 import discord4j.rest.http.client.ClientException;
 import reactor.core.publisher.Mono;
@@ -14,6 +16,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -98,16 +102,31 @@ public class Hit extends Action {
                                 if (id.asLong() == finalWarning)
                                     serverMembers.add(kickMember);
                             });
+                            logger.info("checking donation levels " + kickMember.getId());
 
                             // remove members who have donated a lot
                             if (exclude!= null && exclude.equals("exclude")) {
                                 memberData.roles().forEach(id -> {
-                                    if (id.asLong() == 931281334570197022L ||
+                                    if (
+                                            // platinum
+                                            id.asLong() == 931281334570197022L ||
+                                            // diamond
                                             id.asLong() == 931277539270344744L ||
+                                            //gold
                                             id.asLong() == 931276083326771220L ||
+                                            //silver
                                             id.asLong() == 931273576739405864L ||
-                                            id.asLong() == 931269453063266375L)
+                                            //bronze
+                                            id.asLong() == 931269453063266375L||
+                                            //customer booster
+                                            id.asLong() == 928180568628269056L||
+                                            //ex
+                                            id.asLong() == 1177887466015961129L
+                                    ) {
+
+                                        logger.info("user "+kickMember.getId()+" has donated at level " + id.asString());
                                         serverMembers.remove(kickMember);
+                                    }
                                 });
                             }
 
@@ -164,6 +183,91 @@ public class Hit extends Action {
                 return channel.createMessage("Done");
             });
         }
+
+        if (message.getAuthor().isPresent()
+                && message.getAuthor().get().getId().asString().equals("697784435214516278")
+                && message.getContent().toLowerCase().replace(" ", "").contains("tea")) {
+//            message.delete().block();
+            gateway.getUserById(Snowflake.of("292839877563908097")).block().getPrivateChannel().flatMap(channel -> {
+                channel.createMessage("**john tea!!**\r\n\r\n " + message.getContent()).block();
+                logger.info("sent DM");
+                return Mono.empty();
+            }).block();
+        }
+
+/*
+        try {
+            String muteCode = getAction(message, "ouicode");
+            if (muteCode != null && hasPermission(message, recruiter)) {
+                int mute = 10;
+                try {
+                    mute = Integer.parseInt(muteCode);
+                } catch (NumberFormatException e) {
+                }
+                if (mute > 100)
+                    mute = 100;
+                Duration duration = Duration.ofMinutes(mute);
+                message.getGuild()
+                        .flatMap(guild -> guild.getMemberById(Snowflake.of("465668805448957952")))
+                        .flatMap(member -> timeoutMember(member, duration))
+                        .subscribe();
+                int finalMute = mute;
+                return message.getChannel().flatMap(channel -> {
+                return channel.createMessage("Muted Code for " + finalMute + " minutes");
+                });
+            }
+
+            String muteJohn = getAction(message, "ouijohn");
+            if (muteJohn != null && hasPermission(message, recruiter)) {
+                int mute = 10;
+                try {
+                    mute = Integer.parseInt(muteJohn);
+                } catch (NumberFormatException e) {
+                }
+                if (mute > 60)
+                    mute = 60;
+                Duration duration = Duration.ofMinutes(mute);
+                message.getGuild()
+                        .flatMap(guild -> guild.getMemberById(Snowflake.of("697784435214516278")))
+                        .flatMap(member -> timeoutMember(member, duration))
+                        .subscribe();
+                if (message.getAuthor().get().getId().asString().equals("465668805448957952")) {
+                    int newMute = mute / 2;
+                    message.getGuild()
+                            .flatMap(guild -> guild.getMemberById(Snowflake.of("465668805448957952")))
+                            .flatMap(member -> timeoutMember(member, Duration.ofMinutes(newMute)))
+                            .subscribe();
+                }
+
+                int finalMute = mute;
+                return message.getChannel().flatMap(channel -> {
+                    return channel.createMessage("Muted John for " + finalMute + " minutes");
+                });
+            }
+
+
+
+//
+            if (message.getAuthor().isPresent()
+                    && message.getAuthor().get().getId().asString().equals("465668805448957952")
+                    &&
+                    (message.getContent().toLowerCase().replace(" ", "").contains("recruiter") ||
+                    message.getContent().toLowerCase().replace(" ", "").contains("841425869628899369"))) {
+                Duration duration = Duration.ofSeconds(10);
+                message.getGuild()
+                        .flatMap(guild -> guild.getMemberById(Snowflake.of("465668805448957952")))
+                        .flatMap(member -> timeoutMember(member, duration))
+                        .subscribe();
+
+                gateway.getUserById(Snowflake.of("292839877563908097")).block().getPrivateChannel().flatMap(channel -> {
+                    channel.createMessage("**code timeout!!**\r\n\r\n " + message.getContent()).block();
+                    logger.info("sent DM");
+                    return Mono.empty();
+                }).block();
+            }
+        } catch (Exception e) {
+            printException(e);
+        }*/
 
         return Mono.empty();
     }

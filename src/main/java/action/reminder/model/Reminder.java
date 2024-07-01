@@ -43,4 +43,8 @@ public class Reminder {
     public void setId(long id) {
         this.id = id;
     }
+
+    public void setChannel(String channel) {
+        this.channel = channel;
+    }
 }

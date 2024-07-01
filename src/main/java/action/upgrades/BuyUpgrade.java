@@ -18,6 +18,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -34,6 +35,7 @@ public class BuyUpgrade extends Action implements EmbedAction {
     Location beach = new Location(LocationEnum.beach);
     Location amusement = new Location(LocationEnum.amusement);
     Location hq = new Location(LocationEnum.hq);
+    Location event = new Location(LocationEnum.event);
     List<Location> locations = new ArrayList<>();
 
     String paramUp;
@@ -250,6 +252,16 @@ public class BuyUpgrade extends Action implements EmbedAction {
         hq.addUpgrade("Chief Executive Officer", "Chief Executive Officer", 500, 5000000, 10);
         locations.add(hq);
 
+        event.addUpgrade("Worker Efficiency", "Worker Efficiency", 700, 1000, 25);
+        event.addUpgrade("Customer Service Training", "Customer Service Training", 10, 1500, 15);
+        event.addUpgrade("Fancier Decor", "Fancier Decor", 20, 2000, 15);
+        event.addUpgrade("Newspaper Ads", "Newspaper Ads", 30, 2500, 20);
+        event.addUpgrade("Better Sign", "Better Sign", 50, 3000, 20);
+        event.addUpgrade("Radio Ads", "Radio Ads", 75, 3500, 25);
+        event.addUpgrade("Email Campaign", "Email Campaign", 100, 4000, 25);
+        event.addUpgrade("Flashy Lights", "Flashy Lights", 250, 5000, 20);
+        locations.add(event);
+
 
         watchChannels = Arrays.asList(config.get("watchChannels").split(","));
     }
@@ -367,6 +379,7 @@ public class BuyUpgrade extends Action implements EmbedAction {
                         });
 
                         boolean cheapSort = message.getContent().toLowerCase().contains("cheap");
+                        boolean groupSort = message.getContent().toLowerCase().contains("grouped");
                         String[] split = message.getContent().split(" ");
                         int startPage = -1;
                         int endPage = -1;
@@ -409,6 +422,12 @@ public class BuyUpgrade extends Action implements EmbedAction {
                                     return 1;
                             });
                         }
+                        //sorted by price first, then alphabetically
+                        if (groupSort) {
+                            title = " - Grouped";
+                            total.sort(Comparator.comparing(UserUpgrades::getUpgrade));
+                        }
+
                         int upgradeLimit;
                         if (profile.getUpgrade() == 0) {
                             upgradeLimit = 30;
@@ -470,6 +489,10 @@ public class BuyUpgrade extends Action implements EmbedAction {
                                     }
                                     if (upgrade.getUpgrade().equals("Task Booster")) {
                                         boost = " 100% Daily task";
+                                        fakeBoost = true;
+                                    }
+                                    if (upgrade.getUpgrade().equals("Worker Efficiency")) {
+                                        boost = " mover overtime";
                                         fakeBoost = true;
                                     }
                                     sb.append("*(+$" + boost + ")*\r\n");
@@ -604,7 +627,8 @@ public class BuyUpgrade extends Action implements EmbedAction {
                                         upgrade.getName().equals("Food Services Department") ||
                                         upgrade.getName().equals("Overtime Management") ||
                                         upgrade.getName().equals("Lunch Rush Initiative") ||
-                                        upgrade.getName().equals("Task Booster")) {
+                                        upgrade.getName().equals("Task Booster")||
+                                        upgrade.getName().equals("Worker Efficiency")) {
                                     boost = 0;
                                 }
                                 totalBoost.addAndGet(boost);
@@ -703,7 +727,8 @@ public class BuyUpgrade extends Action implements EmbedAction {
                             title.contains("Taco Truck") ||
                             title.contains("Hotdog Cart") ||
                             title.contains("Amusement Park Attractions") ||
-                            title.contains("Ice Cream Stand")) {
+                            title.contains("Ice Cream Stand") ||
+                            title.contains("Team Shack Upgrades")) {
                         String id = getId(message, embed);
                         Location location = getLocation(title, embed.description().get());
 
@@ -777,6 +802,9 @@ public class BuyUpgrade extends Action implements EmbedAction {
         }
         if (name.contains("Amusement")) {
             name = "amusement";
+        }
+        if (name.contains("Team")) {
+            name = "event";
         }
         Location defaultLocation = null;
 

@@ -9,7 +9,8 @@ public enum LocationEnum {
     beach("beach"),
     amusement ("amusement"),
     city("city"),
-    hq("hq");
+    hq("hq"),
+    event("event");
 
     private String name;
 

@@ -215,7 +215,7 @@ public class CreateReminder extends Action implements EmbedAction {
 
                             }
                             //clean
-                            if (desc.startsWith("\u2705") && desc.contains("You have cleaned")) {
+                            if (desc.startsWith("\u2705") && (desc.contains("You have cleaned your Shack") || desc.contains("You have cleaned all of your locations"))) {
                                 AtomicReference<String> userId = new AtomicReference<>("");
                                 userId.set(getId(message, embed));
 
@@ -235,6 +235,17 @@ public class CreateReminder extends Action implements EmbedAction {
                                     createReminder(ReminderType.clean, message, profile);
                                 }
 
+                            }
+                            // event
+                            // event clean
+                            if (desc.startsWith("\u2705") && desc.contains("You have cleaned your team's shack")) {
+                                AtomicReference<String> userId = new AtomicReference<>("");
+                                userId.set(getId(message, embed));
+
+                                Profile profile = ReminderUtils.loadProfileById(userId.get());
+                                if (profile != null) {
+                                    createReminder(ReminderType.eventClean, message, profile);
+                                }
                             }
 
                         } else if (embed.title().toOptional().isPresent()) {
@@ -460,6 +471,10 @@ public class CreateReminder extends Action implements EmbedAction {
             case clean:
                 sleep = profile.getStatus().getClean();
                 break;
+
+            case eventClean:
+                sleep = 2*60;
+                break;
         }
 
 
@@ -517,22 +532,22 @@ public class CreateReminder extends Action implements EmbedAction {
 
             StringBuilder missingReminders = new StringBuilder();
             if (!work) {
-                missingReminders.append("</work:1006354978274820109>\n");
+                missingReminders.append("</work:1203826210250166292>\n");
             }
             if (!tips) {
-                missingReminders.append("</tips:1006354978153169013>\n");
+                missingReminders.append("</tips:1203826208383696957>\n");
             }
             if (!ot) {
-                missingReminders.append("</overtime:1006354977981210646>\n");
+                missingReminders.append("</overtime:1203826204356911104>\n");
             }
             if (!vote) {
-                missingReminders.append("</vote link:1006354978274820108>\n");
+                missingReminders.append("</vote link:1203826209532682312>\n");
             }
             if (!daily) {
-                missingReminders.append("</daily:1006354977788268621>\n");
+                missingReminders.append("</daily:1203826197352677416>\n");
             }
             if (!clean) {
-                missingReminders.append("</clean:1006354977721176143>\n");
+                missingReminders.append("</clean:1203826195511250967>\n");
             }
             if (missingReminders.toString().length() > 1) {
                 message.getChannel().block().createMessage(missingReminders.toString()).block();
@@ -582,12 +597,12 @@ public class CreateReminder extends Action implements EmbedAction {
 
             Instant reminderTime = message.getTimestamp().plus(time, ChronoUnit.SECONDS);
 
-            react(message, profile);
-
             Reminder reminder = ReminderUtils.addReminder(profile.getName(), type, Timestamp.from(reminderTime), message.getChannelId().asString());
 
             DoReminder doReminder = new DoReminder(gateway, client);
             doReminder.runReminder(reminder);
+
+            react(message, profile);
 
         }
     }

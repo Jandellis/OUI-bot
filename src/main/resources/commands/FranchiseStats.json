@@ -40,7 +40,7 @@
             "type": 4,
             "required": false,
             "min_value": 1,
-            "max_value": 200
+            "max_value": 500
         }
     ]
 }

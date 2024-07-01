@@ -77,6 +77,14 @@ public class CreateBoostReminder extends Action implements EmbedAction {
         boosts.put("Gift Shop",new Boost("Gift Shop", 8, LocationEnum.amusement));
         boosts.put("Live Show",new Boost("Live Show", 24, LocationEnum.amusement));
 
+
+        //Event
+        boosts.put("Flyers", new Boost("Flyers", 1, LocationEnum.event));
+        boosts.put("Sign Twirler",new Boost("Sign Twirler", 2, LocationEnum.event));
+        boosts.put("Refreshments", new Boost("Refreshments", 3, LocationEnum.event));
+        boosts.put("Music",new Boost("Music", 4, LocationEnum.event));
+        boosts.put("Festival",new Boost("Festival", 6, LocationEnum.event));
+
         watchChannels = Arrays.asList(config.get("watchChannels").split(","));
     }
 
@@ -131,7 +139,7 @@ public class CreateBoostReminder extends Action implements EmbedAction {
                 if (embed.description().toOptional().isPresent()) {
                     String desc = embed.description().get();
                     //boosts
-                    if (desc.startsWith("\u2705") && desc.contains("You have purchased:")) {
+                    if (desc.startsWith("\u2705") && (desc.contains("You have purchased:") || desc.contains("You have bought"))) {
 
 
                         AtomicReference<String> userId = new AtomicReference<>("");
@@ -150,10 +158,16 @@ public class CreateBoostReminder extends Action implements EmbedAction {
                         Profile profile = ReminderUtils.loadProfileById(userId.get());
                         if (profile != null) {
 
-                            for (Boost boost : boosts.values()) {
-                                if (desc.contains(boost.getName())) {
+                            if (desc.contains("Live Music")){
+                                //stop live music clashing with music
+                                createReminder(boosts.get("Live Music"), message, profile);
+                            } else {
 
-                                    createReminder(boost, message, profile);
+                                for (Boost boost : boosts.values()) {
+                                    if (desc.contains(boost.getName())) {
+
+                                        createReminder(boost, message, profile);
+                                    }
                                 }
                             }
                         }
@@ -164,6 +178,7 @@ public class CreateBoostReminder extends Action implements EmbedAction {
 
                 if (embed.title().toOptional().isPresent()) {
                     if (embed.title().get().startsWith("\uD83D\uDCC8 Active Boosts")) {
+                        logger.info("Got Boost");
                         AtomicReference<String> userId = new AtomicReference<>("");
                         userId.set(getId(message, embed));
 
@@ -182,10 +197,13 @@ public class CreateBoostReminder extends Action implements EmbedAction {
                                         for (Reminder reminder : reminders) {
                                             if (reminder.getType().getName().equals(boost.getName())) {
                                                 found = true;
+                                                logger.info("Got reminder already for " + boost.getName());
                                                 break;
                                             }
                                         }
                                         if (!found) {
+
+                                            logger.info("Creating new reminder already for " + boost.getName());
                                             createReminder(boost, message, profile, getSeconds(line));
                                         }
                                     }
@@ -229,19 +247,20 @@ public class CreateBoostReminder extends Action implements EmbedAction {
 
 
     private void createReminder(Boost boost, Message message, Profile profile) {
-        createReminder(boost, message, profile, boost.getDuration() * 60 * 60);
+        double reminderLength = boost.getDuration() * 60 * 60;
+        createReminder(boost, message, profile, (int) reminderLength);
     }
 
     private void createReminder(Boost boost, Message message, Profile profile, int duration) {
 
         Instant reminderTime = message.getTimestamp().plus(duration, ChronoUnit.SECONDS);
-        react(message, profile);
         ReminderType type = ReminderType.getReminderType(boost.getName());
 
         Reminder reminder = ReminderUtils.addReminder(profile.getName(), type, Timestamp.from(reminderTime), message.getChannelId().asString());
 
         DoReminder doReminder = new DoReminder(gateway, client);
         doReminder.runReminder(reminder);
+        react(message, profile);
     }
 
     private void react(Message message, Profile profile) {

@@ -5,7 +5,8 @@ public enum Sauce {
     pico("pico"),
     hotsauce("hotsauce"),
     guacamole("guacamole"),
-    chipotle("chipotle");
+    chipotle("chipotle"),
+    secret_sauce("secret_sauce");
 
     private String name;
 
@@ -19,12 +20,18 @@ public enum Sauce {
 
 
     public String getUppercaseName() {
+        if (name.equals(secret_sauce.name)){
+            return ("Secret Sauce");
+        }
         return getName().substring(0, 1).toUpperCase() + getName().substring(1);
     }
 
     public static Sauce getSauce(String name) {
         if (name.equals("guac")) {
             name = "guacamole";
+        }
+        if (name.toLowerCase().contains("secret")) {
+            name = "secret_sauce";
         }
         for (Sauce value : values()) {
             if (name.toLowerCase().contains(value.name))

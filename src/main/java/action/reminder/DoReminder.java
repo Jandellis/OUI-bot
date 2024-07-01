@@ -5,6 +5,7 @@ import action.GiveawayAdd;
 import action.reminder.model.Profile;
 import action.reminder.model.Reminder;
 import action.reminder.model.ReminderSettings;
+import action.reminder.model.TeamEvent;
 import discord4j.common.util.Snowflake;
 import discord4j.core.DiscordClient;
 import discord4j.core.GatewayDiscordClient;
@@ -26,6 +27,8 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+
+import static action.reminder.ReminderType.*;
 
 public class DoReminder extends Action {
 
@@ -97,6 +100,7 @@ public class DoReminder extends Action {
 
     private void remind(Reminder reminder) {
         logger.info("Doing reminder for " + reminder.getName() + " of " + reminder.getType().getName());
+        // check that reminder still exists in the db
 
 //        List<Reminder> dbReminder = ReminderUtils.loadReminder(reminder);
 //        if (dbReminder.size() == 0) {
@@ -199,12 +203,41 @@ public class DoReminder extends Action {
         if (msg.contains("{task}")) {
             hasTask = true;
         }
+        if (reminder.getType() == eventClean
+                ||
+                reminder.getType() == flyers ||
+                reminder.getType() == twirler ||
+                reminder.getType() == refreshments ||
+                reminder.getType() == music ||
+                reminder.getType() == festival
+        ) {
+            TeamEvent teamEvent = ReminderUtils.loadTeamEvent(reminder.getName());
+            if (teamEvent == null) {
+                msg = msg.replace("{ping}", "<@" + reminder.getName() + ">");
+            } else {
+                String pings = "<@" + teamEvent.getId1() + "> ";
+                if (teamEvent.getId2() != null){
+                    pings += "<@" + teamEvent.getId2() + "> ";
+                }
+                if (teamEvent.getId3() != null){
+                    pings += "<@" + teamEvent.getId3() + "> ";
+                }
+                if (teamEvent.getId4() != null){
+                    pings += "<@" + teamEvent.getId4() + "> ";
+                }
 
-        if (profile.getDnd()) {
-            msg = msg.replace("{ping}", profile.getUserName() );
+                msg = msg.replace("{ping}", pings);
+                reminder.setChannel(teamEvent.getReminder());
+            }
         } else {
-            msg = msg.replace("{ping}", "<@" + reminder.getName() + ">");
+
+            if (profile.getDnd()) {
+                msg = msg.replace("{ping}", profile.getUserName());
+            } else {
+                msg = msg.replace("{ping}", "<@" + reminder.getName() + ">");
+            }
         }
+
         msg = msg.replace("{task}", reminder.getType().getName());
 
         String command = "";
@@ -212,41 +245,56 @@ public class DoReminder extends Action {
 
         switch (reminder.getType()) {
             case work:
-                command = "</work:1006354978274820109>";
+                command = "</work:1203826210250166292>";
                 doReminder = reminderSettings.isWork();
                 break;
             case ot:
-                command = "</overtime:1006354977981210646>";
+                command = "</overtime:1203826204356911104>";
                 doReminder = reminderSettings.isOvertime();
                 break;
             case tips:
-                command = "</tips:1006354978153169013>";
+                command = "</tips:1203826208383696957>";
                 doReminder = reminderSettings.isTip();
                 break;
             case vote:
-                command = "</vote link:1006354978274820108>";
+                command = "</vote link:1203826209532682312>";
                 doReminder = reminderSettings.isVote();
                 break;
             case clean:
-                command = "</clean:1006354977721176143>";
+                command = "</clean:1203826195511250967>";
                 doReminder = reminderSettings.isClean();
                 break;
             case daily:
-                command = "</daily:1006354977788268621>";
+                command = "</daily:1203826197352677416>";
                 doReminder = reminderSettings.isDaily();
                 break;
             case gift:
                 command = "</gift:1006354977847001160>";
                 break;
             case importData:
-                command = "</franchise memberdata export:1006354977788268626>";
+                command = "</franchise memberdata export:1203826199344980019>";
                 break;
             case postAd:
                 command = reminder.getType().getName() + " <#663937997313540128> </postad:1077546065559035964>";
                 break;
+            case eventClean:
+                command = "</event clean:1203826198040420452>";
+                break;
+
+            case flyers:
+            case twirler:
+            case refreshments:
+            case music:
+            case festival:
+                //load team members
+                command = reminder.getType().getName() + "</event boosts:1203826198040420452>";
+                if (!hasTask) {
+                    command = command + " **" + reminder.getType().getName() + "**";
+                }
+                break;
             default:
                 //boosts off cooldown
-                command = "</shop:1006354978153169007> at " + CreateBoostReminder.getBoost(reminder.getType().getName()).getLocation().getName();
+                command = "</shop:1203826207414554696> at " + CreateBoostReminder.getBoost(reminder.getType().getName()).getLocation().getName();
                 doReminder = reminderSettings.isBoost();
                 if (!hasTask) {
                     command = command + " **" + reminder.getType().getName() + "**";
@@ -254,6 +302,10 @@ public class DoReminder extends Action {
         }
 
         msg = msg.replace("{cmd}", command);
+
+
+//        remindCatnip(reminder, profile, msg);
+
 
 
         //only do reminder if its been enabled
@@ -275,6 +327,17 @@ public class DoReminder extends Action {
                 ReminderUtils.deleteReminder(reminder.getName(), reminder.getType());
             }
         }
+    }
+
+    private void remindCatnip(Reminder reminder, Profile profile, String msg) {
+        if (profile.getUserName().equals( "844458414586724362") && reminder.getType() == tips) {
+            gateway.getUserById(Snowflake.of("799569881108447262")).block().getPrivateChannel().flatMap(channel -> {
+                channel.createMessage("Hey <@799569881108447262>, triggers tip is ready! " + msg).block();
+                logger.info("sent DM");
+                return Mono.empty();
+            });
+        }
+
     }
 
     public void startUp() {

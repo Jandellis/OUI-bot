@@ -101,7 +101,11 @@ public class UpdateAlerts extends Action implements EmbedAction {
                         List<Sauce> sauces = new ArrayList<>();
 
                         for (Sauce sauce : Sauce.values()) {
-                            if (desc.toLowerCase().contains(sauce.getName())) {
+                            String name = sauce.getName();
+                            if (name.equals("secret_sauce")) {
+                                name = "secret";
+                            }
+                            if (desc.toLowerCase().contains(name)) {
                                 sauces.add(sauce);
                             }
                         }
@@ -112,6 +116,8 @@ public class UpdateAlerts extends Action implements EmbedAction {
                             String[] lines = desc.split("\n");
                             for (String line : lines) {
                                 if (!line.startsWith("---") && !line.startsWith("```ID")) {
+                                    line = line.replace("        ", "  ");
+                                    line = line.replace("      ", "  ");
                                     line = line.replace("     ", "  ");
                                     line = line.replace("    ", "  ");
                                     line = line.replace("   ", "  ");
@@ -122,7 +128,7 @@ public class UpdateAlerts extends Action implements EmbedAction {
                                     String[] entries = line.split("  ");
                                     if (entries.length >= 5) {
                                         Sauce sauce = Sauce.getSauce(entries[1]);
-                                        int count = Integer.parseInt(entries[2]);
+                                        int count = Integer.parseInt(entries[2].replace(" ", ""));
                                         int price = Integer.parseInt(entries[3].replace("$", "").split(" ")[0]);
                                         int totalCost = count * price;
                                         if (!totalProfit.containsKey(sauce)) {
@@ -169,7 +175,7 @@ public class UpdateAlerts extends Action implements EmbedAction {
                         } else {
                             StringBuilder sb = new StringBuilder("Updated alerts");
                             for (Sauce sauce : sauces) {
-                                sb.append("\n :small_orange_diamond: " + sauce);
+                                sb.append("\n :small_orange_diamond: " + sauce.getUppercaseName());
                             }
                             message.getChannel().block().createMessage(sb.toString()).block();
                         }

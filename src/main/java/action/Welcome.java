@@ -18,6 +18,7 @@ public class Welcome extends Action {
     String guildId;
     long chefRole;
     String log;
+    String logPond;
     Long recruiter;
 
     Long immunityId;
@@ -31,6 +32,7 @@ public class Welcome extends Action {
         recruiter = Long.parseLong(config.get("recruiter"));
         immunityId = Long.parseLong(config.get("immunityId"));
         giveawayRole = config.get("giveawayRole");
+        logPond = "1244264763010322483";
 
     }
 
@@ -84,6 +86,28 @@ public class Welcome extends Action {
 //                    }).block();
 //
 //                    message.addReaction(ReactionEmoji.unicode("\uD83D\uDC4D")).block();
+                }
+            }
+
+            //
+
+
+            if (message.getChannelId().asString().equals(logPond)) {
+                if (message.getContent().contains(param)) {
+                    logger.info("Member joined");
+
+                    String memberId = message.getContent().split("`")[1].split("]")[0].substring(1);
+                    try {
+                        client.getGuildById(Snowflake.of("1226485670923599902")).addMemberRole(
+                                Snowflake.of(memberId),
+                                Snowflake.of("1238488243318820894"),
+                                "New pondling").block();
+
+                    } catch (ClientException e) {
+                        //member left the server
+                        logger.info("user left the server " + memberId);
+
+                    }
                 }
             }
 

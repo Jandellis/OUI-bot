@@ -4,14 +4,9 @@ import action.giveaway.model.GiveawayLog;
 import action.giveaway.model.GiveawayWinner;
 import action.reminder.ReminderUtils;
 import action.reminder.model.FlexStats;
-import action.reminder.model.Profile;
 import action.sm.model.SystemReminder;
 import action.sm.model.SystemReminderType;
 import action.sm.Utils;
-import action.upgrades.UpgradeUtils;
-import action.upgrades.model.Location;
-import action.upgrades.model.Upgrade;
-import action.upgrades.model.UserUpgrades;
 import bot.Clean;
 import discord4j.common.util.Snowflake;
 import discord4j.core.event.domain.message.ReactionAddEvent;
@@ -20,7 +15,6 @@ import discord4j.core.object.entity.User;
 import discord4j.core.object.reaction.ReactionEmoji;
 import discord4j.core.spec.EmbedCreateSpec;
 import discord4j.discordjson.Id;
-import discord4j.discordjson.json.EmbedData;
 import discord4j.discordjson.json.MessageData;
 import discord4j.rest.http.client.ClientException;
 import discord4j.rest.util.Color;
@@ -38,6 +32,7 @@ import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class GiveAWay extends Action {
 
@@ -261,6 +256,8 @@ public class GiveAWay extends Action {
         Message message = gateway.getMessageById(Snowflake.of(giveawayChannel), Snowflake.of(messageId)).block();
         List<String> enteredList = new ArrayList<>();
         List<User> users = message.getReactors(ReactionEmoji.unicode(react)).collectList().block();
+        StringBuilder audit = new StringBuilder();
+        AtomicInteger count = new AtomicInteger();
         users.forEach(user -> {
             try {
                 List<Id> roles = client.getGuildById(Snowflake.of(guildId)).getMember(Snowflake.of(user.getId().asString())).block().roles();
@@ -273,6 +270,8 @@ public class GiveAWay extends Action {
                     //only add users who have the correct role into the giveaway
                     if (roleId.asLong() == roleCheck) {
                         enteredList.add(user.getId().asString());
+                        audit.append(count.get() + " - <@" + user.getId().asString() + ">\n");
+                        count.getAndIncrement();
                     }
                 });
             } catch (Exception e) {
@@ -281,7 +280,7 @@ public class GiveAWay extends Action {
         });
         String winner = "409346530277851136";
         try {
-            List<GiveawayLog> winners = ReminderUtils.loadGiveawayLog(7);
+            List<GiveawayLog> winners = ReminderUtils.loadGiveawayLog(14);
 
             HashMap<String, GiveawayWinner> giveawayWinnerHashMap = new HashMap<>();
             for (GiveawayLog winnerEntry : winners) {
@@ -293,13 +292,25 @@ public class GiveAWay extends Action {
                 }
             }
 
+            audit.append("list\n");
+            for (int i = 0; i < enteredList.size(); i++) {
+                audit.append(i + " - <@" + enteredList.get(i) + ">\n");
+
+            }
+            audit.append("past wins\n");
+            giveawayWinnerHashMap.forEach((s, giveawayWinner) -> {
+                audit.append("<@"+giveawayWinner.getName() + "> " + giveawayWinner.getWins() + "\n");
+            });
+
             winner = "";
             Random rand = new Random();
 
             for (int i = 0; i < 10; i++) {
                 // roll a random number and pick a user at random
                 int randomNumber = rand.nextInt(enteredList.size());
+                audit.append("roll is " + randomNumber + " \n");
                 winner = enteredList.get(randomNumber);
+                audit.append("winner is <@" + winner + "> \n");
                 // see if they have won in the past 7 days
                 if (giveawayWinnerHashMap.containsKey(winner)) {
                     // if they have won 2 times this week reroll
@@ -307,8 +318,13 @@ public class GiveAWay extends Action {
                         break;
                     }
                     logger.info(winner + " has won too many times, rerolling! ");
+                    audit.append(" won too mane times, reroll \n");
+                } else {
+                    break;
                 }
             }
+            dmMe(audit.toString());
+
         } catch (Exception e) {
             printException(e);
         }

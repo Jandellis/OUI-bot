@@ -52,7 +52,8 @@ public class DoAlerts extends Action {
                                     prices.get(Sauce.guacamole),
                                     prices.get(Sauce.salsa),
                                     prices.get(Sauce.hotsauce),
-                                    prices.get(Sauce.chipotle));
+                                    prices.get(Sauce.chipotle),
+                                    prices.get(Sauce.secret_sauce));
 
                             logger.info("Loading alerts ");
 

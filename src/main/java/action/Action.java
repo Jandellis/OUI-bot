@@ -11,8 +11,10 @@ import discord4j.core.GatewayDiscordClient;
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.event.domain.message.ReactionAddEvent;
 import discord4j.core.object.Embed;
+import discord4j.core.object.entity.Member;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.reaction.ReactionEmoji;
+import discord4j.core.spec.GuildMemberEditSpec;
 import discord4j.discordjson.Id;
 import discord4j.discordjson.json.EmbedData;
 import discord4j.discordjson.json.MemberData;
@@ -25,6 +27,8 @@ import reactor.core.publisher.Mono;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.sql.Timestamp;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -150,7 +154,7 @@ public abstract class Action {
             }
             logger.info("Found franchise " + franchiseConfig.getName());
             logger.info("Checking if user " + message.getAuthor().get().getId() + " has role " + franchiseConfig.getRecruiter());
-            return hasPermission(message.getAuthor().get().getId().asString(), Long.parseLong(franchiseConfig.getRecruiter()));
+            return hasPermission(message.getAuthor().get().getId().asString(), Long.parseLong(franchiseConfig.getRecruiter()), franchiseConfig.getGuild());
 
         } catch (Exception e) {
             printException(e);
@@ -159,6 +163,10 @@ public abstract class Action {
     }
 
     protected boolean hasPermission(String userId, Long role) {
+        return hasPermission(userId, role, guildId);
+    }
+
+    protected boolean hasPermission(String userId, Long role, String guildId) {
         try {
             MemberData memberData = null;
 
@@ -192,15 +200,34 @@ public abstract class Action {
             }
 
             String finalSStackTrace = sStackTrace;
-            gateway.getUserById(Snowflake.of("292839877563908097")).block().getPrivateChannel().flatMap(channel -> {
-                channel.createMessage("**something broke!!**\r\n\r\n " + finalSStackTrace).block();
-                logger.info("sent DM");
-                return Mono.empty();
-            }).block();
+//            gateway.getUserById(Snowflake.of("292839877563908097")).block().getPrivateChannel().flatMap(channel -> {
+//                channel.createMessage("**something broke!!**\r\n\r\n " + finalSStackTrace).block();
+//                logger.info("sent DM");
+//                return Mono.empty();
+//            }).block();
+            dmMe("**something broke!!**\r\n\r\n " + finalSStackTrace);
         } catch (Throwable e2) {
 
             logger.error("Exception", e2);
         }
+    }
+
+    protected  void dmMe(String message) {
+        gateway.getUserById(Snowflake.of("292839877563908097")).block().getPrivateChannel().flatMap(channel -> {
+            channel.createMessage(message).block();
+            logger.info("sent DM");
+            return Mono.empty();
+        }).block();
+    }
+
+    protected Mono<Void> timeoutMember(Member member, Duration duration) {
+        return member.edit(GuildMemberEditSpec.builder().communicationDisabledUntil(Instant.now().plus(duration)).reason("code pings").build())
+                .doOnSuccess(v -> logger.info("Member " + member.getUsername() + " has been muted for " + duration.toMinutes() + " minutes."))
+                .doOnError(e -> {
+                    logger.error("Error muting member: " + e.getMessage());
+                    printException(e);
+                })
+                .then();
     }
 
     protected String getId(Message message, EmbedData embedData) {

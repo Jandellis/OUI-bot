@@ -49,7 +49,10 @@ public class Location {
             if (line.contains("**"+upgrade.fullName+"**")) {
                 upgradeItem.set(upgrade);
                 //**Booth** `(13/35)`
-                String position = line.split("`")[1].split("/")[0].substring(1);
+                String position = line.split("`")[1].split("/")[0];
+                if (this.name != LocationEnum.event) {
+                    position = position.substring(1);
+                }
                 upgradeItem.get().setPosition(Integer.parseInt(position));
 
             }

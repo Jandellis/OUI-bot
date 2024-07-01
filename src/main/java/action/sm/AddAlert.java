@@ -110,7 +110,7 @@ public class AddAlert extends Action {
                 String userId = message.getAuthor().get().getId().asString();
                 StringBuilder sb = new StringBuilder("Your Alerts");
                 for (Alert alert : Utils.loadAlerts(userId)) {
-                    sb.append("\r\n - Alert " + alert.getType().getName());
+                    sb.append("\n :small_blue_diamond: Alert " + alert.getType().getName());
                     sb.append(" for " + alert.getTrigger());
                     if (alert.getPrice() > 0)
                         sb.append(" at $" + alert.getPrice());
@@ -123,7 +123,7 @@ public class AddAlert extends Action {
                 String userId = message.getAuthor().get().getId().asString();
                 StringBuilder sb = new StringBuilder("Your Triggers");
                 for (Trigger trigger : Utils.loadTriggers(userId)) {
-                    sb.append("\r\n - Trigger " + trigger.getType().getName());
+                    sb.append("\n :small_blue_diamond: Trigger " + trigger.getType().getName());
                     if (trigger.getPrice() > 0)
                         sb.append(" at $" + trigger.getPrice());
                     else {
@@ -153,7 +153,7 @@ public class AddAlert extends Action {
                 String userId = message.getAuthor().get().getId().asString();
                 StringBuilder sb = new StringBuilder("Your Watches");
                 for (Watch watch : Utils.loadWatch(userId)) {
-                    sb.append("\r\n - " + watch.getSauce().getName());
+                    sb.append("\n :small_blue_diamond: " + watch.getSauce().getName());
                 }
                 message.getChannel().block().createMessage(sb.toString()).block();
             }
@@ -171,7 +171,7 @@ public class AddAlert extends Action {
                 if (action.equalsIgnoreCase(paramWatch)) {
                     StringBuilder sb = new StringBuilder("Your Watches");
                     for (Watch watch : Utils.loadWatch(userId)) {
-                        sb.append("\r\n - " + watch.getSauce().getName());
+                        sb.append("\n :small_blue_diamond: " + watch.getSauce().getName());
                     }
                     message.getChannel().block().createMessage(sb.toString()).block();
                 } else {
@@ -187,26 +187,26 @@ public class AddAlert extends Action {
 
             if (message.getContent().equalsIgnoreCase(paramHelp)) {
                 StringBuilder sb = new StringBuilder("I can help you monitor the price of your sauces. ");
-                sb.append("To set me up, first create some triggers.\r\n");
-                sb.append(" :small_blue_diamond: **" + paramDrop + " <" + Drop.both.getName() + "|" + Drop.owned.getName() + "|" + Drop.watchlist.getName() + "> **- add trigger for price dropping more than $10 in one hour or 2 hours in a row. Example `" + paramDrop + " " + Drop.owned.getName() + "`\r\n");
-//                sb.append(" :small_blue_diamond: **" + paramRise + " **- add trigger for price rising more than $10 in one hour. Example `" + paramRise + "`\r\n");
-                sb.append(" :small_blue_diamond: **" + paramHigh + " <price>** - add trigger when price hits that. Example `" + paramHigh + " 150`\r\n");
-                sb.append(" :small_blue_diamond: **" + paramLow + " <price>** - add trigger when price is lower. Example `" + paramLow + " 55`\r\n");
+                sb.append("To set me up, first create some triggers.\n");
+                sb.append(" :small_blue_diamond: **" + paramDrop + " <" + Drop.both.getName() + "|" + Drop.owned.getName() + "|" + Drop.watchlist.getName() + "> **- add trigger for price dropping more than $10 in one hour or 2 hours in a row. Example `" + paramDrop + " " + Drop.owned.getName() + "`\n");
+//                sb.append(" :small_blue_diamond: **" + paramRise + " **- add trigger for price rising more than $10 in one hour. Example `" + paramRise + "`\n");
+                sb.append(" :small_blue_diamond: **" + paramHigh + " <price>** - add trigger when price hits that. Example `" + paramHigh + " 150`\n");
+                sb.append(" :small_blue_diamond: **" + paramLow + " <price>** - add trigger when price is lower. Example `" + paramLow + " 55`\n");
 
-                sb.append("\r\nYou can set up some sauces to watch. (only works for " + paramDrop + " and " + paramLow + ")\r\n");
-                sb.append(" :small_blue_diamond: **" + paramWatch + " <sauce>** - add sauce to watch. Example `" + paramWatch + " pico`\r\n");
-                sb.append("\r\nNow that you have set up your triggers and watchlist everytime you type `/saucemarket list` in the sauce market channel I will automatically create or delete alerts for the sauces you own and on your watchlist\r\n");
-                sb.append("\r\nExamples:\r\n");
-                sb.append(" :small_orange_diamond: you have 10K of pico and you have a high alert of $150. If the price is $155 I will ping you.\r\n");
-                sb.append(" :small_orange_diamond: you have 10K of pico and you have a dropping alert for owned. If the price drops from $155 to $145 I will ping you again saying the price is dropping.\r\n");
-                sb.append(" :small_orange_diamond: you have 10K of pico and you have a dropping alert for owned. If the price drops from $155 to $149 then $149 to $146 the next hour I will ping you again saying the price is dropping.\r\n");
-                sb.append(" :small_orange_diamond: you have salsa on your watch list you have a dropping alert for watchlist. If the price drops from $90 to $78 I will ping you again saying the price is dropping.\r\n");
-                sb.append(" :small_orange_diamond: you have salsa on your watch list you have a low alert of $61. If the price of salsa is $58 I will ping you.\r\n");
-                sb.append("\r\nOther commands:\r\n");
-                sb.append(" :small_blue_diamond: **" + paramDelete + "** - delete all triggers, alerts and watchlist\r\n");
-                sb.append(" :small_blue_diamond: **" + parmaAlert + "** - view your alerts\r\n");
-                sb.append(" :small_blue_diamond: **" + paramTrigger + "** - view your triggers\r\n");
-                sb.append(" :small_blue_diamond: **" + paramWatch + "** - view your watchlist\r\n");
+                sb.append("\nYou can set up some sauces to watch. (only works for " + paramDrop + " and " + paramLow + ")\n");
+                sb.append(" :small_blue_diamond: **" + paramWatch + " <sauce>** - add sauce to watch. Example `" + paramWatch + " pico`\n");
+                sb.append("\nNow that you have set up your triggers and watchlist everytime you type `/saucemarket list` in the sauce market channel I will automatically create or delete alerts for the sauces you own and on your watchlist\n");
+                sb.append("\nExamples:\n");
+                sb.append(" :small_orange_diamond: you have 10K of pico and you have a high alert of $150. If the price is $155 I will ping you.\n");
+                sb.append(" :small_orange_diamond: you have 10K of pico and you have a dropping alert for owned. If the price drops from $155 to $145 I will ping you again saying the price is dropping.\n");
+                sb.append(" :small_orange_diamond: you have 10K of pico and you have a dropping alert for owned. If the price drops from $155 to $149 then $149 to $146 the next hour I will ping you again saying the price is dropping.\n");
+                sb.append(" :small_orange_diamond: you have salsa on your watch list you have a dropping alert for watchlist. If the price drops from $90 to $78 I will ping you again saying the price is dropping.\n");
+                sb.append(" :small_orange_diamond: you have salsa on your watch list you have a low alert of $61. If the price of salsa is $58 I will ping you.\n");
+                sb.append("\nOther commands:\n");
+                sb.append(" :small_blue_diamond: **" + paramDelete + "** - delete all triggers, alerts and watchlist\n");
+                sb.append(" :small_blue_diamond: **" + parmaAlert + "** - view your alerts\n");
+                sb.append(" :small_blue_diamond: **" + paramTrigger + "** - view your triggers\n");
+                sb.append(" :small_blue_diamond: **" + paramWatch + "** - view your watchlist\n");
                 message.getChannel().block().createMessage(sb.toString()).block();
             }
         } catch (Exception e) {

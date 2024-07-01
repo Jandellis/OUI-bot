@@ -313,3 +313,12 @@ CREATE TABLE IF NOT EXISTS franchise_stats (
     sold bigint,
     import_time timestamp
 );
+
+CREATE TABLE IF NOT EXISTS team_event (
+    id serial PRIMARY KEY,
+    reminder VARCHAR(25),
+    id1 VARCHAR(25),
+    id2 VARCHAR(25),
+    id3 VARCHAR(25),
+    id4 VARCHAR(25)
+);

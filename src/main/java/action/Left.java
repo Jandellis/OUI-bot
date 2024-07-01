@@ -20,6 +20,7 @@ public class Left extends Action {
     String guildId;
     String param2;
     String log;
+    String logPond;
     String hitThread;
 
     public Left() {
@@ -28,6 +29,7 @@ public class Left extends Action {
         guildId = config.get("guildId");
         log = config.get("log");
         hitThread = config.get("hitThread");
+        logPond = "1244264763010322483";
     }
 
     @Override
@@ -64,6 +66,37 @@ public class Left extends Action {
                     message.addReaction(ReactionEmoji.unicode("\uD83D\uDD2B")).block();
 
                     ExportUtils.removeMember("oui");
+                    return Mono.empty();
+                }
+            }
+
+
+            if (message.getChannelId().asString().equals(logPond)) {
+                if (message.getContent().contains(param)|| message.getContent().contains(param2)) {
+                    logger.info("Left franchise " + message.getContent());
+
+                    String memberId = message.getContent().split("`")[1].split("]")[0].substring(1);
+
+                    logger.info("Member left " + memberId);
+
+                    MemberData memberData;
+                    try {
+
+                        memberData = client.getMemberById(Snowflake.of("1226485670923599902"), Snowflake.of(memberId)).getData().block();
+
+                        memberData.roles().forEach(id -> {
+                            logger.info("Removed role " + id);
+                            client.getGuildById(Snowflake.of("1226485670923599902")).removeMemberRole(
+                                    Snowflake.of(memberId),
+                                    Snowflake.of(id),
+                                    "user kicked").block();
+                        });
+                    } catch (ClientException e) {
+                        logger.info("user left the server " + memberId);
+                    }
+
+                    message.addReaction(ReactionEmoji.unicode("\uD83D\uDD2B")).block();
+
                     return Mono.empty();
                 }
             }

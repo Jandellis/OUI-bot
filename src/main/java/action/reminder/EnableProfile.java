@@ -3,6 +3,7 @@ package action.reminder;
 import action.Action;
 import action.reminder.model.Profile;
 import action.reminder.model.Reminder;
+import action.reminder.model.TeamEvent;
 import discord4j.core.object.entity.Message;
 import discord4j.core.spec.EmbedCreateSpec;
 import discord4j.rest.util.Color;
@@ -167,6 +168,28 @@ public class EnableProfile extends Action {
                         }
                     } else {
                         message.getChannel().block().createMessage("Sorry, i don't know what you mean. It should be `on` or `off`").block();
+                    }
+                }
+
+
+                String teamParm = "cyteam";
+                String channelId = getAction(message,teamParm);
+                if (channelId != null) {
+                    // channel id
+                    String id1 = getAction(message, teamParm, 1);
+                    String id2 = getAction(message, teamParm, 2);
+                    String id3 = getAction(message, teamParm, 3);
+                    String id4 = getAction(message, teamParm, 4);
+                    if (message.getAuthor().get().getId().asString().equals(id1) || message.getAuthor().get().getId().asString().equals("292839877563908097")) {
+                        TeamEvent teamEvent = new TeamEvent(channelId, id1, id2, id3, id4);
+                        ReminderUtils.createTeamEvent(teamEvent);
+                        String reply = "Created your team reminders will be in <#"+channelId+"> will ping " +
+                                "\n-<@" +id1 + ">" +
+                                "\n-<@" +id2 + ">" +
+                                "\n-<@" +id3 + ">" +
+                                "\n-<@" +id4 + ">" +
+                                "";
+                        message.getChannel().block().createMessage(reply).block();
                     }
                 }
 

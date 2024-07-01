@@ -45,7 +45,16 @@ public enum ReminderType {
     special("Special"),
     sponsor("Sponsorship"),
     cards("Gift Cards"),
-    takeout("Takeout");
+    takeout("Takeout"),
+
+    //event
+    flyers("Flyers"),
+    twirler("Sign Twirler"),
+    refreshments("Refreshments"),
+    music("Music"),
+    festival("Festival"),
+    eventClean("Event Clean"),
+    eventOvertime("Event Overtime");
 
 
     String name;
@@ -59,6 +68,8 @@ public enum ReminderType {
     }
 
     public static ReminderType getReminderType(String name) {
+        if (name.toLowerCase().equals("event clean"))
+            return eventClean;
         for (ReminderType value : values()) {
             if (name.toLowerCase().contains(value.name.toLowerCase()))
                 return value;

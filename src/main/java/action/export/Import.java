@@ -80,12 +80,15 @@ public class Import extends Action {
 //            return null;
 //        }
 
+
         if (actionData != null && hasPermission(message)) {
+            logger.info("starting import");
             Snowflake messageId = Snowflake.of(actionData);
             int worklimit = 5;
             int uncleanlimit = 7;
 
             return message.getChannel().flatMap(channel -> {
+                logger.info("starting import 2");
 
                 FranchiseConfig franchiseConfig = ExportUtils.getFranchiseConfig(message.getGuildId().get().asString());
 
@@ -205,7 +208,8 @@ public class Import extends Action {
                     for(Long id : history.keySet()) {
                         logger.info("loading roles for id " + id);
                         try {
-                            List<Id> roles = client.getGuildById(Snowflake.of(guildId)).getMember(Snowflake.of(id)).block().roles();
+
+                            List<Id> roles = client.getGuildById(message.getGuildId().get()).getMember(Snowflake.of(id)).block().roles();
                             userRoles.put(id, roles);
                         } catch (ClientException e) {
                             //member left the server
@@ -227,97 +231,97 @@ public class Import extends Action {
 
                     channel.createMessage("Checking Roles").block();
 
-                    checkRoles(history, franchiseName, userRoles);
+                    checkRoles(history, franchiseName, userRoles, message);
 
-                    channel.createMessage("Doing Warnings").block();
-                    //be able to skip warning if in downtime like over xmas
-                    //maybe add ouiadmin, list all the admin commands
+                    if (franchiseName.equals("OUI")) {
+                        channel.createMessage("Doing Warnings").block();
+                        //be able to skip warning if in downtime like over xmas
+                        //maybe add ouiadmin, list all the admin commands
 
 
-                    if (!skipWarnings) {
-                        Warn warn = new Warn();
-                        warn.action(gateway, client);
-                        warn.doWarnings(5, 300, true, franchiseConfig, userRoles);
-                    }
-
-                    channel.createMessage("Removing Mercy").block();
-                    //load all users with mercy date before now
-                    //set date to null
-                    //remove role
-                    for (WarningData warningData : ExportUtils.loadWarningDataAfterImmunity()) {
-                        try {
-                        client.getGuildById(Snowflake.of(guildId)).removeMemberRole(
-                                Snowflake.of(warningData.getName()),
-                                Snowflake.of(franchiseConfig.getImmunity()),
-                                "Mercy has expired").block();
-
-                        } catch (ClientException e) {
-                            //member left the server
-                            logger.info("user left the server " + warningData.getName());
-
+                        if (!skipWarnings) {
+                            Warn warn = new Warn();
+                            warn.action(gateway, client);
+                            warn.doWarnings(5, 300, true, franchiseConfig, userRoles);
                         }
-                        warningData.setImmunityUntil(null);
-                        ExportUtils.updateWarningData(warningData);
-                    }
 
-                    channel.createMessage("Adding Giveaway").block();
-                    //go though everyone and check if they meet the requirements for the giveaway
-                    //set the date they will lose the role
-
-                    for (GiveawayData member : giveawayData) {
-
-                        //loop though all
-                        //if match give role
-                        int match = 0;
-                        if (member.getOvertime() >= 30) {
-                            match++;
-                        }
-                        if (member.getWork() >= 50) {
-                            match++;
-                        }
-                        if (member.getVotes() >= 7) {
-                            match++;
-                        }
-                        if (match >= 2) {
-
+                        channel.createMessage("Removing Mercy").block();
+                        //load all users with mercy date before now
+                        //set date to null
+                        //remove role
+                        for (WarningData warningData : ExportUtils.loadWarningDataAfterImmunity()) {
                             try {
-                                //check if user has this role
-
-                                if(!hasRole(userRoles.get(member.getId()), franchiseConfig.getGiveawayRole()))
-                                    client.getGuildById(Snowflake.of(guildId)).addMemberRole(
-                                        Snowflake.of(member.getId()),
-                                        Snowflake.of(franchiseConfig.getGiveawayRole()),
-                                        "Add Giveaway role").block();
+                            client.getGuildById(Snowflake.of(guildId)).removeMemberRole(
+                                    Snowflake.of(warningData.getName()),
+                                    Snowflake.of(franchiseConfig.getImmunity()),
+                                    "Mercy has expired").block();
 
                             } catch (ClientException e) {
                                 //member left the server
-                                logger.info("user left the server " + member.getId());
+                                logger.info("user left the server " + warningData.getName());
 
                             }
-                            LocalDateTime now = LocalDateTime.now().plusDays(7);
-                            ExportUtils.updateWarningData(member.getId() + "", Timestamp.valueOf(now));
+                            warningData.setImmunityUntil(null);
+                            ExportUtils.updateWarningData(warningData);
                         }
-                    }
 
-                    channel.createMessage("Removing Giveaway").block();
+                        channel.createMessage("Adding Giveaway").block();
+                        //go though everyone and check if they meet the requirements for the giveaway
+                        //set the date they will lose the role
 
-                    for (WarningData warningData : ExportUtils.loadWarningDataAfterGiveaway()) {
-                        try {
-                            if(hasRole(userRoles.get(Long.parseLong(warningData.getName())), franchiseConfig.getGiveawayRole()))
-                                client.getGuildById(Snowflake.of(guildId)).removeMemberRole(
-                                        Snowflake.of(warningData.getName()),
-                                        Snowflake.of(franchiseConfig.getGiveawayRole()),
-                                        "Giveaway role has expired").block();
+                        for (GiveawayData member : giveawayData) {
 
-                        } catch (ClientException e) {
-                            //member left the server
-                            logger.info("user left the server " + warningData.getName());
+                            //loop though all
+                            //if match give role
+                            int match = 0;
+                            if (member.getOvertime() >= 30) {
+                                match++;
+                            }
+                            if (member.getWork() >= 50) {
+                                match++;
+                            }
+                            if (member.getVotes() >= 7) {
+                                match++;
+                            }
+                            if (match >= 2) {
 
+                                try {
+                                    //check if user has this role
+
+                                    if(!hasRole(userRoles.get(member.getId()), franchiseConfig.getGiveawayRole()))
+                                        client.getGuildById(Snowflake.of(guildId)).addMemberRole(
+                                            Snowflake.of(member.getId()),
+                                            Snowflake.of(franchiseConfig.getGiveawayRole()),
+                                            "Add Giveaway role").block();
+
+                                } catch (ClientException e) {
+                                    //member left the server
+                                    logger.info("user left the server " + member.getId());
+
+                                }
+                                LocalDateTime now = LocalDateTime.now().plusDays(7);
+                                ExportUtils.updateWarningData(member.getId() + "", Timestamp.valueOf(now));
+                            }
                         }
-                        warningData.setGiveawayUntil(null);
-                        ExportUtils.updateWarningData(warningData);
-                    }
-                    if (franchiseName.equals("OUI")) {
+
+                        channel.createMessage("Removing Giveaway").block();
+
+                        for (WarningData warningData : ExportUtils.loadWarningDataAfterGiveaway()) {
+                            try {
+                                if(hasRole(userRoles.get(Long.parseLong(warningData.getName())), franchiseConfig.getGiveawayRole()))
+                                    client.getGuildById(Snowflake.of(guildId)).removeMemberRole(
+                                            Snowflake.of(warningData.getName()),
+                                            Snowflake.of(franchiseConfig.getGiveawayRole()),
+                                            "Giveaway role has expired").block();
+
+                            } catch (ClientException e) {
+                                //member left the server
+                                logger.info("user left the server " + warningData.getName());
+
+                            }
+                            warningData.setGiveawayUntil(null);
+                            ExportUtils.updateWarningData(warningData);
+                        }
 
                         channel.createMessage("Doing vote check").block();
 
@@ -382,7 +386,7 @@ public class Import extends Action {
 //        return found.get();
 //    }
 
-    private void checkRoles(HashMap<Long, List<ExportData>> history, String franchise, HashMap<Long, List<Id>> userRoles) {
+    private void checkRoles(HashMap<Long, List<ExportData>> history, String franchise, HashMap<Long, List<Id>> userRoles, Message message) {
         logger.info("size = " + history.size());
         logger.info("size = " + history);
         List<Donations> donations = ExportUtils.loadDonations(franchise);
@@ -405,7 +409,7 @@ public class Import extends Action {
                         });
                         if (donate.getMaxDonation() >= amount && donate.getMinDonation() <= amount) {
                             if (!hasRole.get()) {
-                                client.getGuildById(Snowflake.of(guildId)).addMemberRole(
+                                client.getGuildById(message.getGuildId().get()).addMemberRole(
                                         Snowflake.of(id),
                                         Snowflake.of(donate.getRole()),
                                         "donation role").block();
@@ -413,7 +417,7 @@ public class Import extends Action {
                             }
                         } else {
                             if (hasRole.get()) {
-                                client.getGuildById(Snowflake.of(guildId)).removeMemberRole(
+                                client.getGuildById(message.getGuildId().get()).removeMemberRole(
                                         Snowflake.of(id),
                                         Snowflake.of(donate.getRole()),
                                         "donation role").block();

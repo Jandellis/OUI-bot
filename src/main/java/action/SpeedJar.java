@@ -68,19 +68,37 @@ public class SpeedJar extends Action {
                     for (Embed embed: message.getEmbeds()){
                         if (embed.getDescription().isPresent()) {
                             if (embed.getDescription().get().contains("Speed Jar has begun")){
-                                return message.getChannel().flatMap(channel -> {
-                                    create(message.getTimestamp());
-                                    return channel.createMessage("<@&" + speedJarPing + "> starting now!");
-                                });
+                                SpeedJarDetails details = SpeedJarDetails.getSpeedJarDetails(message.getChannelId().asString());
+                                if (!details.isActive()) {
+                                    SpeedJarDetails.getSpeedJarDetails(message.getChannelId().asString()).setActive(true);
+                                    return message.getChannel().flatMap(channel -> {
+                                        create(message.getTimestamp());
+                                        return channel.createMessage("<@&" + speedJarPing + "> starting now!");
+                                    });
+                                }
+                            } else {
+                                SpeedJarDetails details = SpeedJarDetails.getSpeedJarDetails(message.getChannelId().asString());
+                                if (details.isActive()) {
+                                    details.addMessage();
+                                    if (details.getMessages() == 30 ||
+                                            details.getMessages() == 50 ||
+                                            details.getMessages() == 55
+                                    ) {
+                                        return message.getChannel().flatMap(channel -> {
+//                                            create(message.getTimestamp());
+                                            return channel.createMessage("Question number " + details.getMessages());
+                                        });
+                                    }
+                                }
                             }
                         }
                     }
-                    if (message.getContent().contains(param)) {
-                        return message.getChannel().flatMap(channel -> {
-                            create(message.getTimestamp());
-                            return channel.createMessage("<@&" + speedJarPing + "> starting now!");
-                        });
-                    }
+//                    if (message.getContent().contains(param)) {
+//                        return message.getChannel().flatMap(channel -> {
+//                            create(message.getTimestamp());
+//                            return channel.createMessage("<@&" + speedJarPing + "> starting now!");
+//                        });
+//                    }
                 }
             }
 
@@ -130,8 +148,12 @@ public class SpeedJar extends Action {
                             return Mono.empty();
                         }
                 ).block();
-
-        client.getChannelById(Snowflake.of(speedJarChannel)).createMessage("Thanks for playing speed jar, locked channel for 11.5 hours").block();
+        SpeedJarDetails details = SpeedJarDetails.getSpeedJarDetails(speedJarChannel);
+        if (details.isActive()) {
+            details.setActive(false);
+            details.resetMessages();
+            client.getChannelById(Snowflake.of(speedJarChannel)).createMessage("Thanks for playing speed jar, locked channel for 11.5 hours").block();
+        }
     }
 
     private void unlock() {

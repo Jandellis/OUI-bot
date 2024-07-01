@@ -76,7 +76,9 @@ public class Help extends Action {
                             ":small_orange_diamond: For hq, do </hq upgrades:1018564197602295859>, </hq hire:1018564197602295859> and then type cyup h.\n");
                     message.getChannel().block().createMessage(sb.toString()).block();
                     sb = new StringBuilder();
-                    sb.append("You can also add the `cheap` flag to list the upgrades in order from cheapest to most expensive\n");
+                    sb.append("There is some flags you can add: \n" +
+                            " - `cheap` flag to list the upgrades in order from cheapest to most expensive\n" +
+                            " - `group` flag to list the upgrades alphabetically\n");
                     sb.append("You can view a page by including 2 numbers at the end. For example `cyup m 25 35` would show upgrade from the mall from upgrade 25 to upgrade 35 \n");
                     sb.append("Type `cyLimitUp <number>` to set how many upgrades listed\n");
                     sb.append("Type `cyStats <location>` to see stats about your upgrade status\n");

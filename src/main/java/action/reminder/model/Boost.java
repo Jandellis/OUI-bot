@@ -5,11 +5,11 @@ import action.upgrades.model.LocationEnum;
 public class Boost {
 
     String name;
-    int duration;
+    double duration;
 
     LocationEnum location;
 
-    public Boost(String name, int duration, LocationEnum location) {
+    public Boost(String name, double duration, LocationEnum location) {
         this.name = name;
         this.duration = duration;
         this.location = location;
@@ -19,7 +19,7 @@ public class Boost {
         return name;
     }
 
-    public int getDuration() {
+    public double getDuration() {
         return duration;
     }
 
