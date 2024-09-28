@@ -15,6 +15,7 @@ import reactor.core.publisher.Mono;
 
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
@@ -248,7 +249,8 @@ public class CreateReminder extends Action implements EmbedAction {
                                 }
                             }
 
-                        } else if (embed.title().toOptional().isPresent()) {
+                        }
+                        if (embed.title().toOptional().isPresent()) {
 
                             //cooldown
 
@@ -452,15 +454,31 @@ public class CreateReminder extends Action implements EmbedAction {
                 if (!isPatreonServer.get()) {
                     sleep = sleep + 1;
                 }
+                if (isRushHour(profile)) {
+                    sleep = 4;
+                }
+                //grind is double work 1min min warning
+                int grindSleep = 0;
+                grindSleep = sleep * 2 -1;
+
+                Instant reminderTime = message.getTimestamp().plus(grindSleep, ChronoUnit.MINUTES);
+                ReminderUtils.addReminder(profile.getName(), ReminderType.grind, Timestamp.from(reminderTime), message.getChannelId().asString());
+
                 break;
             case tips:
                 sleep = profile.getStatus().getTips();
                 if (!isPatreonServer.get()) {
                     sleep = sleep + 1;
                 }
+                if (isRushHour(profile)) {
+                    sleep = 2;
+                }
                 break;
             case ot:
                 sleep = profile.getStatus().getOt();
+                if (isRushHour(profile)) {
+                    sleep = 15;
+                }
                 break;
             case vote:
                 sleep = profile.getStatus().getVote();
@@ -495,7 +513,7 @@ public class CreateReminder extends Action implements EmbedAction {
         profile.getIgnoredHidden();
         ReminderSettings reminderSettings = ReminderUtils.loadReminderSettings(profile.getName());
         if (reminderSettings == null) {
-            reminderSettings = new ReminderSettings(profile.getName(), true, true, true, true, true, true, true);
+            reminderSettings = new ReminderSettings(profile.getName(), true, true, false, true, true, true, true, true);
         }
 
         List<Reminder> reminders = ReminderUtils.loadReminder(profile.getName());
@@ -588,6 +606,15 @@ public class CreateReminder extends Action implements EmbedAction {
 //            }).block();
 //        }
         doReminder.runReminder(reminder);
+    }
+
+    private boolean isRushHour (Profile profile){
+        if (profile.getRushHourEnd() == null ) {
+            return false;
+        }
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime reminderTime = profile.getRushHourEnd().toLocalDateTime();
+        return now.isBefore(reminderTime);
     }
 
 

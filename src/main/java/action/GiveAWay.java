@@ -13,6 +13,7 @@ import discord4j.core.event.domain.message.ReactionAddEvent;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.User;
 import discord4j.core.object.reaction.ReactionEmoji;
+import discord4j.core.spec.EmbedCreateFields;
 import discord4j.core.spec.EmbedCreateSpec;
 import discord4j.discordjson.Id;
 import discord4j.discordjson.json.MessageData;
@@ -257,6 +258,10 @@ public class GiveAWay extends Action {
         List<String> enteredList = new ArrayList<>();
         List<User> users = message.getReactors(ReactionEmoji.unicode(react)).collectList().block();
         StringBuilder audit = new StringBuilder();
+
+        EmbedCreateSpec.Builder auditEmbed = EmbedCreateSpec.builder();
+        auditEmbed.color(Color.DARK_GOLDENROD);
+        auditEmbed.title("Giveaway Audit");
         AtomicInteger count = new AtomicInteger();
         users.forEach(user -> {
             try {
@@ -280,6 +285,7 @@ public class GiveAWay extends Action {
         });
         String winner = "409346530277851136";
         try {
+            auditEmbed.addField("Entered", audit.toString(), false);
             List<GiveawayLog> winners = ReminderUtils.loadGiveawayLog(14);
 
             HashMap<String, GiveawayWinner> giveawayWinnerHashMap = new HashMap<>();
@@ -292,25 +298,24 @@ public class GiveAWay extends Action {
                 }
             }
 
-            audit.append("list\n");
-            for (int i = 0; i < enteredList.size(); i++) {
-                audit.append(i + " - <@" + enteredList.get(i) + ">\n");
-
-            }
-            audit.append("past wins\n");
+//            audit.append("past wins\n");
+            StringBuilder pastWins = new StringBuilder();
             giveawayWinnerHashMap.forEach((s, giveawayWinner) -> {
-                audit.append("<@"+giveawayWinner.getName() + "> " + giveawayWinner.getWins() + "\n");
+                pastWins.append("<@"+giveawayWinner.getName() + "> " + giveawayWinner.getWins() + "\n");
             });
+
+            auditEmbed.addField("Past Wins", pastWins.toString(), false);
 
             winner = "";
             Random rand = new Random();
 
+            StringBuilder roll = new StringBuilder();
             for (int i = 0; i < 10; i++) {
                 // roll a random number and pick a user at random
                 int randomNumber = rand.nextInt(enteredList.size());
-                audit.append("roll is " + randomNumber + " \n");
+                roll.append("roll is " + randomNumber + " \n");
                 winner = enteredList.get(randomNumber);
-                audit.append("winner is <@" + winner + "> \n");
+                roll.append("winner is <@" + winner + "> \n");
                 // see if they have won in the past 7 days
                 if (giveawayWinnerHashMap.containsKey(winner)) {
                     // if they have won 2 times this week reroll
@@ -318,12 +323,15 @@ public class GiveAWay extends Action {
                         break;
                     }
                     logger.info(winner + " has won too many times, rerolling! ");
-                    audit.append(" won too mane times, reroll \n");
+                    roll.append(" won too mane times, reroll \n");
                 } else {
                     break;
                 }
             }
-            dmMe(audit.toString());
+            auditEmbed.addField("Roll", roll.toString(), false);
+
+            client.getChannelById(Snowflake.of("1273799545737707613")).createMessage(auditEmbed.build().asRequest()).block();
+//            dmMe(audit.toString());
 
         } catch (Exception e) {
             printException(e);

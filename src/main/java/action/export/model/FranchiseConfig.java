@@ -11,8 +11,9 @@ public class FranchiseConfig {
     String immunity;
     String giveawayRole;
     String court;
+    String rushHour;
 
-    public FranchiseConfig(String guild, String name, String warning, String warning2, String warning3, String flex, String recruiter, String immunity, String giveawayRole, String court) {
+    public FranchiseConfig(String guild, String name, String warning, String warning2, String warning3, String flex, String recruiter, String immunity, String giveawayRole, String court, String rushHour) {
         this.guild = guild;
         this.name = name;
         this.warning = warning;
@@ -23,6 +24,7 @@ public class FranchiseConfig {
         this.immunity = immunity;
         this.giveawayRole = giveawayRole;
         this.court = court;
+        this.rushHour = rushHour;
     }
 
     public String getGuild() {
@@ -103,5 +105,13 @@ public class FranchiseConfig {
 
     public void setCourt(String court) {
         this.court = court;
+    }
+
+    public String getRushHour() {
+        return rushHour;
+    }
+
+    public void setRushHour(String rushHour) {
+        this.rushHour = rushHour;
     }
 }

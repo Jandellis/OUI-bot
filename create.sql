@@ -322,3 +322,10 @@ CREATE TABLE IF NOT EXISTS team_event (
     id3 VARCHAR(25),
     id4 VARCHAR(25)
 );
+
+
+alter table reminder_settings add grind BOOLEAN;
+alter table reminder_settings alter column grind set default false;
+alter table franchise_config add rush_hour VARCHAR(25);
+
+alter table profile add rush_hour_end timestamp;

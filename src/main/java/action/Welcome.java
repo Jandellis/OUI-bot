@@ -22,6 +22,7 @@ public class Welcome extends Action {
     Long recruiter;
 
     Long immunityId;
+    Long gifter;
     String giveawayRole;
 
     public Welcome() {
@@ -31,6 +32,7 @@ public class Welcome extends Action {
         log = config.get("log");
         recruiter = Long.parseLong(config.get("recruiter"));
         immunityId = Long.parseLong(config.get("immunityId"));
+        gifter  = 875880362482491422L;
         giveawayRole = config.get("giveawayRole");
         logPond = "1244264763010322483";
 
@@ -123,6 +125,27 @@ public class Welcome extends Action {
 
 
             }
+            action = getAction(message, "ouigift");
+            if (action != null && hasPermission(message, recruiter)) {
+
+                try {
+                    Snowflake.of(action);
+                } catch (Exception e) {
+                    client.getChannelById(message.getChannelId()).createMessage("Sorry, i dont know who " + action + " is, please use the members id").block();
+                    return Mono.empty();
+                }
+                try {
+                    client.getGuildById(Snowflake.of(guildId)).addMemberRole(
+                            Snowflake.of(action),
+                            Snowflake.of(gifter),
+                            "gifter").block();
+                    client.getChannelById(message.getChannelId()).createMessage("<@" + action + "> is, now a gifter").block();
+                } catch (ClientException e) {
+                    logger.info("user left the server " + action);
+                }
+
+
+            }
 
 
             action = getAction(message, "ouihavemercy");
@@ -147,6 +170,14 @@ public class Welcome extends Action {
                         return Mono.empty();
                     }
 
+
+                    try {
+                        Snowflake.of(action);
+                    } catch (Exception e) {
+                        client.getChannelById(message.getChannelId()).createMessage("Sorry, i dont know who " + action + " is, please use the members id").block();
+                        return Mono.empty();
+                    }
+
                     WarningData warningData = ExportUtils.loadWarningData(action);
                     LocalDateTime now = LocalDateTime.now().plusDays(days);
                     warningData.setImmunityUntil(Timestamp.valueOf(now));
@@ -162,7 +193,7 @@ public class Welcome extends Action {
                     }
 
 
-                    client.getChannelById(message.getChannelId()).createMessage("Mercy given to <@" + action + ">for " + days + " days!").block();
+                    client.getChannelById(message.getChannelId()).createMessage("Mercy given to <@" + action + "> for " + days + " days!").block();
                 } else {
                     client.getChannelById(message.getChannelId()).createMessage("Mercy has already been given").block();
                     WarningData warningData = ExportUtils.loadWarningData(action);

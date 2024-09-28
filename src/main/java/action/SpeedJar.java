@@ -100,6 +100,14 @@ public class SpeedJar extends Action {
 //                        });
 //                    }
                 }
+
+                if (message.getContent().toLowerCase().equals("ouilock") && hasPermission(message, recruiter) ) {
+                    lock();
+                }
+
+                if (message.getContent().toLowerCase().equals("ouiunlock") && hasPermission(message, recruiter) ) {
+                    unlock();
+                }
             }
 
         } catch (Exception e) {

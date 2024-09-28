@@ -68,17 +68,19 @@ public class Help extends Action {
                     sb = new StringBuilder();
                     sb.append("I can give you suggestions on what order to buy upgrades\n");
                     sb.append("Type `cyup <location>`, location can be the first letter or the full name \n");
-                    sb.append(":small_orange_diamond: For shack, do </hire:1006354977847001159>, </advertisements:1006354977721176137>, </upgrades:1006354978274820107>, </decorations:1006354977788268620>, </truck:1006354978153169014>, then  type cyup s.\n" +
-                            ":small_orange_diamond: For mall, do </hire:1006354977847001159>, </advertisements:1006354977721176137>, </upgrades:1006354978274820107>, </decorations:1006354977788268620>, </kiosk:1010956257588428840> and then type cyup m.\n" +
-                            ":small_orange_diamond: For beach, do </hire:1006354977847001159>, </advertisements:1006354977721176137>, </upgrades:1006354978274820107>, </decorations:1006354977788268620>, </stand:1006354978153169010> and then type cyup b. \n" +
-                            ":small_orange_diamond: For amusement park, do </hire:1006354977847001159>, </advertisements:1006354977721176137>, </upgrades:1006354978274820107>, </decorations:1006354977788268620>, </attractions:1150514355167821946> and then type cyup a. \n" +
-                            ":small_orange_diamond: For city, do </hire:1006354977847001159>, </advertisements:1006354977721176137>, </upgrades:1006354978274820107>, </decorations:1006354977788268620>, </cart:1006354977721176142> and then type cyup c.\n" +
-                            ":small_orange_diamond: For hq, do </hq upgrades:1018564197602295859>, </hq hire:1018564197602295859> and then type cyup h.\n");
+                    sb.append("For each location do </hire:1203826200452137022>, </advertisements:1203826194500288593>, </upgrades:1203826209532682311>, </decorations:1203826197352677417> then\n");
+                    sb.append(":small_orange_diamond: For shack </truck:1203826208953999482>, then  type cyup s.\n" +
+                            ":small_orange_diamond: For mall </kiosk:1203826201504780309> and then type cyup m.\n" +
+                            ":small_orange_diamond: For beach </stand:1203826207884582913> and then type cyup b. \n" +
+                            ":small_orange_diamond: For amusement park </attractions:1203826194500288594> and then type cyup a. \n" +
+                            ":small_orange_diamond: For city </cart:1203826195511250965> and then type cyup c.\n" +
+                            ":small_orange_diamond: For Cantina </stage:1276293791728406771> and then type cyup ca.\n" +
+                            ":small_orange_diamond: For hq, do </hq upgrades:1203826200959651851>, </hq hire:1203826200959651851> and then type cyup h.\n");
                     message.getChannel().block().createMessage(sb.toString()).block();
                     sb = new StringBuilder();
                     sb.append("There is some flags you can add: \n" +
                             " - `cheap` flag to list the upgrades in order from cheapest to most expensive\n" +
-                            " - `group` flag to list the upgrades alphabetically\n");
+                            " - `grouped` flag to list the upgrades alphabetically\n");
                     sb.append("You can view a page by including 2 numbers at the end. For example `cyup m 25 35` would show upgrade from the mall from upgrade 25 to upgrade 35 \n");
                     sb.append("Type `cyLimitUp <number>` to set how many upgrades listed\n");
                     sb.append("Type `cyStats <location>` to see stats about your upgrade status\n");

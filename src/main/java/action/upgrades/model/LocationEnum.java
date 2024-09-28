@@ -9,6 +9,8 @@ public enum LocationEnum {
     beach("beach"),
     amusement ("amusement"),
     city("city"),
+
+    cantina("cantina"),
     hq("hq"),
     event("event");
 
@@ -29,6 +31,9 @@ public enum LocationEnum {
         }
         if (name.equalsIgnoreCase("p") || name.equalsIgnoreCase("park") ) {
             return amusement;
+        }
+        if (name.equalsIgnoreCase("ca") ) {
+            return cantina;
         }
         for (LocationEnum value : values()) {
             if (value.name.startsWith(name.toLowerCase()))

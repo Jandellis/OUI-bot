@@ -113,11 +113,11 @@ public class Hit extends Action {
                                             // diamond
                                             id.asLong() == 931277539270344744L ||
                                             //gold
-                                            id.asLong() == 931276083326771220L ||
+                                            //id.asLong() == 931276083326771220L ||
                                             //silver
-                                            id.asLong() == 931273576739405864L ||
+                                            //id.asLong() == 931273576739405864L ||
                                             //bronze
-                                            id.asLong() == 931269453063266375L||
+                                            //id.asLong() == 931269453063266375L||
                                             //customer booster
                                             id.asLong() == 928180568628269056L||
                                             //ex
@@ -137,8 +137,14 @@ public class Hit extends Action {
                         }
                     }
                     serverMembers.sort((o1, o2) -> {
-                        if (o1.getDaysUnhappy() == o2.getDaysUnhappy())
-                            return 0;
+                        if (o1.getDaysUnhappy() == o2.getDaysUnhappy()) {
+                            if (o1.getDaysNoWork() == o2.getDaysNoWork())
+                                return 0;
+                            if (o1.getDaysNoWork() < o2.getDaysNoWork())
+                                return 1;
+                            else
+                                return -1;
+                        }
                         if (o1.getDaysUnhappy() < o2.getDaysUnhappy())
                             return 1;
                         else
@@ -165,7 +171,7 @@ public class Hit extends Action {
                     }
                     for (KickMember kickMember : serverMembers) {
                         if (count < hitListSize) {
-                            String messageId = client.getChannelById(Snowflake.of(hitThread)).createMessage("<@" + kickMember.getId().toString() + ">").block().id().asString();
+                            String messageId = client.getChannelById(Snowflake.of(hitThread)).createMessage("<@" + kickMember.getId().toString() + ">     no work - " + kickMember.getDaysNoWork() + ", unhappy - " + kickMember.getDaysUnhappy()).block().id().asString();
                             hitMessages.put(kickMember.getId(), messageId);
                             count++;
                         }

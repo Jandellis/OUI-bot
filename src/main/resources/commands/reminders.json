@@ -21,6 +21,12 @@
             "required": false
         },
         {
+            "name": "grind",
+            "description": "Do you want grind streak reminders enabled?",
+            "type": 5,
+            "required": false
+        },
+        {
             "name": "overtime",
             "description": "Do you want overtime reminders enabled?",
             "type": 5,

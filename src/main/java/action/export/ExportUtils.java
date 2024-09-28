@@ -473,7 +473,7 @@ public class ExportUtils {
                     " flex," +
                     " recruiter," +
                     " immunity," +
-                    " giveawayRole, court FROM franchise_config " +
+                    " giveawayRole, court, rush_hour FROM franchise_config " +
                     "WHERE guild = ?");
             pst.setString(1, guild);
             ResultSet rs = pst.executeQuery();
@@ -488,7 +488,8 @@ public class ExportUtils {
                         rs.getString(7),
                         rs.getString(8),
                         rs.getString(9),
-                        rs.getString(10)
+                        rs.getString(10),
+                        rs.getString(11)
                 );
             }
 
@@ -509,7 +510,7 @@ public class ExportUtils {
                     " flex," +
                     " recruiter," +
                     " immunity," +
-                    " giveawayRole, court FROM franchise_config " +
+                    " giveawayRole, court, rush_hour FROM franchise_config " +
                     "WHERE name = ?");
             pst.setString(1, name);
             ResultSet rs = pst.executeQuery();
@@ -524,7 +525,8 @@ public class ExportUtils {
                         rs.getString(7),
                         rs.getString(8),
                         rs.getString(9),
-                        rs.getString(10)
+                        rs.getString(10),
+                        rs.getString(11)
                 );
             }
 

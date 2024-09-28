@@ -6,16 +6,18 @@ public class ReminderSettings {
 
     boolean tip;
     boolean work ;
+    boolean grind ;
     boolean overtime ;
     boolean vote ;
     boolean daily ;
     boolean clean ;
     boolean boost ;
 
-    public ReminderSettings(String name, boolean tip, boolean work, boolean overtime, boolean vote, boolean daily, boolean clean, boolean boost) {
+    public ReminderSettings(String name, boolean tip, boolean work, boolean grind, boolean overtime, boolean vote, boolean daily, boolean clean, boolean boost) {
         this.name = name;
         this.tip = tip;
         this.work = work;
+        this.grind = grind;
         this.overtime = overtime;
         this.vote = vote;
         this.daily = daily;
@@ -27,6 +29,7 @@ public class ReminderSettings {
         this.name = name;
         this.tip = true;
         this.work = true;
+        this.grind = true;
         this.overtime = true;
         this.vote = true;
         this.daily = true;
@@ -96,5 +99,13 @@ public class ReminderSettings {
 
     public void setBoost(boolean boost) {
         this.boost = boost;
+    }
+
+    public boolean isGrind() {
+        return grind;
+    }
+
+    public void setGrind(boolean grind) {
+        this.grind = grind;
     }
 }

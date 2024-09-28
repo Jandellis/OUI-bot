@@ -3,6 +3,8 @@ package action.reminder;
 import action.Action;
 import action.FranchiseStat;
 import action.GiveawayAdd;
+import action.Karen;
+import action.RushHour;
 import action.reminder.model.Profile;
 import action.reminder.model.Reminder;
 import action.sm.UpdateAlerts;
@@ -33,6 +35,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class EmbedMessage extends Action {
 
     String tacoBot = "490707751832649738";
+    String customerBot = "526268502932455435";
     List<EmbedAction> embedActions = new ArrayList<>();
 
     /**
@@ -71,13 +74,21 @@ public class EmbedMessage extends Action {
         buyUpgrade.action(gateway, client);
         embedActions.add(buyUpgrade);
 
+        Karen karen = new Karen();
+        karen.action(gateway, client);
+        embedActions.add(karen);
+
+        RushHour rushHour = new RushHour();
+        rushHour.action(gateway, client);
+        embedActions.add(rushHour);
+
     }
 
 
     @Override
     public Mono<Object> doAction(Message message) {
 
-            if (message.getData().author().id().asString().equals(tacoBot)) {
+            if (message.getData().author().id().asString().equals(tacoBot) || message.getData().author().id().asString().equals(customerBot)) {
                 try {
                     List<EmbedData> embedData;
                     if (message.getEmbeds().isEmpty() || message.getEmbeds().size() == 0){
@@ -120,7 +131,7 @@ public class EmbedMessage extends Action {
 
     public Mono<Object> doEmbed(Message message, List<EmbedData> embedData) {
 
-        if (message.getData().author().id().asString().equals(tacoBot)) {
+        if (message.getData().author().id().asString().equals(tacoBot)  || message.getData().author().id().asString().equals(customerBot)) {
             try {
                 for (EmbedAction embedAction : embedActions) {
                     embedAction.handleEmbedAction(message, embedData);
@@ -153,6 +164,7 @@ public class EmbedMessage extends Action {
                     lookForEmbeds(message, newCount);
 
                 } else {
+                    logger.info("found embeds");
                     doEmbed(message, embedData);
                 }
             }

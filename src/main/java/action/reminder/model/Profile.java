@@ -1,6 +1,7 @@
 package action.reminder.model;
 
 import java.sql.Time;
+import java.sql.Timestamp;
 
 public class Profile {
 
@@ -18,6 +19,7 @@ public class Profile {
     Boolean ignoredHidden = false;
     Boolean dnd = false;
     String userName;
+    Timestamp rushHourEnd;
 
     public Profile(String name, String shackName, Status status) {
         this.name = name;
@@ -25,7 +27,7 @@ public class Profile {
         this.status = status;
     }
 
-    public Profile(String name, String shackName, Status status, Boolean enabled, String emote, String message, int depth, int upgrade, Time sleepStart, Time sleepEnd, Boolean dmReminder, Boolean ignoredHidden, Boolean dnd, String userName) {
+    public Profile(String name, String shackName, Status status, Boolean enabled, String emote, String message, int depth, int upgrade, Time sleepStart, Time sleepEnd, Boolean dmReminder, Boolean ignoredHidden, Boolean dnd, String userName, Timestamp rushHourEnd) {
         this.name = name;
         this.shackName = shackName;
         this.status = status;
@@ -42,6 +44,7 @@ public class Profile {
         this.userName = userName;
         this.ignoredHidden = ignoredHidden;
         this.dnd = dnd;
+        this.rushHourEnd = rushHourEnd;
     }
 
     public String getName() {
@@ -106,4 +109,13 @@ public class Profile {
     // emabled
     // emote
     // message
+
+
+    public Timestamp getRushHourEnd() {
+        return rushHourEnd;
+    }
+
+    public void setRushHourEnd(Timestamp rushHourEnd) {
+        this.rushHourEnd = rushHourEnd;
+    }
 }

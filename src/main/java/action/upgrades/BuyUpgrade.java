@@ -18,6 +18,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -33,6 +34,7 @@ public class BuyUpgrade extends Action implements EmbedAction {
     Location city = new Location(LocationEnum.city);
     Location shack = new Location(LocationEnum.shack);
     Location beach = new Location(LocationEnum.beach);
+    Location cantina = new Location(LocationEnum.cantina);
     Location amusement = new Location(LocationEnum.amusement);
     Location hq = new Location(LocationEnum.hq);
     Location event = new Location(LocationEnum.event);
@@ -238,6 +240,48 @@ public class BuyUpgrade extends Action implements EmbedAction {
         locations.add(beach);
 
 
+
+
+        //ad
+        cantina.addUpgrade("newspaper", "Newspaper Ad", 10, 350, 50);
+        cantina.addUpgrade("radio", "Radio Ad", 20, 650, 45);
+        cantina.addUpgrade("email", "Email Campaign", 30, 1000, 45);
+        cantina.addUpgrade("internet", "Internet Ad", 50, 2000, 50);
+        cantina.addUpgrade("tv", "TV Commercial", 160, 5500, 35);
+        cantina.addUpgrade("blimp", "Advertising Blimp", 200, 250000, 6);
+        //up
+        cantina.addUpgrade("paint", "New Paint", 10, 250, 50);
+        cantina.addUpgrade("furniture", "New Furniture", 20, 600, 45);
+        cantina.addUpgrade("bathrooms", "Nicer Bathrooms", 25, 800, 45);
+        cantina.addUpgrade("billboard", "Billboard", 35, 1000, 45);
+        cantina.addUpgrade("appliances", "Better Appliances", 90, 1200, 30);
+        cantina.addUpgrade("tipjar", "Cooler Tip Jar", 40, 500, 35);
+        //hire
+        cantina.addUpgrade("dishwasher", "Dishwasher", 10, 250, 50);
+        cantina.addUpgrade("cashier", "Cashier", 10, 250, 50);
+        cantina.addUpgrade("server", "Server", 20, 600, 50);
+        cantina.addUpgrade("bartender", "Bartender", 35, 1000, 55);
+        cantina.addUpgrade("sous", "Sous Chef", 40, 1200, 50);
+        cantina.addUpgrade("head", "Head Chef", 65, 2000, 45);
+        cantina.addUpgrade("manager", "Store Manager", 150, 5000, 50);
+        //deco
+        cantina.addUpgrade("barstools", "Barstools", 5, 175, 70);
+        cantina.addUpgrade("skulls", "Sugar Skulls", 15, 650, 55);
+        cantina.addUpgrade("coasters", "Coasters", 30, 2750, 50);
+        cantina.addUpgrade("tiles", "Mosaic Tiles", 80, 50000, 30);
+        cantina.addUpgrade("mirrors", "Vintage Mirrors", 850, 1000000, 18);
+        //stage
+        cantina.addUpgrade("discolights", "Disco Lights", 50, 8000, 30, true);
+        cantina.addUpgrade("sound", "Sound System", 110, 12500, 25, true);
+        cantina.addUpgrade("spotlight", "Spotlight", 260, 40000, 20, true);
+        cantina.addUpgrade("microphones", "Microphones", 420, 200000, 15, true);
+        cantina.addUpgrade("lyrics", "Lyrics", 750, 800000, 10, true);
+        cantina.addUpgrade("pyrotechnics", "Pyrotechnics", 1500, 10000000, 1, true);
+
+        locations.add(cantina);
+
+
+
         //Upgrades
         hq.addUpgrade("Customer Service Department", "Customer Service Department", 180, 750000, 20);
         hq.addUpgrade("Food Services Department", "Food Services Department", 180, 750000, 20);
@@ -319,7 +363,7 @@ public class BuyUpgrade extends Action implements EmbedAction {
                             return Mono.empty();
                         }
 
-                        Location location = getLocation(locationEnum.getName(), "");
+                        Location location = getLocation(locationEnum.getName(), "", "");
 
                         if (location == null) {
                             return Mono.empty();
@@ -333,7 +377,7 @@ public class BuyUpgrade extends Action implements EmbedAction {
                             EmbedCreateSpec.Builder embed = EmbedCreateSpec.builder();
                             embed.color(Color.SUMMER_SKY);
                             embed.title("Your upgrades");
-                            String commands = "</hire:1006354977847001159>, </advertisements:1006354977721176137>, </upgrades:1006354978274820107>, </decorations:1006354977788268620>, ";
+                            String commands = "</hire:1203826200452137022>, </advertisements:1203826194500288593>, </upgrades:1203826209532682311>, </decorations:1203826197352677417>, ";
                             switch (locationEnum) {
                                 case shack:
                                     commands = commands + "</truck:1006354978153169014>";
@@ -346,6 +390,9 @@ public class BuyUpgrade extends Action implements EmbedAction {
                                     break;
                                 case city:
                                     commands = commands + "</cart:1006354977721176142>";
+                                    break;
+                                case cantina:
+                                    commands = commands + "</stage:1276293791728406771>";
                                     break;
                                 case hq:
                                     commands = "</hq upgrades:1018564197602295859>, </hq hire:1018564197602295859> ";
@@ -422,11 +469,6 @@ public class BuyUpgrade extends Action implements EmbedAction {
                                     return 1;
                             });
                         }
-                        //sorted by price first, then alphabetically
-                        if (groupSort) {
-                            title = " - Grouped";
-                            total.sort(Comparator.comparing(UserUpgrades::getUpgrade));
-                        }
 
                         int upgradeLimit;
                         if (profile.getUpgrade() == 0) {
@@ -495,7 +537,7 @@ public class BuyUpgrade extends Action implements EmbedAction {
                                         boost = " mover overtime";
                                         fakeBoost = true;
                                     }
-                                    sb.append("*(+$" + boost + ")*\r\n");
+                                    sb.append("*(+$" + boost + ")*\n");
                                     totalCost = totalCost + upgrade.getCurrentCost();
                                     if (!fakeBoost) {
                                         totalBoost = totalBoost + upgrade.getBoost();
@@ -515,7 +557,30 @@ public class BuyUpgrade extends Action implements EmbedAction {
                         }
                         if (totalCost == 0) {
                             sb.append("Maxed out!");
+                        } else {
+
+                            //sorted by price first, then alphabetically
+                            if (groupSort) {
+                                title = " - Grouped";
+                                String[] lines = sb.toString().split("\n");
+                                List<String> sorted = new ArrayList();
+                                for (String line : lines) {
+                                    sorted.add(line.split(" - `")[1]);
+                                }
+                                Collections.sort(sorted);
+                                sb = new StringBuilder();
+                                count = 1;
+                                for (String line : sorted) {
+
+                                    sb.append(count + " - `" + line + "\n");
+                                    count++;
+
+                                }
+
+                            }
                         }
+
+
 
                         EmbedCreateSpec.Builder embed = EmbedCreateSpec.builder();
                         embed.color(Color.SUMMER_SKY);
@@ -538,7 +603,7 @@ public class BuyUpgrade extends Action implements EmbedAction {
                             return Mono.empty();
                         }
 
-                        Location location = getLocation(locationEnum.getName(), "");
+                        Location location = getLocation(locationEnum.getName(), "", "");
 
                         if (location == null) {
                             return Mono.empty();
@@ -564,6 +629,9 @@ public class BuyUpgrade extends Action implements EmbedAction {
                                     break;
                                 case city:
                                     commands = commands + "</cart:1006354977721176142>";
+                                    break;
+                                case cantina:
+                                    commands = commands + "</stage:1276293791728406771>";
                                     break;
                                 case hq:
                                     commands = "</hq upgrades:1018564197602295859>, </hq hire:1018564197602295859> ";
@@ -617,6 +685,7 @@ public class BuyUpgrade extends Action implements EmbedAction {
                         AtomicLong totalBoost = new AtomicLong();
                         location.getUpgrades().forEach((name, upgrade) -> {
                             int max = upgrade.getMax();
+                            StringBuilder sb = new StringBuilder(upgrade.getName() + "-"+ upgrade.getBoost()+ "-"+upgrade.getMax()+ "\r\n");
                             for (int i = 0; i < max; i++) {
                                 totalUpgrades.getAndIncrement();
                                 totalCost.addAndGet(location.getCost(upgrade.getName(), i + 1));
@@ -632,6 +701,11 @@ public class BuyUpgrade extends Action implements EmbedAction {
                                     boost = 0;
                                 }
                                 totalBoost.addAndGet(boost);
+                                int pos = i+ 1;
+                                sb.append(pos + "-" + location.getCost(upgrade.getName(), pos) +"\r\n");
+                            }
+                            if (userId.equals("292839877563908097")) {
+//                                dmMe(sb.toString());
                             }
                         });
 
@@ -728,9 +802,10 @@ public class BuyUpgrade extends Action implements EmbedAction {
                             title.contains("Hotdog Cart") ||
                             title.contains("Amusement Park Attractions") ||
                             title.contains("Ice Cream Stand") ||
+                            title.contains("Karaoke Stage") ||
                             title.contains("Team Shack Upgrades")) {
                         String id = getId(message, embed);
-                        Location location = getLocation(title, embed.description().get());
+                        Location location = getLocation(title, embed.description().get(), "");
 
                         if (location == null) {
                             return Mono.empty();
@@ -753,6 +828,31 @@ public class BuyUpgrade extends Action implements EmbedAction {
                             if (profile != null) {
                                 react(message, profile, false);
                                 react(message, profile, true);//:arrows_counterclockwise:
+                            }
+                        }
+                    }
+                }
+
+                if (embed.description().toOptional().isPresent()) {
+                    String desc = embed.description().get();
+                    //boosts
+                    if (desc.startsWith("\u2705") && (desc.contains("You have purchased:") || desc.contains("You have hired:"))) {
+
+                        String id = getId(message, embed);
+                        Location location = getLocation("", "", embedData.get(0).footer().get().text());
+
+                        Upgrade upgrade = location.getUpgradeDesc(desc);
+                        if (upgrade != null) {
+                            UserUpgrades userUpgrades = UpgradeUtils.loadUserUpgrade(id, location.getName().getName(), upgrade.getName());
+                            if (userUpgrades != null) {
+                                upgrade.setPosition(userUpgrades.getProgress() + 1);
+                                UpgradeUtils.addUserUpgrades(new UserUpgrades(id, location.getName().getName(), upgrade.getName(), upgrade.getPosition()));
+
+
+                                Profile profile = ReminderUtils.loadProfileById(id);
+                                if (profile != null) {
+                                    react(message, profile, false);
+                                }
                             }
                         }
                     }
@@ -789,7 +889,7 @@ public class BuyUpgrade extends Action implements EmbedAction {
         }
     }
 
-    private Location getLocation(String name, String desc) {
+    private Location getLocation(String name, String desc, String footer) {
 
         if (name.contains("Taco Truck")) {
             name = "shack";
@@ -799,6 +899,9 @@ public class BuyUpgrade extends Action implements EmbedAction {
         }
         if (name.contains("Hotdog Cart")) {
             name = "city";
+        }
+        if (name.contains("Karaoke Stage")) {
+            name = "cantina";
         }
         if (name.contains("Amusement")) {
             name = "amusement";
@@ -817,6 +920,9 @@ public class BuyUpgrade extends Action implements EmbedAction {
                     return location;
                 }
                 if (desc.contains("**HQ Balance:**") && LocationEnum.hq.getName().equals(location.getName().getName())) {
+                    return location;
+                }
+                if (footer.contains("|") && location.getName().getName().contains(footer.split("\\|")[1].split(" ")[2].toLowerCase())) {
                     return location;
                 }
             }

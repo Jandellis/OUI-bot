@@ -55,6 +55,40 @@ public class UpgradeUtils {
     }
 
 
+    public static UserUpgrades loadUserUpgrade (String name, String location, String item ) {
+
+        List<UserUpgrades> upgrades = new ArrayList<>();
+        try {
+            Connection con = databaseUtils.getConnection();
+//            Statement st = con.createStatement();
+
+            LocalDateTime oneWeek = LocalDateTime.now().minusDays(7).minusHours(12);
+
+            PreparedStatement pst = con.prepareStatement("SELECT name, location, upgrade, progress FROM user_upgrades " +
+                    "WHERE name = ? and location = ? and upgrade = ?");
+            pst.setString(1, name);
+            pst.setString(2, location);
+            pst.setString(3, item);
+            ResultSet rs = pst.executeQuery();
+            while (rs.next()) {
+
+                UserUpgrades userUpgrades = new UserUpgrades(rs.getString(1),
+                        rs.getString(2),
+                        rs.getString(3),
+                        rs.getInt(4)
+                );
+                return userUpgrades;
+            }
+
+
+//            st.executeBatch();
+        } catch (SQLException ex) {
+            databaseUtils.printException(ex);
+        }
+        return null;
+    }
+
+
     public static void addUserUpgrades(UserUpgrades userUpgrades) {
         try {
             Connection con = databaseUtils.getConnection();

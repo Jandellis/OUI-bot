@@ -21,6 +21,7 @@ public class RemindersCommand extends SlashCommand {
         Boolean all = getParameter("all", (Boolean) null, event);
         Boolean tip = getParameter("tip", (Boolean) null, event);
         Boolean work = getParameter("work", (Boolean) null, event);
+        Boolean grind = getParameter("grind", (Boolean) null, event);
         Boolean overtime = getParameter("overtime", (Boolean) null, event);
         Boolean vote = getParameter("vote", (Boolean) null, event);
         Boolean daily = getParameter("daily", (Boolean) null, event);
@@ -33,7 +34,7 @@ public class RemindersCommand extends SlashCommand {
             reminderSettings = new ReminderSettings(name);
         }
 
-        if (all == null && tip == null && work == null && overtime == null && vote == null && daily == null && clean == null && boost == null ) {
+        if (all == null && tip == null && work == null && grind == null && overtime == null && vote == null && daily == null && clean == null && boost == null ) {
 
 //            EnabledReminders enabledReminders = ReminderUtils.loadEnableReminders(name);
             String message = "Your current reminders are ";
@@ -42,6 +43,9 @@ public class RemindersCommand extends SlashCommand {
             }
             if (reminderSettings.isWork()) {
                 message += "\n :small_orange_diamond: work ";
+            }
+            if (reminderSettings.isGrind()) {
+                message += "\n :small_orange_diamond: grind ";
             }
             if (reminderSettings.isOvertime()) {
                 message += "\n :small_orange_diamond: overtime ";
@@ -69,7 +73,7 @@ public class RemindersCommand extends SlashCommand {
         String messageEnable = "";
         String messageDisable = "";
         if (all != null) {
-            reminderSettings = new ReminderSettings(name, all, all, all, all, all, all, all);
+            reminderSettings = new ReminderSettings(name, all, all, all, all, all, all, all, all);
             ReminderUtils.updateReminderSettings(reminderSettings);
             if (all) {
                 messageEnable = "\n :small_orange_diamond: all";
@@ -91,6 +95,13 @@ public class RemindersCommand extends SlashCommand {
                     messageEnable+= "\n :small_orange_diamond: work ";
                 else
                     messageDisable+= "\n :small_orange_diamond: work ";
+            }
+            if (grind != null) {
+                reminderSettings.setGrind(grind);
+                if (grind)
+                    messageEnable+= "\n :small_orange_diamond: grind ";
+                else
+                    messageDisable+= "\n :small_orange_diamond: grind ";
             }
             if (overtime != null) {
                 reminderSettings.setOvertime(overtime);

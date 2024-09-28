@@ -9,6 +9,7 @@ import action.Heartbeat;
 import action.Hit;
 import action.Karen;
 import action.Left;
+import action.RushHour;
 import action.SpeedJar;
 import action.Test;
 import action.Warn;
@@ -305,6 +306,8 @@ public class Bot {
                             .and(new Heartbeat().action(gateway, client))
                             .and(new GiveAWay().action(gateway, client))
                             .and(new GiveAWay().reaction(gateway, client))
+//                            .and(new RushHour().action(gateway, client))
+                            .and(new RushHour().reaction(gateway, client))
                             .and(new BuyUpgrade().action(gateway, client))
                             .and(new BuyUpgrade().reaction(gateway, client))
                             .and(new Olympics().action(gateway, client))

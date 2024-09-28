@@ -77,6 +77,13 @@ public class CreateBoostReminder extends Action implements EmbedAction {
         boosts.put("Gift Shop",new Boost("Gift Shop", 8, LocationEnum.amusement));
         boosts.put("Live Show",new Boost("Live Show", 24, LocationEnum.amusement));
 
+        //Cantina
+        boosts.put("Margarita Bar", new Boost("Margarita Bar", 8, LocationEnum.cantina));
+        boosts.put("Taco Bar",new Boost("Taco Bar", 6, LocationEnum.cantina));
+        boosts.put("Poker Night", new Boost("Poker Night", 4, LocationEnum.cantina));
+        boosts.put("Disco Night",new Boost("Disco Night", 24, LocationEnum.cantina));
+        boosts.put("Jukebox",new Boost("Jukebox", 4, LocationEnum.cantina));
+
 
         //Event
         boosts.put("Flyers", new Boost("Flyers", 1, LocationEnum.event));

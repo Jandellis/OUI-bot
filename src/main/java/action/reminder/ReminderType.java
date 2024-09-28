@@ -2,6 +2,7 @@ package action.reminder;
 
 public enum ReminderType {
     work("work"),
+    grind("grind"),
     tips("tips"),
     ot("overtime"),
     vote("vote"),
@@ -46,6 +47,13 @@ public enum ReminderType {
     sponsor("Sponsorship"),
     cards("Gift Cards"),
     takeout("Takeout"),
+
+    //Cantina
+    margarita("Margarita Bar"),
+    taco("Taco Bar"),
+    poker("Poker Night"),
+    disco("Disco Night"),
+    jukebox("Jukebox"),
 
     //event
     flyers("Flyers"),

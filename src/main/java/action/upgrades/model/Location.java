@@ -49,11 +49,30 @@ public class Location {
             if (line.contains("**"+upgrade.fullName+"**")) {
                 upgradeItem.set(upgrade);
                 //**Booth** `(13/35)`
-                String position = line.split("`")[1].split("/")[0];
-                if (this.name != LocationEnum.event) {
-                    position = position.substring(1);
+                try {
+                    String position = line.split("`")[1].split("/")[0];
+                    if (this.name != LocationEnum.event) {
+                        position = position.substring(1);
+                    }
+                    upgradeItem.get().setPosition(Integer.parseInt(position));
+                } catch (ArrayIndexOutOfBoundsException e) {
+                    upgradeItem.get().setPosition(1);
+
                 }
-                upgradeItem.get().setPosition(Integer.parseInt(position));
+
+            }
+        });
+        return upgradeItem.get();
+    }
+
+
+    public Upgrade getUpgradeDesc(String desc){
+        AtomicReference<Upgrade> upgradeItem = new AtomicReference<>();
+
+        upgrades.forEach((name, upgrade) -> {
+            if (desc.contains(upgrade.fullName)) {
+                upgradeItem.set(upgrade);
+                upgradeItem.get().setPosition(1);
 
             }
         });

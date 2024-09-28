@@ -1,10 +1,15 @@
 package action;
 
+import action.reminder.EmbedAction;
+import discord4j.common.util.Snowflake;
 import discord4j.core.object.Embed;
 import discord4j.core.object.entity.Message;
+import discord4j.discordjson.json.EmbedData;
 import reactor.core.publisher.Mono;
 
-public class Karen extends Action {
+import java.util.List;
+
+public class Karen extends Action implements EmbedAction {
 
 
     String customerChannel;
@@ -17,6 +22,7 @@ public class Karen extends Action {
     String customerPingPond;
     String customerBot = "526268502932455435";
 //    String customerBot = "292839877563908097";
+    String office = "841078057565814845";
 
     String param2;
     String param3;
@@ -51,6 +57,41 @@ public class Karen extends Action {
                     message.getChannelId().asString().equals(customerChannel2)||
                     message.getChannelId().asString().equals(customerChannel3) ){
                 if (message.getData().author().id().asString().equals(customerBot)) {
+
+                    //check if its an interaction
+                    //check if its an add command or a remove command
+
+
+//                    if (message.getData().interaction().toOptional().isPresent()) {
+//
+//                        String userId = message.getData().interaction().get().user().id().toString();
+//
+//                        String action = message.getData().interaction().get().name();
+////                        dmMe( userId+"message" + message.toString());
+////                        dmMe( userId+action+"message" +message.getData().embeds().size());
+//                        if (action.toLowerCase().contains("remove") || action.toLowerCase().contains("upgrade")) {
+////                            try {
+////                                Thread.sleep(1000);
+////                            } catch (InterruptedException e) {
+////                                e.printStackTrace();
+////                            }
+//                            List<EmbedData> embeds = checkEmbeds(message, true);
+//                            if (action.toLowerCase().contains("remove")) {
+//                                if (embeds.get(0).description().get().contains("You have removed your")) {
+//                                    String msg = "BOO :( <@" + userId + "> removed multiplier in https://discord.com/channels/840395541791768599/" + message.getChannelId().asLong() + "/" + message.getId().asLong();
+//                                    client.getChannelById(Snowflake.of(office)).createMessage(msg).block();
+//                                }
+//                            }
+//
+//                            if (action.toLowerCase().contains("upgrade")) {
+//                                if (embeds.get(0).description().get().contains("Customer bot has been upgraded to a")) {
+//                                    String msg = "YAY!! :) <@" + userId + "> added multiplier in https://discord.com/channels/840395541791768599/" + message.getChannelId().asLong() + "/" + message.getId().asLong();
+//                                    client.getChannelById(Snowflake.of(office)).createMessage(msg).block();
+//                                }
+//                            }
+//                        }
+//
+//                    }
                     if (message.getContent().contains(param2) || message.getContent().contains(param3)) {
                         logger.info("got sell");
 
@@ -164,4 +205,56 @@ public class Karen extends Action {
         return Mono.empty();
     }
 
+    @Override
+    public Mono<Object> handleEmbedAction(Message message, List<EmbedData> embedData) {
+
+        try {
+            logger.info("got karen message");
+            if (message.getChannelId().asString().equals(customerChannel) ||
+                    message.getChannelId().asString().equals(customerChannel2)||
+                    message.getChannelId().asString().equals(customerChannel3) ) {
+                if (message.getData().author().id().asString().equals(customerBot)) {
+                    logger.info("got karen message");
+
+
+                    if (message.getData().interaction().toOptional().isPresent()) {
+                        logger.info("got karen message");
+
+                        String userId = message.getData().interaction().get().user().id().toString();
+
+                        String action = message.getData().interaction().get().name();
+    //                        dmMe( userId+"message" + message.toString());
+    //                        dmMe( userId+action+"message" +message.getData().embeds().size());
+                        if (action.toLowerCase().contains("remove") || action.toLowerCase().contains("upgrade")) {
+    //                            try {
+    //                                Thread.sleep(1000);
+    //                            } catch (InterruptedException e) {
+    //                                e.printStackTrace();
+    //                            }
+//                            List<EmbedData> embeds = checkEmbeds(message, true);
+                            if (action.toLowerCase().contains("remove")) {
+                                if (embedData.get(0).description().get().contains("You have removed your")) {
+                                    String msg = "BOO :( <@" + userId + "> removed multiplier in https://discord.com/channels/840395541791768599/" + message.getChannelId().asLong() + "/" + message.getId().asLong();
+                                    client.getChannelById(Snowflake.of(office)).createMessage(msg).block();
+                                }
+                            }
+
+                            if (action.toLowerCase().contains("upgrade")) {
+                                if (embedData.get(0).description().get().contains("Customer bot has been upgraded to a")) {
+                                    String msg = "YAY!! :) <@" + userId + "> added multiplier in https://discord.com/channels/840395541791768599/" + message.getChannelId().asLong() + "/" + message.getId().asLong();
+                                    client.getChannelById(Snowflake.of(office)).createMessage(msg).block();
+                                }
+                            }
+                        }
+
+                    }
+                }
+            }
+
+        } catch (Exception e) {
+            printException(e);
+        }
+
+        return Mono.empty();
+    }
 }

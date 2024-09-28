@@ -126,6 +126,10 @@ public abstract class Action {
         return null;
     }
 
+    protected boolean hasPermission(Message message, String role) {
+        return hasPermission(message, Long.parseLong(role));
+    }
+
     protected boolean hasPermission(Message message, Long role) {
         try {
             if (!message.getAuthor().isPresent()) {
@@ -353,9 +357,11 @@ public abstract class Action {
 //        logger.info("message has embeds or content " + message.getId());
         return false;
     }
-
-
     protected List<EmbedData> checkEmbeds(Message message) {
+        return checkEmbeds(message, false);
+    }
+
+    protected List<EmbedData> checkEmbeds(Message message, Boolean force) {
 
         logger.info("checking embeds " + message.getId());
         if (message.getEmbeds().isEmpty()) {
@@ -368,8 +374,15 @@ public abstract class Action {
 
             // this may break again in the future
             Message result = gateway.getMessageById(Snowflake.of(message.getChannelId().asString()), message.getId()).block();
-            if (result != null) {
-                return result.getData().embeds();
+
+            if (result != null ) {
+                if (force) {
+                    if (result.getData().embeds().size() > 0) {
+                        return result.getData().embeds();
+                    }
+                } else {
+                    return result.getData().embeds();
+                }
             }
 
 

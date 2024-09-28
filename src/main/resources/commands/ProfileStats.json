@@ -45,6 +45,10 @@
                     "value": "city"
                 },
                 {
+                    "name": "Cantina",
+                    "value": "cantina"
+                },
+                {
                     "name": "Hq",
                     "value": "hq"
                 },

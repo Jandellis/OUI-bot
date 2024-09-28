@@ -192,7 +192,7 @@ public class DoReminder extends Action {
 
         ReminderSettings reminderSettings = ReminderUtils.loadReminderSettings(profile.getName());
         if (reminderSettings == null) {
-            reminderSettings = new ReminderSettings(profile.getName(), true, true, true, true, true, true, true);
+            reminderSettings = new ReminderSettings(profile.getName(), true, true, false, true, true, true, true, true);
         }
 
 
@@ -244,6 +244,18 @@ public class DoReminder extends Action {
         boolean doReminder = true;
 
         switch (reminder.getType()) {
+            case grind:
+                command = "</work:1203826210250166292>";
+                msg = "**1 MIN GRIND STREAK WARNING!!**\n" + msg;
+                doReminder = reminderSettings.isGrind();
+
+                for (Reminder dbReminders : ReminderUtils.loadReminder(reminder.getName())) {
+                    // there is a db reminder for work, so we can skip the grind reminder
+                    if (dbReminders.getType().equals(work)) {
+                        doReminder = false;
+                    }
+                }
+                break;
             case work:
                 command = "</work:1203826210250166292>";
                 doReminder = reminderSettings.isWork();
@@ -320,7 +332,7 @@ public class DoReminder extends Action {
             } else {
                 client.getChannelById(Snowflake.of(reminder.getChannel())).createMessage(msg).block();
             }
-            if (reminder.getType() == ReminderType.gift) {
+            if (reminder.getType() == ReminderType.gift || reminder.getType() == grind) {
                 //for gifts only delete that reminder
                 ReminderUtils.deleteReminder(reminder);
             } else {
