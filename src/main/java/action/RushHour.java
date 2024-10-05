@@ -14,8 +14,10 @@ import action.sm.model.SystemReminderType;
 import bot.Clean;
 import discord4j.common.util.Snowflake;
 import discord4j.core.event.domain.message.ReactionAddEvent;
+import discord4j.core.object.PermissionOverwrite;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.User;
+import discord4j.core.object.entity.channel.TopLevelGuildChannel;
 import discord4j.core.object.reaction.ReactionEmoji;
 import discord4j.core.spec.EmbedCreateSpec;
 import discord4j.discordjson.Id;
@@ -23,6 +25,8 @@ import discord4j.discordjson.json.EmbedData;
 import discord4j.discordjson.json.MessageData;
 import discord4j.rest.http.client.ClientException;
 import discord4j.rest.util.Color;
+import discord4j.rest.util.Permission;
+import discord4j.rest.util.PermissionSet;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
@@ -32,6 +36,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
@@ -48,6 +53,8 @@ public class RushHour extends Action implements EmbedAction {
 
 
     String tacoBot = "490707751832649738";
+    String rushHourChannel = "1289435874240630825";
+
 
     String giveawayChannel;
     String giveawayShower;
@@ -132,11 +139,28 @@ public class RushHour extends Action implements EmbedAction {
                     embedData.get(0).title().get().contains("Rush Hour Event Started!")) {
                 message.getChannel().flatMap(channel -> {
                     String ping = "";
-                    if (franchiseConfig != null && !franchiseConfig.getRushHour().isEmpty()) {
+                    if (franchiseConfig != null
+                            && franchiseConfig.getRushHour() != null
+                            && !franchiseConfig.getRushHour().isEmpty()) {
                         ping = "<@&" + franchiseConfig.getRushHour() + "> ";
+                        if (franchiseConfig.getName().equals("OUI")) {
+                            runEnd(60);
+                            runWarn(28*60 - 30);
+                            runStart(28*60 - 5);
+                        }
                     }
 
-                    Message pingMsg = channel.createMessage("Rush hour event now, " + ping + "react with " + react + " to get updated reminders").block();
+                    /**
+                     * do 30 min warning
+                     * ping nafda and me at start time
+                     * its started
+                     * crete system reminder for 60min time       - rush hour end
+                     * create system reminder for 27.5 hours time - 30min warning
+                     * create system reminder for 28 hours time   - nafda amd me start ping
+                     * 60 min after starts, say thanks for joining, next one will start in 27 hours
+                     */
+
+                    Message pingMsg = channel.createMessage("Rush hour event now, " + ping + "react with " + react + " to get updated reminders for the next 60 minuites").block();
                     pingMsg.addReaction(ReactionEmoji.unicode(react)).block();
                     return Mono.empty();
                 }).block();
@@ -146,4 +170,112 @@ public class RushHour extends Action implements EmbedAction {
         }
         return null;
     }
+
+
+    public void runWarn(long delay) {
+        LocalDateTime time = LocalDateTime.now().plusMinutes(delay);
+        Utils.addReminder(SystemReminderType.rushHourWarning, Timestamp.valueOf(time), "", "");
+        Runnable taskWrapper = () -> {
+            logger.info("running rushHour warn");
+            warn();
+        };
+        logger.info("rush hour warn at " + formatter.format(time));
+        executorService.schedule(taskWrapper, delay, TimeUnit.MINUTES);
+    }
+
+    public void runStart(long delay) {
+        LocalDateTime time = LocalDateTime.now().plusMinutes(delay);
+        Utils.addReminder(SystemReminderType.rushHourStart, Timestamp.valueOf(time), "", "");
+        Runnable taskWrapper = () -> {
+            logger.info("running rushHour start");
+            start();
+        };
+        logger.info("rush hour start at " + formatter.format(time));
+        executorService.schedule(taskWrapper, delay, TimeUnit.MINUTES);
+    }
+
+    public void runEnd(long delay) {
+        LocalDateTime time = LocalDateTime.now().plusMinutes(delay);
+        Utils.addReminder(SystemReminderType.rushHourEnd, Timestamp.valueOf(time), "", "");
+        Runnable taskWrapper = () -> {
+            logger.info("running rushHour end");
+            end();
+        };
+        logger.info("rush hour end at " + formatter.format(time));
+        executorService.schedule(taskWrapper, delay, TimeUnit.MINUTES);
+    }
+
+
+    private void warn() {
+        List<SystemReminder> warn = Utils.loadReminder(SystemReminderType.rushHourWarning);
+        if (timeBetween(warn.get(0)) < 5) {
+            Utils.deleteReminder(SystemReminderType.rushHourWarning);
+            String rushHour = ExportUtils.getFranchiseConfigByName("OUI").getRushHour();
+            client.getChannelById(Snowflake.of(rushHourChannel)).createMessage("<@&" + rushHour + "> will start in 30 min time").block();
+        }
+    }
+
+    private void start() {
+        List<SystemReminder> start = Utils.loadReminder(SystemReminderType.rushHourStart);
+        if (timeBetween(start.get(0)) < 5) {
+            Utils.deleteReminder(SystemReminderType.rushHourStart);
+            client.getChannelById(Snowflake.of(rushHourChannel)).createMessage("<@292839877563908097> <@695518297168281640>, please start the rush hour \n</rushhour start:1289034970341314571>").block();
+        }
+    }
+
+    private void end() {
+        List<SystemReminder> end = Utils.loadReminder(SystemReminderType.rushHourEnd);
+
+        if (timeBetween(end.get(0)) < 5) {
+            Utils.deleteReminder(SystemReminderType.rushHourEnd);
+            client.getChannelById(Snowflake.of(rushHourChannel)).createMessage("Thanks for joining us, the next rush hour will start in 27 hours").block();
+        }
+    }
+
+    public long timeBetween (SystemReminder reminder) {
+
+        LocalDateTime localNow = LocalDateTime.now();
+        LocalDateTime time;
+        time = reminder.getTime().toLocalDateTime();
+        long between = ChronoUnit.MINUTES.between(localNow, time);
+        return between;
+    }
+
+
+    public void startUp() throws IOException {
+
+        List<SystemReminder> start = Utils.loadReminder(SystemReminderType.rushHourStart);
+        List<SystemReminder> end = Utils.loadReminder(SystemReminderType.rushHourEnd);
+        List<SystemReminder> warn = Utils.loadReminder(SystemReminderType.rushHourWarning);
+
+        LocalDateTime localNow = LocalDateTime.now();
+        LocalDateTime time;
+
+        if (!start.isEmpty() ){
+            time = start.get(0).getTime().toLocalDateTime();
+            long delay = ChronoUnit.MINUTES.between(localNow, time);
+            runStart(delay);
+        }
+        if (!end.isEmpty() ){
+            time = end.get(0).getTime().toLocalDateTime();
+            long delay = ChronoUnit.MINUTES.between(localNow, time);
+            runEnd(delay);
+        }
+        if (!warn.isEmpty() ){
+            time = warn.get(0).getTime().toLocalDateTime();
+            long delay = ChronoUnit.MINUTES.between(localNow, time);
+            runWarn(delay);
+        }
+    }
+
+
+    /**
+     * do 30 min warning
+     * ping nafda and me at start time
+     * its started
+     * crete system reminder for 60min time       - rush hour end
+     * create system reminder for 27.5 hours time - 30min warning
+     * create system reminder for 28 hours time   - nafda amd me start ping
+     * 60 min after starts, say thanks for joining, next one will start in 27 hours
+     */
 }

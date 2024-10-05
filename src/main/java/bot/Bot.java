@@ -151,6 +151,15 @@ public class Bot {
                         logger.error("Exception", e);
                     }
 
+
+                    RushHour rushHour = new RushHour();
+                    rushHour.action(gateway, client);
+                    try {
+                        rushHour.startUp();
+                    } catch (IOException e) {
+                        logger.error("Exception", e);
+                    }
+
                     DoReminder doReminder = new DoReminder(gateway, client);
 
                     try {

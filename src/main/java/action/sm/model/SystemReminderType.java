@@ -5,7 +5,10 @@ public enum SystemReminderType {
     speedJarUnlock("speedJarUnlock"),
     speedJarLock("speedJarLock"),
     updateStats("updateStats"),
-    giveaway("giveaway");
+    giveaway("giveaway"),
+    rushHourWarning("rushHourWarning"),
+    rushHourStart("rushHourStart"),
+    rushHourEnd("rushHourEnd");
 
 
     String name;

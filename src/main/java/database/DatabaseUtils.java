@@ -57,8 +57,26 @@ public class DatabaseUtils {
     }
 
     public Connection getConnection() throws SQLException {
-        Connection con = DriverManager.getConnection(url);
-        return con;
+
+        Connection con;
+        int count = 0;
+        while (count < 10) {
+            try {
+                con = DriverManager.getConnection(url);
+                return con;
+            } catch (SQLException e){
+                if (count == 5) {
+                    throw e;
+                }
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException ignored) {
+                }
+
+            }
+            count ++;
+        }
+        return null;
     }
 
 

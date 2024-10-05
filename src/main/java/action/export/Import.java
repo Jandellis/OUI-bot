@@ -17,6 +17,7 @@ import discord4j.common.util.Snowflake;
 import discord4j.core.object.entity.Message;
 import discord4j.core.spec.EmbedCreateSpec;
 import discord4j.discordjson.Id;
+import discord4j.discordjson.json.MessageData;
 import discord4j.rest.http.client.ClientException;
 import discord4j.rest.util.Color;
 import reactor.core.publisher.Mono;
@@ -369,7 +370,48 @@ public class Import extends Action {
             });
         }
 
-        return Mono.empty();
+        actionData = getAction(message, "cyreimport");
+        if ( actionData != null && message.getAuthor().get().getId().asString().equalsIgnoreCase("292839877563908097")) {
+            reimport(message, actionData);
+        }
+            return Mono.empty();
+    }
+
+    private void reimport(Message message, String action) {
+        //go back 30 days
+        //look for message from taco shack
+        List<MessageData> history = message.getRestChannel().getMessagesAfter(Snowflake.of(action)).collectList().block();
+        message.getChannel().flatMap(channel -> {
+
+            channel.createMessage("Starting import").block();
+            int worklimit = 5;
+            int uncleanlimit = 7;
+            for (MessageData messageData : history) {
+                try {
+                    if (messageData.author().id().asString().equals("490707751832649738")) {
+
+                        String url = messageData.attachments().get(0).url();
+                        //get franchise name from url
+                        String[] name = url.split("/");
+                        String franchiseName = name[name.length - 1].split("_")[0];
+                        Timestamp time = Timestamp.valueOf(messageData.timestamp().replace("T", " ").replace("+00:00", ""));
+                        Clean.main(url, franchiseName + "historic.csv", worklimit, uncleanlimit, time, franchiseName);
+
+
+                        channel.createMessage("imported " + messageData.id().asString()).block();
+                    }
+                } catch (Exception e) {
+
+                    channel.createMessage("import failed for " + messageData.id().asString()).block();
+                }
+
+
+            }
+            channel.createMessage("import done").block();
+
+        return null;
+        }).block();
+
     }
 
 //    private boolean hasRole(List<Id> roles, String role) {
