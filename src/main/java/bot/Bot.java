@@ -1,5 +1,6 @@
 package bot;
 
+import action.Colour;
 import action.FranchiseStat;
 import action.GiveAWay;
 import action.GiveawayAdd;
@@ -264,6 +265,7 @@ public class Bot {
                     commands.add("FlexStats.json");
                     commands.add("giveaway.json");
                     commands.add("reminders.json");
+                    commands.add("SauceMarketOdds.json");
 
 //            List.of("greet.json", "ping.json");
                     try {
@@ -302,6 +304,7 @@ public class Bot {
                             .and(new Test().action(gateway, client))
                             .and(new Left().action(gateway, client))
                             .and(new CleanUp().action(gateway, client))
+                            .and(new Colour().action(gateway, client))
 
 //                            .and(new CreateProfile().action(gateway, client))
                             .and(new CreateProfile().reaction(gateway, client))

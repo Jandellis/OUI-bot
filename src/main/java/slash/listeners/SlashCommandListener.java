@@ -14,6 +14,7 @@ import slash.commands.PingCommand;
 import slash.commands.PostAdCommand;
 import slash.commands.ProfileStatsCommand;
 import slash.commands.RemindersCommand;
+import slash.commands.SauceMarketOddsCommand;
 import slash.commands.SauceMarketStatsCommand;
 import slash.commands.SlashCommand;
 
@@ -35,6 +36,7 @@ public class SlashCommandListener {
         commands.add(new GiveawayCommand());
         commands.add(new RemindersCommand());
         commands.add(new SauceMarketStatsCommand());
+        commands.add(new SauceMarketOddsCommand());
     }
 
     public static Mono<Void> handle(ChatInputInteractionEvent event) {

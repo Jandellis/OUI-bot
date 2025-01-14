@@ -33,6 +33,8 @@ import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -160,7 +162,7 @@ public class RushHour extends Action implements EmbedAction {
                      * 60 min after starts, say thanks for joining, next one will start in 27 hours
                      */
 
-                    Message pingMsg = channel.createMessage("Rush hour event now, " + ping + "react with " + react + " to get updated reminders for the next 60 minuites").block();
+                    Message pingMsg = channel.createMessage("Rush hour event now, " + ping + "react with " + react + " to get updated reminders for the next 60 minutes").block();
                     pingMsg.addReaction(ReactionEmoji.unicode(react)).block();
                     return Mono.empty();
                 }).block();
@@ -219,7 +221,7 @@ public class RushHour extends Action implements EmbedAction {
         List<SystemReminder> start = Utils.loadReminder(SystemReminderType.rushHourStart);
         if (timeBetween(start.get(0)) < 5) {
             Utils.deleteReminder(SystemReminderType.rushHourStart);
-            client.getChannelById(Snowflake.of(rushHourChannel)).createMessage("<@292839877563908097> <@695518297168281640>, please start the rush hour \n</rushhour start:1289034970341314571>").block();
+            client.getChannelById(Snowflake.of(rushHourChannel)).createMessage("<@&1296069096055636010>, please start the rush hour \n</rushhour start:1289034970341314571>").block();
         }
     }
 
@@ -228,7 +230,9 @@ public class RushHour extends Action implements EmbedAction {
 
         if (timeBetween(end.get(0)) < 5) {
             Utils.deleteReminder(SystemReminderType.rushHourEnd);
-            client.getChannelById(Snowflake.of(rushHourChannel)).createMessage("Thanks for joining us, the next rush hour will start in 27 hours").block();
+            ZonedDateTime utcTime = ZonedDateTime.now(ZoneOffset.UTC);
+            ZonedDateTime startTime = utcTime.plusHours(27);
+            client.getChannelById(Snowflake.of(rushHourChannel)).createMessage("Thanks for joining us, the next rush hour will start in 27 hours - <t:"+startTime.toEpochSecond()+":R> at <t:"+startTime.toEpochSecond()+":f>").block();
         }
     }
 

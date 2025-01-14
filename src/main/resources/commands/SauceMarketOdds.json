@@ -1,0 +1,52 @@
+{
+    "name": "odds",
+    "description": "Shows the chance of the next hour price going up or down based on the current price change",
+    "options": [
+        {
+            "name": "type",
+            "description": "What type of data do you want see?",
+            "type": 3,
+            "required": true,
+            "choices": [
+                {
+                    "name": "Salsa",
+                    "value": "salsa"
+                },
+                {
+                    "name": "Hotsauce",
+                    "value": "hotsauce"
+                },
+                {
+                    "name": "Guacamole",
+                    "value": "guac"
+                },
+                {
+                    "name": "Pico",
+                    "value": "pico"
+                },
+                {
+                    "name": "Chipotle",
+                    "value": "chipotle"
+                },
+                {
+                    "name": "Secret Sauce",
+                    "value": "secret_sauce"
+                }
+            ]
+        },
+        {
+            "name": "price",
+            "description": "What price point are you looking for?",
+            "type": 4,
+            "required": false
+        },
+        {
+            "name": "time",
+            "description": "How many hours in the future?",
+            "type": 4,
+            "required": false,
+            "min_value": 1,
+            "max_value": 48
+        }
+    ]
+}
