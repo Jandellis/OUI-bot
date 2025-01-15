@@ -7,6 +7,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,7 +18,9 @@ import discord4j.common.util.Snowflake;
 import discord4j.core.object.entity.Guild;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.Role;
+import discord4j.discordjson.json.ImmutablePositionModifyRequest;
 import discord4j.discordjson.json.MemberData;
+import discord4j.discordjson.json.PositionModifyRequest;
 import discord4j.rest.http.client.ClientException;
 import discord4j.rest.util.Color;
 import reactor.core.publisher.Mono;
@@ -57,7 +60,10 @@ public class Colour extends Action {
                     try {
                         Guild guild = message.getGuild().block();
                         Role role = updateRoleWithUserId(guild, message.getAuthor().get().getId().asString(), action).block();
-
+//                        ImmutablePositionModifyRequest.Builder builder = ImmutablePositionModifyRequest.builder();
+//                        builder.id(role.getId().asString());
+//                        builder.position(role.getRawPosition() + 1);
+//                        client.getGuildById(guild.getId()).modifyRolePositions()
                         client.getGuildById(guild.getId()).addMemberRole(
                                 message.getAuthor().get().getId(),
                                 role.getId(),
@@ -72,12 +78,19 @@ public class Colour extends Action {
 
                 return Mono.empty();
             });
+        } else if (getAction(message, "cycolor") != null) {
+            return message.getChannel().flatMap(channel -> {
+                if (channel.getId().asString().equals(fittingRoom)) {
+                    return channel.createMessage("Spell **colour** correctly!");
+                }
+                return Mono.empty();
+            });
         }
 
 
         return Mono.empty();
     }
-    private static Mono<Role> createRole(Guild guild, String roleName, Color color) {
+    private Mono<Role> createRole(Guild guild, String roleName, Color color) {
         return guild.createRole(spec -> {
             spec.setName(roleName);
             spec.setColor(color);
@@ -86,7 +99,36 @@ public class Colour extends Action {
         });
     }
 
-    private static Mono<Role> updateRoleWithUserId(Guild guild, String userId, String hexColor) {
+    private void moveRoleAbove(Guild guild, Role newRole) {
+//        Snowflake guildId = guild.getId(); // Get the Guild's ID
+        try {
+            int position = guild.getRoles()
+                    .filter(role -> role.getName().equalsIgnoreCase("platinum")).blockFirst().getRawPosition();
+            //unsure if should use getRawPosition or getPosition
+            if (position > newRole.getRawPosition())
+            newRole.changePosition(position + 1).blockFirst();
+        } catch (Exception e) {
+            printException(e);
+            System.out.println("Error moving role");
+        }
+
+
+        // Create a PositionModifyRequest to move the new role above the target role
+//        PositionModifyRequest request = PositionModifyRequest.builder()
+//                .id(newRole.getId().asString())
+//                .position(position + 1)
+//                .build();
+//        List<PositionModifyRequest> requests = Collections.singletonList(request);
+//
+//        // Modify the role positions using RestGuild
+//        guild.getClient()
+//                .rest()
+//                .getGuildById(guildId)
+//                .modifyRolePositions(requests).blockFirst();
+
+    }
+
+    private Mono<Role> updateRoleWithUserId(Guild guild, String userId, String hexColor) {
         try {
             // Convert hex color to Color
             Color color = parseColor(hexColor);
@@ -97,13 +139,16 @@ public class Colour extends Action {
                     .filter(role -> role.getName().equals(roleName))
                     .next()
                     .switchIfEmpty(createRole(guild, roleName, color)) // Create the role if it doesn't exist
-                    .flatMap(role -> role.edit(spec -> spec.setColor(color))); // Update the role with the new color
+                    .flatMap(role -> {
+                        moveRoleAbove(guild, role);
+                        return role.edit(spec -> spec.setColor(color));
+                    }); // Update the role with the new color
         } catch (IllegalArgumentException e) {
             return Mono.error(new IllegalArgumentException("Invalid hex color: " + hexColor));
         }
     }
 
-    private static Color parseColor(String input) {
+    private Color parseColor(String input) {
         // Check if the input matches a predefined color name
         Color color = COLOR_MAP.get(input.toUpperCase());
         if (color != null) {
@@ -114,7 +159,7 @@ public class Colour extends Action {
         return convertHexToColor(input);
     }
 
-    private static Color convertHexToColor(String hexColor) {
+    private Color convertHexToColor(String hexColor) {
         // Remove the '#' if present
         if (hexColor.startsWith("#")) {
             hexColor = hexColor.substring(1);

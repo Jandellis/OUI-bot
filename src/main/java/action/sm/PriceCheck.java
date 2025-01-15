@@ -64,6 +64,7 @@ public class PriceCheck extends Action {
     static long chefRole;
     int cheapPrice = 45;
     List<String> smUpdateChannels;
+    boolean hideSS;
 
 
     ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
@@ -77,6 +78,7 @@ public class PriceCheck extends Action {
         chefRole = Long.parseLong(config.get("chefRole"));
         cheapPrice = Integer.parseInt(config.get("cheapPrice"));
         smUpdateChannels = Arrays.asList(config.get("smUpdateChannels").split(","));
+        hideSS = Boolean.parseBoolean(config.get("hideSS", "true"));
     }
 
     public void loadPrices() {
@@ -99,15 +101,27 @@ public class PriceCheck extends Action {
             HashMap<Sauce, SauceObject> SauceObjectPrices = new HashMap<>();
             HashMap<Sauce, Integer> oldPrices = Utils.loadPrices();
 
+            Boolean hasSS = false;
+
             for (Sauce sauce : Sauce.values()) {
+                if (sauce == Sauce.secret_sauce  ) {
+                    // if doing ss check that its still in the data
+                    if (((JSONObject) obj).get(sauce.getName())!= null) {
+                        hasSS = true;
+                    } else {
+                        continue;
+                    }
+                }
+
                 int price = Integer.parseInt(((JSONObject) ((JSONObject) obj).get(sauce.getName())).get("price").toString());
-                JSONArray history = (JSONArray) ((JSONObject) ((JSONObject) obj).get(sauce.getName())).get("history");
+//                JSONArray history = (JSONArray) ((JSONObject) ((JSONObject) obj).get(sauce.getName())).get("history");
+                HashMap<Integer, Integer> history = Utils.loadLast(sauce, 24);
                 int max = 0;
                 int min = 99999999;
                 double avg = 0;
                 double total = 0;
                 for (int i = 0; i < history.size(); i++) {
-                    int value = Integer.parseInt(history.get(i).toString());
+                    int value = history.get(i+1);
                     if (value > max) {
                         max = value;
                     }
@@ -132,6 +146,9 @@ public class PriceCheck extends Action {
                 SauceObjectPrices.put(sauce, sauceObject);
             }
 
+            if (!hasSS) {
+                prices.put(Sauce.secret_sauce, -1);
+            }
 
             Utils.updatePrices(prices.get(Sauce.pico),
                     prices.get(Sauce.guacamole),
@@ -248,7 +265,9 @@ public class PriceCheck extends Action {
             addSauce(SauceObjectPrices.get(Sauce.guacamole), embed);
             addSauce(SauceObjectPrices.get(Sauce.pico), embed);
             addSauce(SauceObjectPrices.get(Sauce.chipotle), embed);
-            addSauce(SauceObjectPrices.get(Sauce.secret_sauce), embed);
+            if (hasSS && !hideSS) {
+                addSauce(SauceObjectPrices.get(Sauce.secret_sauce), embed);
+            }
 
             printCheap(SauceObjectPrices);
 
@@ -271,22 +290,24 @@ public class PriceCheck extends Action {
             });
 
 
-            logger.info("creating chart");
-            createChart(data, "ss_chart", Sauce.secret_sauce);
-            logger.info("got chart");
-            smUpdateChannels.forEach(channel -> {
-                try {
-                    InputStream inputStream = null;
-                    inputStream = new BufferedInputStream(new FileInputStream("ss_chart.png"));
-                    MessageCreateSpec msg = MessageCreateSpec.builder()
-                            .addFile("ss_chart.png", inputStream)
-                            .build();
+            if (hasSS && !hideSS) {
+                logger.info("creating chart");
+                createChart(data, "ss_chart", Sauce.secret_sauce);
+                logger.info("got chart");
+                smUpdateChannels.forEach(channel -> {
+                    try {
+                        InputStream inputStream = null;
+                        inputStream = new BufferedInputStream(new FileInputStream("ss_chart.png"));
+                        MessageCreateSpec msg = MessageCreateSpec.builder()
+                                .addFile("ss_chart.png", inputStream)
+                                .build();
 
-                    client.getChannelById(Snowflake.of(channel)).createMessage(msg.asRequest()).block();
-                } catch (Exception e) {
-                    printException(e);
-                }
-            });
+                        client.getChannelById(Snowflake.of(channel)).createMessage(msg.asRequest()).block();
+                    } catch (Exception e) {
+                        printException(e);
+                    }
+                });
+            }
 
             logger.info("Finished");
         } catch (Exception e) {
@@ -657,7 +678,7 @@ public class PriceCheck extends Action {
 
 
         XYChart chart = new XYChartBuilder().width(900).height(600)
-                .title(title + " last 24 hours")
+                .title(title + " last 48 hours")
                 .xAxisTitle("Hours ago")
                 .yAxisTitle("Price").build();
         logger.info("got builder");
@@ -688,17 +709,18 @@ public class PriceCheck extends Action {
             }
 //            XYSeries series = new XYSeries(sauce.getUppercaseName());
 
-            int price = Integer.parseInt(((JSONObject) ((JSONObject) obj).get(sauce.getName())).get("price").toString());
-            JSONArray history = (JSONArray) ((JSONObject) ((JSONObject) obj).get(sauce.getName())).get("history");
+//            int price = Integer.parseInt(((JSONObject) ((JSONObject) obj).get(sauce.getName())).get("price").toString());
+//            JSONArray history = (JSONArray) ((JSONObject) ((JSONObject) obj).get(sauce.getName())).get("history");
 
+            HashMap<Integer, Integer> history = Utils.loadLast(sauce, 48);
 //            series.add(0, price);
             List<Integer> xData = new ArrayList<>();
             List<Integer> yData = new ArrayList<>();
-            xData.add(0);
-            yData.add(price);
+//            xData.add(0);
+//            yData.add(price);
             for (int i = 0; i < history.size(); i++) {
-                int value = Integer.parseInt(history.get(i).toString());
-                int position = (i + 1) * -1;
+                int value = history.get(i+1);
+                int position = (i) * -1;
 //                series.add(position, value);
                 xData.add(position);
                 yData.add(value);

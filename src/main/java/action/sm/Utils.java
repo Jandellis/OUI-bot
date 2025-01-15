@@ -56,8 +56,14 @@ public class Utils {
 
     }
 
-
     public static HashMap<Integer, Integer> loadLast5(Sauce sauce) {
+        return loadLast(sauce, 5);
+    }
+    public static HashMap<Integer, Integer> loadLast(Sauce sauce, int amount) {
+        return loadLast(sauce, amount, true, 1);
+    }
+
+    public static HashMap<Integer, Integer> loadLast(Sauce sauce, int amount, boolean desc, int start) {
         String sauceName = sauce.getName();
         if (sauce == Sauce.guacamole) {
             sauceName = "guac";
@@ -65,11 +71,20 @@ public class Utils {
 
 
         HashMap<Integer, Integer> prices = new HashMap<>();
+        String limit = "";
+        if (amount > 0) {
+            limit = " LIMIT " + amount;
+        }
+        String order = "";
+        if (desc) {
+            order = " desc ";
+        }
         try (Connection con = databaseUtils.getConnection();
-             PreparedStatement pst = con.prepareStatement("SELECT price, update_time FROM sm_history WHERE name = '" + sauceName + "' ORDER BY update_time desc LIMIT 5 ");
+
+             PreparedStatement pst = con.prepareStatement("SELECT price, update_time FROM sm_history WHERE name = '" + sauceName + "' ORDER BY update_time " +order + limit);
              ResultSet rs = pst.executeQuery()) {
 
-            int count = 1;
+            int count = start;
             while (rs.next()) {
                 prices.put(count, rs.getInt(1));
                 count++;
@@ -102,8 +117,10 @@ public class Utils {
                     "VALUES ('hotsauce', " + hotsauce + ", 0);");
             st.addBatch("insert into sm (name, price, age) " +
                     "VALUES ('chipotle', " + chipotle + ", 0);");
-            st.addBatch("insert into sm (name, price, age) " +
-                    "VALUES ('secret_sauce', " + secret + ", 0);");
+            if (secret >= 0) {
+                st.addBatch("insert into sm (name, price, age) " +
+                        "VALUES ('secret_sauce', " + secret + ", 0);");
+            }
 
             st.executeBatch();
 
@@ -125,8 +142,12 @@ public class Utils {
                         "VALUES ('hotsauce', " + hotsauce + ", DATE_SUB(NOW(), INTERVAL 10 MINUTE), " + (hotsauce - hotsauceHistory.get(1)) + ", " + (hotsauceHistory.get(1) - hotsauceHistory.get(2)) + ", " + (hotsauceHistory.get(1) - hotsauceHistory.get(3)) + ", " + (hotsauceHistory.get(1) - hotsauceHistory.get(4)) + ", " + (hotsauceHistory.get(1) - hotsauceHistory.get(5)) + ", " + (hotsauce - hotsauceHistory.get(1)) + ", " + (hotsauce - hotsauceHistory.get(2)) + ", " + (hotsauce - hotsauceHistory.get(3)) + ", " + (hotsauce - hotsauceHistory.get(4)) + ");");
                 st.addBatch("insert into sm_history (name, price, update_time, last_change, change_1_to_2, change_1_to_3, change_1_to_4, change_1_to_5, change_0_to_1, change_0_to_2, change_0_to_3, change_0_to_4) " +
                         "VALUES ('chipotle', " + chipotle + ", DATE_SUB(NOW(), INTERVAL 10 MINUTE), " + (chipotle - chipotleHistory.get(1)) + ", " + (chipotleHistory.get(1) - chipotleHistory.get(2)) + ", " + (chipotleHistory.get(1) - chipotleHistory.get(3)) + ", " + (chipotleHistory.get(1) - chipotleHistory.get(4)) + ", " + (chipotleHistory.get(1) - chipotleHistory.get(5)) + ", " + (chipotle - chipotleHistory.get(1)) + ", " + (chipotle - chipotleHistory.get(2)) + ", " + (chipotle - chipotleHistory.get(3)) + ", " + (chipotle - chipotleHistory.get(4)) + ");");
+                if (secret >= 0) {
+                    st.addBatch("insert into sm_history (name, price, update_time, last_change, change_1_to_2, change_1_to_3, change_1_to_4, change_1_to_5, change_0_to_1, change_0_to_2, change_0_to_3, change_0_to_4) " +
+                            "VALUES ('secret_sauce', " + secret + ", DATE_SUB(NOW(), INTERVAL 10 MINUTE), " + (secret - secretHistory.get(1)) + ", " + (secretHistory.get(1) - secretHistory.get(2)) + ", " + (secretHistory.get(1) - secretHistory.get(3)) + ", " + (secretHistory.get(1) - secretHistory.get(4)) + ", " + (secretHistory.get(1) - secretHistory.get(5)) + ", " + (secret - secretHistory.get(1)) + ", " + (secret - chipotleHistory.get(2)) + ", " + (secret - secretHistory.get(3)) + ", " + (secret - secretHistory.get(4)) + ");");
+                }
 //                st.addBatch("insert into sm_history (name, price, update_time, last_change, change_1_to_2, change_1_to_3, change_1_to_4, change_1_to_5, change_0_to_1, change_0_to_2, change_0_to_3, change_0_to_4) " +
-//                        "VALUES ('secret', " + secret + ", DATE_SUB(NOW(), INTERVAL 10 MINUTE), " + (secret - secretHistory.get(1)) + ", " + (secretHistory.get(1) - secretHistory.get(2)) + ", " + (secretHistory.get(1) - secretHistory.get(3)) + ", " + (secretHistory.get(1) - secretHistory.get(4)) + ", " + (secretHistory.get(1) - secretHistory.get(5)) + ", " + (secret - secretHistory.get(1)) + ", " + (secret - chipotleHistory.get(2)) + ", " + (secret - secretHistory.get(3)) + ", " + (secret - secretHistory.get(4)) + ");");
+//                        "VALUES ('secret', " + secret + ", DATE_SUB(NOW(), INTERVAL 10 MINUTE), " + 0 + ", " + 0 + ", " + 0 + ", " + 0 + ", " + 0 + ", " + 0 + ", " + 0 + ", " + 0 + ", " + 0 + ");");
 
 
             }

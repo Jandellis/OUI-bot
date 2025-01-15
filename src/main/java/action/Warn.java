@@ -116,7 +116,7 @@ public class Warn extends Action {
             uncleanList.add("__Your status is unclean, clean your shack otherwise you may be kicked__ \r\n");
             for (KickMember kickMember : kickMemberList) {
                 boolean inServer = false;
-                AtomicInteger warning = new AtomicInteger();
+                AtomicInteger warning = new AtomicInteger(0);
                 AtomicBoolean imunity = new AtomicBoolean(false);
 //                MemberData memberData = null;
                 try {
@@ -172,14 +172,18 @@ public class Warn extends Action {
 
                     if (inServer && warnMember) {
                         if (warning.get() == 0) {
-                            //set donations to 0
-                            ExportUtils.resetMemberDonations(kickMember.getId().toString());
+//
                             MemberDonations donations = ExportUtils.loadMemberDonations(kickMember.getId().toString());
-                            if (donations.getDonation() >= 5000000) {
+                            if (donations.getDonation() >= (5000000*3)) {
+                                //pre clear warnings need to be triple
+                                ExportUtils.clearWarning(kickMember.getId().toString());
+                                ExportUtils.clearWarning(kickMember.getId().toString());
                                 ExportUtils.clearWarning(kickMember.getId().toString());
                                 warnMember = false;
                                 logger.info("user should be warned, but they have donated to ingore the warning " + kickMember.getId());
                             } else {
+                                //set donations to 0
+                                ExportUtils.resetMemberDonations(kickMember.getId().toString());
                                 client.getGuildById(Snowflake.of(franchiseConfig.getGuild())).addMemberRole(
                                         Snowflake.of(kickMember.getId()),
                                         Snowflake.of(franchiseConfig.getWarning()),
