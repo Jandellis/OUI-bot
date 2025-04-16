@@ -8,7 +8,12 @@ public enum SystemReminderType {
     giveaway("giveaway"),
     rushHourWarning("rushHourWarning"),
     rushHourStart("rushHourStart"),
-    rushHourEnd("rushHourEnd");
+    rushHourEnd("rushHourEnd"),
+    weeklyReset("weeklyReset"),
+    cookOffStart("cookOffStart"),
+    cookOffEnd("cookOffEnd"),
+    cookOff("cookOff"),
+    cookOffDonator("cookOffDonator");
 
 
     String name;

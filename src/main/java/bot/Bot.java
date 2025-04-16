@@ -1,6 +1,8 @@
 package bot;
 
 import action.Colour;
+import action.CookOff;
+import action.CookOffDonator;
 import action.FranchiseStat;
 import action.GiveAWay;
 import action.GiveawayAdd;
@@ -14,6 +16,7 @@ import action.RushHour;
 import action.SpeedJar;
 import action.Test;
 import action.Warn;
+import action.WeeklyReset;
 import action.Welcome;
 import action.export.Donate;
 import action.export.Import;
@@ -38,6 +41,7 @@ import discord4j.core.DiscordClient;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.event.ReactiveEventAdapter;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
+import discord4j.core.event.domain.interaction.SelectMenuInteractionEvent;
 import discord4j.core.event.domain.lifecycle.ReadyEvent;
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.event.domain.message.ReactionAddEvent;
@@ -181,6 +185,17 @@ public class Bot {
                     franchiseStat.action(gateway, client);
                     franchiseStat.startUp();
 
+                    WeeklyReset weeklyReset = new WeeklyReset();
+                    weeklyReset.action(gateway, client);
+                    weeklyReset.startUp();
+
+                    CookOff cookOff = new CookOff();
+                    cookOff.action(gateway, client);
+                    cookOff.startUp();
+                    CookOffDonator cookOffDonator = new CookOffDonator();
+                    cookOffDonator.action(gateway, client);
+                    cookOffDonator.startUp();
+
                     Mono<Void> reaction = gateway.on(ReactionAddEvent.class, reactionAddEvent -> {
                         reactionAddEvent.getChannelId().toString();
                         reactionAddEvent.getEmoji();
@@ -277,6 +292,9 @@ public class Bot {
                     //Register our slash command listener
                     gateway.on(ChatInputInteractionEvent.class, SlashCommandListener::handle)
                             .then(gateway.onDisconnect()).subscribe();
+
+                    gateway.on(SelectMenuInteractionEvent.class, SlashCommandListener::handle)
+                            .then(gateway.onDisconnect()).subscribe();
 //                            .block(); // We use .block() as there is not another non-daemon thread and the jvm would close otherwise.
 
 
@@ -324,6 +342,7 @@ public class Bot {
                             .and(new BuyUpgrade().reaction(gateway, client))
                             .and(new Olympics().action(gateway, client))
 //                            .and(new FranchiseStat().action(gateway, client))
+                            .and(new WeeklyReset().action(gateway, client))
                             .and(new Sleep().action(gateway, client))
                             .and(new Donate().action(gateway, client));
 //                            .and(reaction)

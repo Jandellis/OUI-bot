@@ -329,3 +329,7 @@ alter table reminder_settings alter column grind set default false;
 alter table franchise_config add rush_hour VARCHAR(25);
 
 alter table profile add rush_hour_end timestamp;
+
+alter table franchise add donations bigint;
+alter table franchise add vote_estimate double;
+alter table franchise add ot_estimate double;

@@ -7,7 +7,10 @@ public enum FranchiseStatType {
 
     balance("balance"),
     income("income"),
-    sold("sold");
+    sold("sold"),
+    donations("donations"),
+    ot_estimate("ot_estimate"),
+    vote_estimate("vote_estimate");
 
 
     String name;

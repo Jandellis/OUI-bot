@@ -973,8 +973,8 @@ public class ReminderUtils {
         return newProfile;
     }
 
-
-    public static List<ProfileStats> loadProfileStats(String id, int days, LocationEnum location) {
+//update this to take a list of locations
+    public static List<ProfileStats> loadProfileStats(String id, int days, List<LocationEnum> locations) {
         List<ProfileStats> stats = new ArrayList<>();
 
 
@@ -987,17 +987,24 @@ public class ReminderUtils {
             String sql = "SELECT name, income, balance, location, import_time FROM profile_stats  " +
                     "WHERE name = ? " +
                     "and import_time > ? ";
-            if (location != null) {
-                sql += "and location = ? ";
+            if (locations != null) {
+                // use location in ???
+                sql += "and location in ( ";
+                String comma = "";
+                for (LocationEnum location : locations) {
+                    sql += comma + "'"+location.getName()+"'";
+                    comma = ",";
+                }
+                sql += ") ";
             }
             sql += "order by import_time";
             PreparedStatement pst = con.prepareStatement(sql);
             pst.setString(1, id);
 
             pst.setTimestamp(2, timestamp);
-            if (location != null) {
-                pst.setString(3, location.getName());
-            }
+//            if (location != null) {
+//                pst.setString(3, location.getName());
+//            }
             ResultSet rs = pst.executeQuery();
 
             while (rs.next()) {

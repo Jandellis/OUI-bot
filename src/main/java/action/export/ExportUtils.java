@@ -461,6 +461,88 @@ public class ExportUtils {
         }
         return 0;
     }
+
+    public static double getFranchiseDouble(String name, FranchiseStatType type) {
+
+        try {
+            Connection con = databaseUtils.getConnection();
+            PreparedStatement pst = con.prepareStatement("SELECT "+type.getName()+" FROM franchise " +
+                    "WHERE name = ?");
+            pst.setString(1, name);
+            ResultSet rs = pst.executeQuery();
+            while (rs.next()) {
+                return rs.getLong(1);
+            }
+
+        } catch (SQLException ex) {
+            databaseUtils.printException(ex);
+        }
+        return 0;
+    }
+
+
+    public static boolean updateFranchiseDonations(String name, long donations){
+        try {
+            Connection con = databaseUtils.getConnection();
+            PreparedStatement pst = con.prepareStatement("UPDATE franchise SET donations = donations +? WHERE name = ?");
+            pst.setLong(1, donations);
+            pst.setString(2, name);
+            int rs = pst.executeUpdate();
+            if (rs == 1) {
+                con.close();
+                return true;
+            } else {
+                con.close();
+                return false;
+            }
+        } catch (SQLException ex) {
+            databaseUtils.printException(ex);
+        }
+        return false;
+    }
+
+    public static boolean resetFranchiseDonations(String name){
+        try {
+            Connection con = databaseUtils.getConnection();
+            PreparedStatement pst = con.prepareStatement("UPDATE franchise SET donations = 0 WHERE name = ?");
+
+            pst.setString(1, name);
+            int rs = pst.executeUpdate();
+            if (rs == 1) {
+                con.close();
+                return true;
+            } else {
+                con.close();
+                return false;
+            }
+        } catch (SQLException ex) {
+            databaseUtils.printException(ex);
+        }
+        return false;
+    }
+
+    public static boolean updateFranchiseVoteOtEstimate(String name, double voteEstimate, double otEstimate){
+        try {
+            Connection con = databaseUtils.getConnection();
+            PreparedStatement pst = con.prepareStatement("UPDATE franchise SET vote_estimate = ?, ot_estimate = ? WHERE name = ?");
+            pst.setDouble(1, voteEstimate);
+            pst.setDouble(2, otEstimate);
+            pst.setString(3, name);
+            int rs = pst.executeUpdate();
+            if (rs == 1) {
+                con.close();
+                return true;
+            } else {
+                con.close();
+                return false;
+            }
+        } catch (SQLException ex) {
+            databaseUtils.printException(ex);
+        }
+        return false;
+    }
+
+
     public static FranchiseConfig getFranchiseConfig(String guild) {
 
         try {

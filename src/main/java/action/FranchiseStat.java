@@ -40,6 +40,7 @@ public class FranchiseStat extends Action implements EmbedAction {
     String shiftsChannel;
     String tacosChannel;
     String membersChannel;
+    String donationsChannel;
     String boostChannel;
     String balanceChannel;
     int tasksEndHour;
@@ -59,6 +60,7 @@ public class FranchiseStat extends Action implements EmbedAction {
         membersChannel = config.get("membersChannel");
         boostChannel = config.get("boostChannel");
         balanceChannel = config.get("balanceChannel");
+        donationsChannel = "1360565504254672956";
         tasksEndHour = Integer.parseInt(config.get("tasksEndHour"));
 
     }
@@ -155,6 +157,7 @@ public class FranchiseStat extends Action implements EmbedAction {
                         double otAvg = ot / days;
 //                                double otEstimate = otAvg * 7;
                         double otEstimate = ot / pecentage;
+                        ExportUtils.updateFranchiseVoteOtEstimate("oui", voteEstimate, otEstimate);
 
                         String msg = "I estimate you will get \n" +
                                 ":small_blue_diamond: **Votes** : " + new DecimalFormat("#").format(voteEstimate) + "\n" +
@@ -174,7 +177,7 @@ public class FranchiseStat extends Action implements EmbedAction {
                             String franchise = embed.fields().get().get(0).value().split("\\[")[1].split("]")[0];
                             Long balance = Long.parseLong(embed.fields().get().get(5).value().replace("\uD83D\uDCB5 $", "").replace(",", ""));
                             Long sold = Long.parseLong(embed.fields().get().get(6).value().replace("\uD83C\uDF2E ", "").replace(",", ""));
-                            Long income = Long.parseLong(embed.fields().get().get(7).value().replace("\uD83D\uDCB8 $", "").replace(",", ""));
+                            Long income = Long.parseLong(embed.fields().get().get(7).value().replace("\uD83D\uDCB8 $", "").replace(",", "").split(" \\(")[0]);
                             FranchiseStats franchiseStats = new FranchiseStats(franchise, income, sold, balance, Timestamp.from(Instant.now()));
                             ExportUtils.insertFranchiseStats(franchiseStats);
                         }
@@ -185,7 +188,7 @@ public class FranchiseStat extends Action implements EmbedAction {
                             ExportUtils.updateFranchise(FranchiseStatType.balance, Long.parseLong(balance), "oui");
                             String sold = embed.fields().get().get(6).value().replace("\uD83C\uDF2E ", "").replace(",", "");
                             ExportUtils.updateFranchise(FranchiseStatType.sold, Long.parseLong(sold), "oui");
-                            String income = embed.fields().get().get(7).value().replace("\uD83D\uDCB8 $", "").replace(",", "");
+                            String income = embed.fields().get().get(7).value().replace("\uD83D\uDCB8 $", "").replace(",", "").split(" \\(")[0];
                             ExportUtils.updateFranchise(FranchiseStatType.income, Long.parseLong(income), "oui");
                             embed.fields().get().get(5).value();//💵 $5,072,587,412 "\uD83D\uDCB5"
                             embed.fields().get().get(6).value();//🌮 14,774,858,494 "\uD83C\uDF2E "
@@ -304,10 +307,19 @@ public class FranchiseStat extends Action implements EmbedAction {
             printException(e);
         }
 
+        long donations = ExportUtils.getFranchise("oui", FranchiseStatType.donations);
+        long boostCost = 1383000000;
+        if (donations >= boostCost) {
+            donations = 0;
+        } else {
+            donations = boostCost - donations;
+        }
+
         updateChannel(balanceChannel, "Balance: " + format(ExportUtils.getFranchise("oui", FranchiseStatType.balance)));
         updateChannel(tacosChannel, "Tacos Sold: " + format(ExportUtils.getFranchise("oui", FranchiseStatType.sold)));
         updateChannel(boostChannel, "Income Boost: " + format(ExportUtils.getFranchise("oui", FranchiseStatType.income)));
         updateChannel(membersChannel, "Franchise Members: " + ExportUtils.getMembers("oui"));
+        updateChannel(donationsChannel, "Donation Goal: " + format(donations));
 
 
 

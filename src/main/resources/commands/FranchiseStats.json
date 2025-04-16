@@ -41,6 +41,14 @@
             "required": false,
             "min_value": 1,
             "max_value": 500
+        },
+        {
+            "name": "average",
+            "description": "Would you like a rolling average over a number of days",
+            "type": 4,
+            "required": false,
+            "min_value": 1,
+            "max_value": 7
         }
     ]
 }

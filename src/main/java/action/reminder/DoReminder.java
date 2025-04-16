@@ -35,10 +35,13 @@ public class DoReminder extends Action {
     String tacoBot = "490707751832649738";
     List<String> watchChannels;
     String giveawayChannel;
+    String recruiter;
 
     public DoReminder(GatewayDiscordClient gateway, DiscordClient client) {
         this.client = client;
         this.gateway = gateway;
+        guildId = config.get("guildId");
+        recruiter = config.get("recruiter");
         watchChannels = Arrays.asList(config.get("watchChannels").split(","));
         giveawayChannel = config.get("giveawayChannel");
     }
@@ -203,38 +206,52 @@ public class DoReminder extends Action {
         if (msg.contains("{task}")) {
             hasTask = true;
         }
-        if (reminder.getType() == eventClean
-                ||
-                reminder.getType() == flyers ||
-                reminder.getType() == twirler ||
-                reminder.getType() == refreshments ||
-                reminder.getType() == music ||
-                reminder.getType() == festival
+        if (reminder.getType() == rewards
+                || reminder.getType() == menu
+                || reminder.getType() == training
+                || reminder.getType() == survey
+                || reminder.getType() == incentives
         ) {
-            TeamEvent teamEvent = ReminderUtils.loadTeamEvent(reminder.getName());
-            if (teamEvent == null) {
-                msg = msg.replace("{ping}", "<@" + reminder.getName() + ">");
-            } else {
-                String pings = "<@" + teamEvent.getId1() + "> ";
-                if (teamEvent.getId2() != null){
-                    pings += "<@" + teamEvent.getId2() + "> ";
-                }
-                if (teamEvent.getId3() != null){
-                    pings += "<@" + teamEvent.getId3() + "> ";
-                }
-                if (teamEvent.getId4() != null){
-                    pings += "<@" + teamEvent.getId4() + "> ";
-                }
 
-                msg = msg.replace("{ping}", pings);
-                reminder.setChannel(teamEvent.getReminder());
+            if (hasPermission(profile.getName(), Long.parseLong(recruiter))) {
+                msg = msg.replace("{ping}", "<@&" + recruiter + ">");
+                reminder.setChannel("842352482034515998");
             }
-        } else {
 
-            if (profile.getDnd()) {
-                msg = msg.replace("{ping}", profile.getUserName());
+        } else {
+            if (reminder.getType() == eventClean
+                    ||
+                    reminder.getType() == flyers ||
+                    reminder.getType() == twirler ||
+                    reminder.getType() == refreshments ||
+                    reminder.getType() == music ||
+                    reminder.getType() == festival
+            ) {
+                TeamEvent teamEvent = ReminderUtils.loadTeamEvent(reminder.getName());
+                if (teamEvent == null) {
+                    msg = msg.replace("{ping}", "<@" + reminder.getName() + ">");
+                } else {
+                    String pings = "<@" + teamEvent.getId1() + "> ";
+                    if (teamEvent.getId2() != null) {
+                        pings += "<@" + teamEvent.getId2() + "> ";
+                    }
+                    if (teamEvent.getId3() != null) {
+                        pings += "<@" + teamEvent.getId3() + "> ";
+                    }
+                    if (teamEvent.getId4() != null) {
+                        pings += "<@" + teamEvent.getId4() + "> ";
+                    }
+
+                    msg = msg.replace("{ping}", pings);
+                    reminder.setChannel(teamEvent.getReminder());
+                }
             } else {
-                msg = msg.replace("{ping}", "<@" + reminder.getName() + ">");
+
+                if (profile.getDnd()) {
+                    msg = msg.replace("{ping}", profile.getUserName());
+                } else {
+                    msg = msg.replace("{ping}", "<@" + reminder.getName() + ">");
+                }
             }
         }
 
@@ -300,6 +317,17 @@ public class DoReminder extends Action {
             case festival:
                 //load team members
                 command = reminder.getType().getName() + "</event boosts:1203826198040420452>";
+                if (!hasTask) {
+                    command = command + " **" + reminder.getType().getName() + "**";
+                }
+                break;
+                // franchise boosts
+                case rewards:
+                case menu:
+                case training:
+                case survey:
+                case incentives:
+                command = reminder.getType().getName() + "</franchise shop:1203826199344980019>";
                 if (!hasTask) {
                     command = command + " **" + reminder.getType().getName() + "**";
                 }

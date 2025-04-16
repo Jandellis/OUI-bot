@@ -62,7 +62,13 @@ public enum ReminderType {
     music("Music"),
     festival("Festival"),
     eventClean("Event Clean"),
-    eventOvertime("Event Overtime");
+    eventOvertime("Event Overtime"),
+
+    rewards("Rewards"),
+    menu("Menu"),
+    training("Training"),
+    survey("Survey"),
+    incentives("Incentives");
 
 
     String name;

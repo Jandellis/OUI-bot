@@ -3,6 +3,7 @@ package slash.commands;
 import discord4j.common.util.Snowflake;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
+import discord4j.core.event.domain.interaction.SelectMenuInteractionEvent;
 import discord4j.core.object.command.ApplicationCommandInteractionOption;
 import discord4j.core.object.command.ApplicationCommandInteractionOptionValue;
 import org.apache.logging.log4j.LogManager;
@@ -24,7 +25,15 @@ public abstract class SlashCommand {
 
     public abstract String getName();
 
+    public String getCustomId() {
+        return getName();
+    }
+
     public abstract Mono<Void> handle(ChatInputInteractionEvent event);
+
+    public  Mono<Void> handle(SelectMenuInteractionEvent event) {
+        return Mono.empty();
+    }
     protected static final Logger logger = LogManager.getLogger("ouiBot");
 
     protected String getParameter(String name, String defaultValue, ChatInputInteractionEvent event)  {

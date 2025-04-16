@@ -1,7 +1,5 @@
 package action.upgrades.model;
 
-import bot.Sauce;
-
 public enum LocationEnum {
 
     shack("shack"),
@@ -12,7 +10,8 @@ public enum LocationEnum {
 
     cantina("cantina"),
     hq("hq"),
-    event("event");
+    event("event"),
+    franchise("franchise");
 
     private String name;
 

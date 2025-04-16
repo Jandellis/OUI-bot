@@ -92,6 +92,12 @@ public class CreateBoostReminder extends Action implements EmbedAction {
         boosts.put("Music",new Boost("Music", 4, LocationEnum.event));
         boosts.put("Festival",new Boost("Festival", 6, LocationEnum.event));
 
+        boosts.put ("Loyalty Rewards", new Boost("Rewards", 12, LocationEnum.franchise));
+        boosts.put ("Seasonal Menu", new Boost("Menu", 18, LocationEnum.franchise));
+        boosts.put ("Training Refresher", new Boost("Training", 12, LocationEnum.franchise));
+        boosts.put ("Customer Survey", new Boost("Survey", 20, LocationEnum.franchise));
+        boosts.put ("Employee Incentives", new Boost("Incentives", 24, LocationEnum.franchise));
+
         watchChannels = Arrays.asList(config.get("watchChannels").split(","));
     }
 
@@ -148,7 +154,7 @@ public class CreateBoostReminder extends Action implements EmbedAction {
                     //boosts
                     if (desc.startsWith("\u2705") && (desc.contains("You have purchased:") || desc.contains("You have bought"))) {
 
-
+                        logger.info("buying boosts " + desc);
                         AtomicReference<String> userId = new AtomicReference<>("");
                         userId.set(getId(message, embed));
 
@@ -172,7 +178,7 @@ public class CreateBoostReminder extends Action implements EmbedAction {
 
                                 for (Boost boost : boosts.values()) {
                                     if (desc.contains(boost.getName())) {
-
+                                        logger.info("creating reminder for " + boost.getName());
                                         createReminder(boost, message, profile);
                                     }
                                 }
@@ -262,6 +268,7 @@ public class CreateBoostReminder extends Action implements EmbedAction {
 
         Instant reminderTime = message.getTimestamp().plus(duration, ChronoUnit.SECONDS);
         ReminderType type = ReminderType.getReminderType(boost.getName());
+        logger.info("creating reminder " + type.getName() + " for " + boost.getName());
 
         Reminder reminder = ReminderUtils.addReminder(profile.getName(), type, Timestamp.from(reminderTime), message.getChannelId().asString());
 

@@ -51,6 +51,8 @@ public class Donate extends Action {
                     //Donated to the franchise **Top Tacos Throughout Ten Towns** `[292839877563908097]` has donated `$100`
                     long donation = Long.parseLong(message.getContent().split("`")[3].replace("`", "").replace(",", "").replace("$", ""));
 
+                    ExportUtils.updateFranchiseDonations("oui", donation);
+
                     logger.info("Member donated " + memberId + ", $" + donation);
 
                     ExportUtils.updateMemberDonations(memberId, donation);

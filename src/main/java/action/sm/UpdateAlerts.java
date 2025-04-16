@@ -159,7 +159,8 @@ public class UpdateAlerts extends Action implements EmbedAction {
                                 if (profit == 0) {
                                     emote = "<a:orange_dots:1015118419047235585>";
                                 }
-                                embedBuilder.addField(sauce.getUppercaseName(), " "+ emote +" Profit if you sell now **$" +String.format("%,d",profit)+ "**\n :small_blue_diamond: Total if you sell now **$" + String.format("%,d",totalSell) +"**", false);
+                                embedBuilder.addField(sauce.getUppercaseName(), " "+ emote +" Profit if you sell now **$" +String.format("%,d",profit)+
+                                        "**\n :small_blue_diamond: Total if you sell now **$" + String.format("%,d",totalSell) +"**", false);
                             });
 
                             message.getChannel().block().createMessage(embedBuilder.build()).block();
