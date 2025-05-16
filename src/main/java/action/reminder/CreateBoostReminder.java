@@ -261,6 +261,16 @@ public class CreateBoostReminder extends Action implements EmbedAction {
 
     private void createReminder(Boost boost, Message message, Profile profile) {
         double reminderLength = boost.getDuration() * 60 * 60;
+        if (boost.getLocation() == LocationEnum.franchise || profile.getName().equals("292839877563908097")) {
+            if (message.getReferencedMessage().isPresent()) {
+                //delete the shop message
+                Message msg = gateway.getMessageById(Snowflake.of(message.getChannelId().asString()), Snowflake.of(message.getMessageReference().get().getMessageId().get().asLong())).block();
+                msg.delete().block();
+//                message.getReferencedMessage().get().delete().block();
+            }
+            //add on 30 seconds for the franchise boost as they are too slow
+            reminderLength = reminderLength + 30;
+        }
         createReminder(boost, message, profile, (int) reminderLength);
     }
 

@@ -22,7 +22,7 @@ public class CookOffDonator extends CookOff {
     public CookOffDonator() {
         super();
         cookOffChannelLink = "622635554336538654";
-        cookOffType = "tacoChat";
+        cookOffType = "donator";
     }
 
 

@@ -272,15 +272,26 @@ public class PriceCheck extends Action {
             printCheap(SauceObjectPrices);
 
             logger.info("creating chart");
-            createChart(data, "line_chart", null);
+            String filename = "line_chart";
+            int i = 0;
+            try {
+                createChart(data, filename, null);
+            } catch (Exception e) {
+                while (new File(filename+".png").exists()) {
+                    filename = "line_chart_"+i;
+                    i++;
+                }
+                createChart(data, filename, null);
+            }
             logger.info("got chart");
+            String finalFilename = filename;
             smUpdateChannels.forEach(channel -> {
                 try {
                     client.getChannelById(Snowflake.of(channel)).createMessage(embed.build().asRequest()).block();
                     InputStream inputStream = null;
-                    inputStream = new BufferedInputStream(new FileInputStream("line_chart.png"));
+                    inputStream = new BufferedInputStream(new FileInputStream(finalFilename +".png"));
                     MessageCreateSpec msg = MessageCreateSpec.builder()
-                            .addFile("line_chart.png", inputStream)
+                            .addFile(finalFilename +".png", inputStream)
                             .build();
 
                     client.getChannelById(Snowflake.of(channel)).createMessage(msg.asRequest()).block();

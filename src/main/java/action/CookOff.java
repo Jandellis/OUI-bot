@@ -59,14 +59,14 @@ public class CookOff extends Action {
         ZonedDateTime nextReminderTime = getNextReminderTime(fromTime);
         long delay = Duration.between(ZonedDateTime.now(zoneId), nextReminderTime).toMillis();
         logger.info("🔔 CookOff "+cookOffType+" Reminder scheduled for: " + nextReminderTime + " or in "+ (delay/1000/60) + " minutes");
-        client.getChannelById(Snowflake.of("1362036275821019196")).createMessage("Next Cookoff in "+cookOffType+" in  "+ (delay/1000/60) + " minutes").block();
+        client.getChannelById(Snowflake.of("1362036275821019196")).createMessage("Next Cookoff in "+cookOffType+" in  <t:"+nextReminderTime.toEpochSecond()+":R>").block();
 
         scheduler.schedule(() -> {
             try {
                 logger.info("🔔 CookOff "+cookOffType+"Reminder triggered at: " + ZonedDateTime.now(zoneId));
 
                 //post message to channel
-                client.getChannelById(Snowflake.of("1362036275821019196")).createMessage("<@&1362036275821019196>, Cookoff in "+cookOffType+" now at <#" + cookOffChannelLink + "> ").block();
+                client.getChannelById(Snowflake.of("1362036275821019196")).createMessage("<@&1362018134827208714>, Cookoff in "+cookOffType+" now at <#" + cookOffChannelLink + "> ").block();
 
                 // Schedule the next one
                 scheduleNextReminder(ZonedDateTime.now(zoneId));
@@ -76,7 +76,7 @@ public class CookOff extends Action {
         }, delay, TimeUnit.MILLISECONDS);
     }
 
-    private ZonedDateTime getNextReminderTime(ZonedDateTime fromTime) {
+    public ZonedDateTime getNextReminderTime(ZonedDateTime fromTime) {
         ZonedDateTime time = fromTime.plusMinutes(1).truncatedTo(ChronoUnit.MINUTES);
         while (!isReminderTime(time)) {
             time = time.plusMinutes(1);
@@ -92,7 +92,7 @@ public class CookOff extends Action {
         ZonedDateTime tuesday6am = time.with(TemporalAdjusters.previousOrSame(DayOfWeek.TUESDAY)).withHour(tasksEndHour).withMinute(0).withSecond(0).withNano(0);
         ZonedDateTime wednesday6am = tuesday6am.plusDays(1);
 
-        if (time.isAfter(tuesday6am) && time.isBefore(wednesday6am)) {
+        if (!time.isBefore(tuesday6am) && time.isBefore(wednesday6am)) {
             return localTime.getMinute() % 30 == 0;
         } else {
             if (localTime.getMinute() != 30) {
@@ -101,7 +101,7 @@ public class CookOff extends Action {
 
             ZonedDateTime wednesday630am = tuesday6am.plusDays(1).withHour(tasksEndHour).withMinute(30);
             long minutes = Duration.between(wednesday630am, time).toMinutes();
-            return minutes >= 0 && minutes % 120 == 0;
+            return minutes % 120 == 0;
         }
     }
 

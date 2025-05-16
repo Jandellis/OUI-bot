@@ -68,7 +68,8 @@ public enum ReminderType {
     menu("Menu"),
     training("Training"),
     survey("Survey"),
-    incentives("Incentives");
+    incentives("Incentives"),
+    franchiseTasks("Franchise Tasks");
 
 
     String name;

@@ -211,11 +211,17 @@ public class DoReminder extends Action {
                 || reminder.getType() == training
                 || reminder.getType() == survey
                 || reminder.getType() == incentives
+                || reminder.getType() == franchiseTasks
         ) {
 
             if (hasPermission(profile.getName(), Long.parseLong(recruiter))) {
                 msg = msg.replace("{ping}", "<@&" + recruiter + ">");
-                reminder.setChannel("842352482034515998");
+                if (reminder.getType() == franchiseTasks) {
+                    // post in the office channel
+                    reminder.setChannel("841078057565814845");
+                } else {
+                    reminder.setChannel("842352482034515998");
+                }
             }
 
         } else {
@@ -302,6 +308,9 @@ public class DoReminder extends Action {
                 break;
             case importData:
                 command = "</franchise memberdata export:1203826199344980019>";
+                break;
+            case franchiseTasks:
+                command = "</franchise tasks view:1203826199344980019>";
                 break;
             case postAd:
                 command = reminder.getType().getName() + " <#663937997313540128> </postad:1077546065559035964>";

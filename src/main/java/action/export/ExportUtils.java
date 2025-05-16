@@ -430,6 +430,22 @@ public class ExportUtils {
         return 0;
     }
 
+    public static int getVotes(String name) {
+        try {
+            Connection con = databaseUtils.getConnection();
+            PreparedStatement pst = con.prepareStatement("SELECT votes FROM franchise WHERE name = ?");
+            pst.setString(1, name);
+            ResultSet rs = pst.executeQuery();
+            while (rs.next()) {
+                return rs.getInt(1);
+            }
+            con.close();
+        } catch (SQLException ex) {
+            databaseUtils.printException(ex);
+        }
+        return 0;
+    }
+
 
     public static void updateFranchise(FranchiseStatType type, Long value, String name) {
         try {
@@ -521,13 +537,14 @@ public class ExportUtils {
         return false;
     }
 
-    public static boolean updateFranchiseVoteOtEstimate(String name, double voteEstimate, double otEstimate){
+    public static boolean updateFranchiseVoteOtEstimate(String name, double voteEstimate, double otEstimate, int vote){
         try {
             Connection con = databaseUtils.getConnection();
-            PreparedStatement pst = con.prepareStatement("UPDATE franchise SET vote_estimate = ?, ot_estimate = ? WHERE name = ?");
+            PreparedStatement pst = con.prepareStatement("UPDATE franchise SET vote_estimate = ?, ot_estimate = ?, votes = ? WHERE name = ?");
             pst.setDouble(1, voteEstimate);
             pst.setDouble(2, otEstimate);
-            pst.setString(3, name);
+            pst.setInt(3, vote);
+            pst.setString(4, name);
             int rs = pst.executeUpdate();
             if (rs == 1) {
                 con.close();

@@ -4,6 +4,9 @@ import action.export.ExportUtils;
 import action.export.model.FranchiseStatType;
 import action.export.model.FranchiseStats;
 import action.reminder.EmbedAction;
+import action.reminder.ReminderType;
+import action.reminder.ReminderUtils;
+import action.reminder.model.Reminder;
 import action.sm.Utils;
 import action.sm.model.SystemReminder;
 import action.sm.model.SystemReminderType;
@@ -157,8 +160,17 @@ public class FranchiseStat extends Action implements EmbedAction {
                         double otAvg = ot / days;
 //                                double otEstimate = otAvg * 7;
                         double otEstimate = ot / pecentage;
-                        ExportUtils.updateFranchiseVoteOtEstimate("oui", voteEstimate, otEstimate);
 
+                        if (title.contains("OUI")) {
+
+                            ExportUtils.updateFranchiseVoteOtEstimate("oui", voteEstimate, otEstimate, votes);
+                            int duration = 12;
+                            Instant reminderTime = message.getTimestamp().plus(duration, ChronoUnit.HOURS);
+                            ReminderType type = ReminderType.franchiseTasks;
+
+                            Reminder reminder = ReminderUtils.addReminder("292839877563908097", type, Timestamp.from(reminderTime), message.getChannelId().asString());
+
+                        }
                         String msg = "I estimate you will get \n" +
                                 ":small_blue_diamond: **Votes** : " + new DecimalFormat("#").format(voteEstimate) + "\n" +
                                 ":small_blue_diamond: **Ot** : " + new DecimalFormat("#").format(otEstimate);
@@ -320,6 +332,7 @@ public class FranchiseStat extends Action implements EmbedAction {
         updateChannel(boostChannel, "Income Boost: " + format(ExportUtils.getFranchise("oui", FranchiseStatType.income)));
         updateChannel(membersChannel, "Franchise Members: " + ExportUtils.getMembers("oui"));
         updateChannel(donationsChannel, "Donation Goal: " + format(donations));
+//        updateChannel(donationsChannel, "Vote Goal: " + ExportUtils.getVotes("oui") + "/600");
 
 
 

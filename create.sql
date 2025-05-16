@@ -333,3 +333,4 @@ alter table profile add rush_hour_end timestamp;
 alter table franchise add donations bigint;
 alter table franchise add vote_estimate double;
 alter table franchise add ot_estimate double;
+alter table franchise add votes int;
