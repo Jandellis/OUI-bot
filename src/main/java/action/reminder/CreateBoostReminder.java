@@ -30,10 +30,22 @@ public class CreateBoostReminder extends Action implements EmbedAction {
     String tacoBot = "490707751832649738";
     List<String> watchChannels;
     String defaultReact = "\uD83D\uDC4B";
-    private static HashMap<String,Boost> boosts;
+    public static HashMap<String,Boost> boosts;
 
     public static Boost getBoost(String name) {
         return boosts.get(name);
+    }
+
+    public static HashMap<LocationEnum,List<Boost>> getLocationBoosts() {
+        HashMap<LocationEnum,List<Boost>> locationBoosts = new HashMap<>();
+        for (Boost boost : boosts.values()) {
+            if (boost.getLocation() != LocationEnum.event && boost.getLocation() != LocationEnum.franchise) {
+                List<Boost> boostList = locationBoosts.computeIfAbsent(boost.getLocation(), k -> new ArrayList<>());
+                boostList.add(boost);
+                locationBoosts.put(boost.getLocation(), boostList);
+            }
+        }
+        return locationBoosts;
     }
 
     ScheduledExecutorService executorService = Executors.newScheduledThreadPool(5);
@@ -42,61 +54,61 @@ public class CreateBoostReminder extends Action implements EmbedAction {
 
         boosts = new HashMap<>();
         //city
-        boosts.put("Happy Hour", new Boost("Happy Hour", 4, LocationEnum.city));
-        boosts.put("Samples",new Boost("Samples", 4, LocationEnum.city));
-        boosts.put("Mascot",new Boost("Mascot", 6, LocationEnum.city));
-        boosts.put("Online Delivery",new Boost("Online Delivery", 8, LocationEnum.city));
-        boosts.put("Bus Sign", new Boost("Bus Sign", 24, LocationEnum.city));
+        boosts.put("Happy Hour", new Boost("Happy Hour", 4, LocationEnum.city, 1));
+        boosts.put("Samples",new Boost("Samples", 4, LocationEnum.city, 2));
+        boosts.put("Mascot",new Boost("Mascot", 6, LocationEnum.city, 3));
+        boosts.put("Online Delivery",new Boost("Online Delivery", 8, LocationEnum.city, 4));
+        boosts.put("Bus Sign", new Boost("Bus Sign", 24, LocationEnum.city, 5));
 
         //shack
-        boosts.put("Rent-A-Chef", new Boost("Rent-A-Chef", 4, LocationEnum.shack));
-        boosts.put("Live Music", new Boost("Live Music", 4, LocationEnum.shack));
-        boosts.put("Karaoke Night", new Boost("Karaoke Night", 6, LocationEnum.shack));
-        boosts.put("Sign Flipper", new Boost("Sign Flipper", 8, LocationEnum.shack));
-        boosts.put("Airplane Sign", new Boost("Airplane Sign", 24, LocationEnum.shack));
+        boosts.put("Rent-A-Chef", new Boost("Rent-A-Chef", 4, LocationEnum.shack, 1));
+        boosts.put("Live Music", new Boost("Live Music", 4, LocationEnum.shack, 2));
+        boosts.put("Karaoke Night", new Boost("Karaoke Night", 6, LocationEnum.shack, 3));
+        boosts.put("Sign Flipper", new Boost("Sign Flipper", 8, LocationEnum.shack, 4));
+        boosts.put("Airplane Sign", new Boost("Airplane Sign", 24, LocationEnum.shack, 5));
 
 
         //beach
-        boosts.put("Concert", new Boost("Concert", 4, LocationEnum.beach));
-        boosts.put("Hammock", new Boost("Hammock", 4, LocationEnum.beach));
-        boosts.put("Parasailing", new Boost("Parasailing", 6, LocationEnum.beach));
-        boosts.put("Beach Chairs", new Boost("Beach Chairs", 8, LocationEnum.beach));
-        boosts.put("Helicopter Tours", new Boost("Helicopter Tours", 24, LocationEnum.beach));
+        boosts.put("Concert", new Boost("Concert", 4, LocationEnum.beach, 1));
+        boosts.put("Hammock", new Boost("Hammock", 4, LocationEnum.beach, 2));
+        boosts.put("Parasailing", new Boost("Parasailing", 6, LocationEnum.beach,3 ));
+        boosts.put("Beach Chairs", new Boost("Beach Chairs", 8, LocationEnum.beach, 4));
+        boosts.put("Helicopter Tours", new Boost("Helicopter Tours", 24, LocationEnum.beach, 5));
 
         //mall
-        boosts.put("Lunch Discount", new Boost("Lunch Discount", 4, LocationEnum.mall));
-        boosts.put("Sponsorship", new Boost("Sponsorship", 4, LocationEnum.mall));
-        boosts.put("Gift Cards", new Boost("Gift Cards", 6, LocationEnum.mall));
-        boosts.put("Takeout",new Boost("Takeout", 8, LocationEnum.mall));
-        boosts.put("Special",new Boost("Special", 24, LocationEnum.mall));
+        boosts.put("Lunch Discount", new Boost("Lunch Discount", 4, LocationEnum.mall, 1));
+        boosts.put("Sponsorship", new Boost("Sponsorship", 4, LocationEnum.mall, 2));
+        boosts.put("Gift Cards", new Boost("Gift Cards", 6, LocationEnum.mall, 3));
+        boosts.put("Takeout",new Boost("Takeout", 8, LocationEnum.mall, 4));
+        boosts.put("Special",new Boost("Special", 24, LocationEnum.mall, 5));
 
         //Amusement
-        boosts.put("Magic Show", new Boost("Magic Show", 4, LocationEnum.amusement));
-        boosts.put("Parade",new Boost("Parade", 4, LocationEnum.amusement));
-        boosts.put("Face Painting", new Boost("Face Painting", 6, LocationEnum.amusement));
-        boosts.put("Gift Shop",new Boost("Gift Shop", 8, LocationEnum.amusement));
-        boosts.put("Live Show",new Boost("Live Show", 24, LocationEnum.amusement));
+        boosts.put("Magic Show", new Boost("Magic Show", 4, LocationEnum.amusement, 1));
+        boosts.put("Parade",new Boost("Parade", 4, LocationEnum.amusement, 2));
+        boosts.put("Face Painting", new Boost("Face Painting", 6, LocationEnum.amusement, 3));
+        boosts.put("Gift Shop",new Boost("Gift Shop", 8, LocationEnum.amusement, 4));
+        boosts.put("Live Show",new Boost("Live Show", 24, LocationEnum.amusement, 5));
 
         //Cantina
-        boosts.put("Margarita Bar", new Boost("Margarita Bar", 8, LocationEnum.cantina));
-        boosts.put("Taco Bar",new Boost("Taco Bar", 6, LocationEnum.cantina));
-        boosts.put("Poker Night", new Boost("Poker Night", 4, LocationEnum.cantina));
-        boosts.put("Disco Night",new Boost("Disco Night", 24, LocationEnum.cantina));
-        boosts.put("Jukebox",new Boost("Jukebox", 4, LocationEnum.cantina));
+        boosts.put("Margarita Bar", new Boost("Margarita Bar", 8, LocationEnum.cantina, 1));
+        boosts.put("Taco Bar",new Boost("Taco Bar", 6, LocationEnum.cantina, 2));
+        boosts.put("Poker Night", new Boost("Poker Night", 4, LocationEnum.cantina, 3));
+        boosts.put("Disco Night",new Boost("Disco Night", 24, LocationEnum.cantina, 4));
+        boosts.put("Jukebox",new Boost("Jukebox", 4, LocationEnum.cantina, 5));
 
 
         //Event
-        boosts.put("Flyers", new Boost("Flyers", 1, LocationEnum.event));
-        boosts.put("Sign Twirler",new Boost("Sign Twirler", 2, LocationEnum.event));
-        boosts.put("Refreshments", new Boost("Refreshments", 3, LocationEnum.event));
-        boosts.put("Music",new Boost("Music", 4, LocationEnum.event));
-        boosts.put("Festival",new Boost("Festival", 6, LocationEnum.event));
+//        boosts.put("Flyers", new Boost("Flyers", 1, LocationEnum.event));
+//        boosts.put("Sign Twirler",new Boost("Sign Twirler", 2, LocationEnum.event));
+//        boosts.put("Refreshments", new Boost("Refreshments", 3, LocationEnum.event));
+//        boosts.put("Music",new Boost("Music", 4, LocationEnum.event));
+//        boosts.put("Festival",new Boost("Festival", 6, LocationEnum.event));
 
-        boosts.put ("Loyalty Rewards", new Boost("Rewards", 12, LocationEnum.franchise));
-        boosts.put ("Seasonal Menu", new Boost("Menu", 18, LocationEnum.franchise));
-        boosts.put ("Training Refresher", new Boost("Training", 12, LocationEnum.franchise));
-        boosts.put ("Customer Survey", new Boost("Survey", 20, LocationEnum.franchise));
-        boosts.put ("Employee Incentives", new Boost("Incentives", 24, LocationEnum.franchise));
+        boosts.put ("Loyalty Rewards", new Boost("Rewards", 12, LocationEnum.franchise, 1));
+        boosts.put ("Seasonal Menu", new Boost("Menu", 18, LocationEnum.franchise, 2));
+        boosts.put ("Training Refresher", new Boost("Training", 12, LocationEnum.franchise, 3));
+        boosts.put ("Customer Survey", new Boost("Survey", 20, LocationEnum.franchise, 4));
+        boosts.put ("Employee Incentives", new Boost("Incentives", 24, LocationEnum.franchise, 5));
 
         watchChannels = Arrays.asList(config.get("watchChannels").split(","));
     }
@@ -171,10 +183,10 @@ public class CreateBoostReminder extends Action implements EmbedAction {
                         Profile profile = ReminderUtils.loadProfileById(userId.get());
                         if (profile != null) {
 
-                            if (desc.contains("Live Music")){
-                                //stop live music clashing with music
-                                createReminder(boosts.get("Live Music"), message, profile);
-                            } else {
+//                            if (desc.contains("Live Music")){
+//                                //stop live music clashing with music
+//                                createReminder(boosts.get("Live Music"), message, profile);
+//                            } else {
 
                                 for (Boost boost : boosts.values()) {
                                     if (desc.contains(boost.getName())) {
@@ -182,7 +194,7 @@ public class CreateBoostReminder extends Action implements EmbedAction {
                                         createReminder(boost, message, profile);
                                     }
                                 }
-                            }
+//                            }
                         }
 
                     }
@@ -261,15 +273,22 @@ public class CreateBoostReminder extends Action implements EmbedAction {
 
     private void createReminder(Boost boost, Message message, Profile profile) {
         double reminderLength = boost.getDuration() * 60 * 60;
-        if (boost.getLocation() == LocationEnum.franchise || profile.getName().equals("292839877563908097")) {
-            if (message.getReferencedMessage().isPresent()) {
-                //delete the shop message
-                Message msg = gateway.getMessageById(Snowflake.of(message.getChannelId().asString()), Snowflake.of(message.getMessageReference().get().getMessageId().get().asLong())).block();
-                msg.delete().block();
+        if (boost.getLocation() == LocationEnum.franchise) {
+            try {
+                if (message.getMessageReference().isPresent()) {
+                    //delete the shop message
+                    Message msg = gateway.getMessageById(Snowflake.of(message.getChannelId().asString()), Snowflake.of(message.getMessageReference().get().getMessageId().get().asLong())).block();
+                    msg.delete().block();
 //                message.getReferencedMessage().get().delete().block();
+                }
+            } catch (Exception e) {
+
+            }
+            if (hasPermission(message) && isOUI(message)) {
+                profile = ReminderUtils.loadProfileById("292839877563908097");
             }
             //add on 30 seconds for the franchise boost as they are too slow
-            reminderLength = reminderLength + 30;
+            reminderLength = reminderLength + 60;
         }
         createReminder(boost, message, profile, (int) reminderLength);
     }

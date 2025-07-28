@@ -2,25 +2,38 @@ package action.upgrades.model;
 
 public enum LocationEnum {
 
-    shack("shack"),
-    mall("mall"),
-    beach("beach"),
-    amusement ("amusement"),
-    city("city"),
+    shack("shack", 1),
+    mall("mall", 2),
+    beach("beach", 3),
+    amusement ("amusement", 4),
+    city("city", 5),
 
-    cantina("cantina"),
-    hq("hq"),
-    event("event"),
-    franchise("franchise");
+    cantina("cantina", 6),
+    hq("hq", 0),
+    event("event", 0),
+    franchise("franchise", 0);
 
     private String name;
+    private int order;
 
-    private LocationEnum(String name) {
+    private LocationEnum(String name, int order) {
+        this.order = order;
         this.name = name;
     }
 
     public String getName() {
         return name;
+    }
+
+    public int getOrder() {
+        return order;
+    }
+
+    public String getPrintName() {
+        if (name == null || name.isEmpty()) {
+            return name;
+        }
+        return name.substring(0, 1).toUpperCase() + name.substring(1);
     }
 
 

@@ -1,6 +1,7 @@
 package action.reminder;
 
 import action.Action;
+import action.export.ExportUtils;
 import action.reminder.model.Profile;
 import action.reminder.model.Reminder;
 import action.reminder.model.ReminderSettings;
@@ -274,6 +275,7 @@ public class CreateReminder extends Action implements EmbedAction {
                                     });
                                 }
                                 Profile profile = ReminderUtils.loadProfileById(userId.get());
+                                checkRushHour(message, profile);
 
 
                                 if (profile != null) {
@@ -370,6 +372,34 @@ public class CreateReminder extends Action implements EmbedAction {
         return Mono.empty();
     }
 
+
+    private void checkRushHour(Message message, Profile profile) {
+        logger.info("Checking rush hour");
+        if (message.getGuildId().isPresent()) {
+                if (message.getGuildId().get().asString().equals("840395541791768599")) {
+                    logger.info("In OUI");
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+                    if (profile != null && profile.getRushHourEnd() != null) {
+                        logger.info("User rush hour end at " + formatter.format(profile.getRushHourEnd().toLocalDateTime()));
+                    }
+                    LocalDateTime rushHour = ExportUtils.loadFranchiseRushHour("oui");
+                    logger.info("OUI rush hour warn at " + formatter.format(rushHour));
+                    if (rushHour != null && profile != null
+                            && profile.getRushHourEnd() != null
+                            && profile.getRushHourEnd().toLocalDateTime().isBefore(LocalDateTime.now())) {
+
+                        if (LocalDateTime.now().isBefore(rushHour)) {
+                            String msg = "A Rush Hour is active now, come join <#1289435874240630825>";
+                            message.getChannel().block().createMessage(msg).block();
+                        }
+                    }
+            };
+        }
+
+
+
+    }
+
     public int getSeconds(String value) {
         int seconds = 0;
         if (value.startsWith("\u274C")) {
@@ -439,6 +469,7 @@ public class CreateReminder extends Action implements EmbedAction {
     }
 
     private void createReminder(ReminderType type, Message message, Profile profile) {
+        checkRushHour(message, profile);
         int sleep = 0;
         AtomicBoolean isPatreonServer = new AtomicBoolean(false);
         if (message.getGuildId().isPresent()) {

@@ -4,6 +4,7 @@ import action.sm.model.Alert;
 import action.sm.model.AlertType;
 import action.sm.model.Drop;
 import action.sm.model.SauceMarketStats;
+import action.sm.model.SauceMarketStreak;
 import action.sm.model.SystemReminder;
 import action.sm.model.SystemReminderType;
 import action.sm.model.Trigger;
@@ -24,6 +25,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Utils {
 
@@ -653,6 +655,204 @@ public class Utils {
         }
         return stats;
 
+    }
+
+
+    public static List<SauceMarketStats> loadHistoryStatsNoSecret() {
+
+
+        List<SauceMarketStats> stats = new ArrayList<>();
+        try {
+            Connection con = databaseUtils.getConnection();
+
+            String sql = "select change_data.change_1_to_2 as change_data, " +
+                    "round(z.total / change_data.total * 100, 2) as zero, " +
+                    "round(p.total / change_data.total * 100, 2) as positive, " +
+                    "round(n.total / change_data.total * 100, 2) as negative, " +
+                    "change_data.total as \"times occurred\" " +
+                    "from " +
+                    "(select change_1_to_2, count(*) as total from sm_history where last_change = 0 and name not like 'secret%' group by change_1_to_2) z, " +
+                    "(select change_1_to_2, count(*) as total from sm_history where last_change > 0 and name not like 'secret%' group by change_1_to_2) p, " +
+                    "(select change_1_to_2, count(*) as total from sm_history where last_change < 0 and name not like 'secret%' group by change_1_to_2) n, " +
+                    "(select change_1_to_2, count(*) as total from sm_history where name not like 'secret%' group by change_1_to_2) change_data " +
+                    "where z.change_1_to_2 = change_data.change_1_to_2 and " +
+                    "p.change_1_to_2 = change_data.change_1_to_2 and " +
+                    "n.change_1_to_2 = change_data.change_1_to_2 ";
+
+//            if (!sauce.equals("all")) {
+//                sql += " "
+//            }
+
+
+            PreparedStatement pst = con.prepareStatement(sql);
+            ResultSet rs = pst.executeQuery();
+
+            while (rs.next()) {
+                SauceMarketStats stat = new SauceMarketStats(rs.getInt(1), rs.getDouble(2), rs.getDouble(3), rs.getDouble(4), rs.getInt(5));
+                stats.add(stat);
+            }
+            con.close();
+
+        } catch (SQLException ex) {
+            databaseUtils.printException(ex);
+        }
+        return stats;
+
+    }
+
+
+
+    public static Map<String, SauceMarketStreak> loadStreakLength() {
+
+
+        Map<String, SauceMarketStreak> stats = new HashMap<>();
+        try {
+            Connection con = databaseUtils.getConnection();
+
+            String sql = "WITH recent AS ( " +
+                    "  SELECT * " +
+                    "  FROM price_changes " +
+                    "  WHERE update_time >= NOW() - INTERVAL 2 DAY " +
+                    "), " +
+                    "classified AS ( " +
+                    "  SELECT *, " +
+                    "    CASE  " +
+                    "      WHEN last_change BETWEEN -2 AND 15 THEN 'up' " +
+                    "      WHEN last_change BETWEEN -15 AND -3 THEN 'down' " +
+                    "      ELSE NULL " +
+                    "    END AS direction " +
+                    "  FROM sm_history " +
+                    "  WHERE last_change BETWEEN -15 AND 15 " +
+                    "), " +
+                    "ordered AS ( " +
+                    "  SELECT " +
+                    "    name, " +
+                    "    update_time, " +
+                    "    direction, " +
+                    "    ROW_NUMBER() OVER (PARTITION BY name ORDER BY update_time DESC) AS rn " +
+                    "  FROM classified " +
+                    "), " +
+                    "gaps AS ( " +
+                    "  SELECT " +
+                    "    name, " +
+                    "    direction, " +
+                    "    rn, " +
+                    "    update_time, " +
+                    "    TIMESTAMPDIFF(MINUTE, " +
+                    "      LAG(update_time) OVER (PARTITION BY name ORDER BY rn), " +
+                    "      update_time " +
+                    "    ) AS time_diff, " +
+                    "    LAG(direction) OVER (PARTITION BY name ORDER BY rn) AS prev_dir " +
+                    "  FROM ordered " +
+                    "), " +
+                    "flags AS ( " +
+                    "  SELECT *, " +
+                    "    CASE  " +
+                    "      WHEN rn = 1 THEN 0 " +
+                    "      WHEN time_diff > 90 OR direction != prev_dir THEN 1 " +
+                    "      ELSE 0 " +
+                    "    END AS is_break " +
+                    "  FROM gaps " +
+                    "), " +
+                    "grouped AS ( " +
+                    "  SELECT *, " +
+                    "    SUM(is_break) OVER (PARTITION BY name ORDER BY rn) AS streak_group " +
+                    "  FROM flags " +
+                    "), " +
+                    "latest_group AS ( " +
+                    "  SELECT name, MAX(streak_group) AS current_group " +
+                    "  FROM grouped " +
+                    "  GROUP BY name " +
+                    "), " +
+                    "final AS ( " +
+                    "  SELECT g.name,COUNT(*) AS streak_len,  g.direction " +
+                    "  FROM grouped g " +
+                    "  JOIN latest_group lg ON g.name = lg.name AND g.streak_group = lg.current_group " +
+                    "  WHERE g.direction IS NOT NULL " +
+                    "  GROUP BY g.name, g.direction " +
+                    ") " +
+                    "SELECT * FROM final; ";
+
+            PreparedStatement pst = con.prepareStatement(sql);
+            ResultSet rs = pst.executeQuery();
+
+            while (rs.next()) {
+                SauceMarketStreak stat = new SauceMarketStreak(rs.getString(1), rs.getInt(2), rs.getString(3));
+                stats.put(stat.getName(), stat);
+            }
+            con.close();
+
+        } catch (SQLException ex) {
+            databaseUtils.printException(ex);
+        }
+        return stats;
+
+    }
+
+
+    public static Map<Integer, Map<Integer, Integer>> getChangeCount() {
+        Map<Integer, Map<Integer, Integer>> changeCount = new HashMap<>();
+
+        try {
+            Connection con = databaseUtils.getConnection();
+
+            String sql = "SELECT " +
+                    "    last_change, " +
+                    "    SUM(CASE WHEN change_1_to_2 = -15 THEN 1 ELSE 0 END) AS 'c_-15', " +
+                    "    SUM(CASE WHEN change_1_to_2 = -14 THEN 1 ELSE 0 END) AS 'c_-14', " +
+                    "    SUM(CASE WHEN change_1_to_2 = -13 THEN 1 ELSE 0 END) AS 'c_-13', " +
+                    "    SUM(CASE WHEN change_1_to_2 = -12 THEN 1 ELSE 0 END) AS 'c_-12', " +
+                    "    SUM(CASE WHEN change_1_to_2 = -11 THEN 1 ELSE 0 END) AS 'c_-11', " +
+                    "    SUM(CASE WHEN change_1_to_2 = -10 THEN 1 ELSE 0 END) AS 'c_-10', " +
+                    "    SUM(CASE WHEN change_1_to_2 = -9 THEN 1 ELSE 0 END) AS 'c_-9', " +
+                    "    SUM(CASE WHEN change_1_to_2 = -8 THEN 1 ELSE 0 END) AS 'c_-8', " +
+                    "    SUM(CASE WHEN change_1_to_2 = -7 THEN 1 ELSE 0 END) AS 'c_-7', " +
+                    "    SUM(CASE WHEN change_1_to_2 = -6 THEN 1 ELSE 0 END) AS 'c_-6', " +
+                    "    SUM(CASE WHEN change_1_to_2 = -5 THEN 1 ELSE 0 END) AS 'c_-5', " +
+                    "    SUM(CASE WHEN change_1_to_2 = -4 THEN 1 ELSE 0 END) AS 'c_-4', " +
+                    "    SUM(CASE WHEN change_1_to_2 = -3 THEN 1 ELSE 0 END) AS 'c_-3', " +
+                    "    SUM(CASE WHEN change_1_to_2 = -2 THEN 1 ELSE 0 END) AS 'c_-2', " +
+                    "    SUM(CASE WHEN change_1_to_2 = -1 THEN 1 ELSE 0 END) AS 'c_-1', " +
+                    "    SUM(CASE WHEN change_1_to_2 = 0 THEN 1 ELSE 0 END) AS 'c_0', " +
+                    "    SUM(CASE WHEN change_1_to_2 = 1 THEN 1 ELSE 0 END) AS 'c_1', " +
+                    "    SUM(CASE WHEN change_1_to_2 = 2 THEN 1 ELSE 0 END) AS 'c_2', " +
+                    "    SUM(CASE WHEN change_1_to_2 = 3 THEN 1 ELSE 0 END) AS 'c_3', " +
+                    "    SUM(CASE WHEN change_1_to_2 = 4 THEN 1 ELSE 0 END) AS 'c_4', " +
+                    "    SUM(CASE WHEN change_1_to_2 = 5 THEN 1 ELSE 0 END) AS 'c_5', " +
+                    "    SUM(CASE WHEN change_1_to_2 = 6 THEN 1 ELSE 0 END) AS 'c_6', " +
+                    "    SUM(CASE WHEN change_1_to_2 = 7 THEN 1 ELSE 0 END) AS 'c_7', " +
+                    "    SUM(CASE WHEN change_1_to_2 = 8 THEN 1 ELSE 0 END) AS 'c_8', " +
+                    "    SUM(CASE WHEN change_1_to_2 = 9 THEN 1 ELSE 0 END) AS 'c_9', " +
+                    "    SUM(CASE WHEN change_1_to_2 = 10 THEN 1 ELSE 0 END) AS 'c_10', " +
+                    "    SUM(CASE WHEN change_1_to_2 = 11 THEN 1 ELSE 0 END) AS 'c_11', " +
+                    "    SUM(CASE WHEN change_1_to_2 = 12 THEN 1 ELSE 0 END) AS 'c_12', " +
+                    "    SUM(CASE WHEN change_1_to_2 = 13 THEN 1 ELSE 0 END) AS 'c_13', " +
+                    "    SUM(CASE WHEN change_1_to_2 = 14 THEN 1 ELSE 0 END) AS 'c_14', " +
+                    "    SUM(CASE WHEN change_1_to_2 = 15 THEN 1 ELSE 0 END) AS 'c_15' " +
+                    "FROM sm_history " +
+                    "WHERE name NOT LIKE 'secret%' " +
+                    "  AND last_change BETWEEN -15 AND 15 " +
+                    "  AND change_1_to_2 BETWEEN -15 AND 15 " +
+                    "GROUP BY last_change " +
+                    "ORDER BY last_change DESC;";
+
+            PreparedStatement pst = con.prepareStatement(sql);
+            ResultSet rs = pst.executeQuery();
+
+            while (rs.next()) {
+                Map<Integer, Integer> currentChange = new HashMap<>();
+                for (int i = -15; i < 16; i++) {
+                    currentChange.put(i, rs.getInt("c_" + i));
+                }
+                changeCount.put(rs.getInt("last_change"), currentChange);
+
+            }
+            con.close();
+
+        } catch (SQLException ex) {
+            databaseUtils.printException(ex);
+        }
+        return changeCount;
     }
 
 

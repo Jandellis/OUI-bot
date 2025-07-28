@@ -143,7 +143,12 @@ public abstract class Action {
         }
         return false;
     }
+
     protected boolean hasPermission(Message message) {
+        return hasPermission(message, false);
+    }
+
+    protected boolean hasPermission(Message message, boolean checkInteraction) {
         try {
             if (!message.getAuthor().isPresent()) {
                 return false;
@@ -156,10 +161,40 @@ public abstract class Action {
             if (franchiseConfig == null) {
                 return false;
             }
+            String userId = message.getAuthor().get().getId().asString();
             logger.info("Found franchise " + franchiseConfig.getName());
-            logger.info("Checking if user " + message.getAuthor().get().getId() + " has role " + franchiseConfig.getRecruiter());
-            return hasPermission(message.getAuthor().get().getId().asString(), Long.parseLong(franchiseConfig.getRecruiter()), franchiseConfig.getGuild());
+            logger.info("Checking if user " +userId + " has role " + franchiseConfig.getRecruiter());
 
+            boolean result = hasPermission(userId, Long.parseLong(franchiseConfig.getRecruiter()), franchiseConfig.getGuild());
+            if (checkInteraction && !result) {
+                if (message.getInteraction().isPresent()) {
+                    logger.info("Checking interaction");
+                    userId = message.getInteraction().get().getUser().getId().asString();
+                    logger.info("Checking if user " +userId + " has role " + franchiseConfig.getRecruiter());
+                    result = hasPermission(userId, Long.parseLong(franchiseConfig.getRecruiter()), franchiseConfig.getGuild());
+                }
+            }
+            return result;
+
+        } catch (Exception e) {
+            printException(e);
+        }
+        return false;
+    }
+    protected boolean isOUI(Message message) {
+        try {
+            if (!message.getAuthor().isPresent()) {
+                return false;
+            }
+
+            if (!message.getGuildId().isPresent()) {
+                return false;
+            }
+            FranchiseConfig franchiseConfig = ExportUtils.getFranchiseConfig(message.getGuildId().get().asString());
+            if (franchiseConfig == null) {
+                return false;
+            }
+            return franchiseConfig.getName().equals("oui");
         } catch (Exception e) {
             printException(e);
         }

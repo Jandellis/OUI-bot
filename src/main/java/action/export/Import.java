@@ -82,7 +82,13 @@ public class Import extends Action {
 //        }
 
 
-        if (actionData != null && hasPermission(message)) {
+        if (message.getInteraction().isPresent() && message.getInteraction().get().getName().contains("franchise memberdata export")) {
+            actionData = message.getId().asString();
+
+        }
+
+
+        if (actionData != null && hasPermission(message, true)) {
             logger.info("starting import");
             Snowflake messageId = Snowflake.of(actionData);
             int worklimit = 5;
@@ -99,6 +105,7 @@ public class Import extends Action {
                 // have franchise table, this has all the config for roles
 
                 Message data = channel.getMessageById(messageId).block();
+
 
                 //download file
                 String url = data.getData().attachments().get(0).url();

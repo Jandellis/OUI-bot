@@ -6,7 +6,9 @@ import action.export.model.FranchiseStatType;
 import action.export.model.FranchiseStats;
 import action.export.model.MemberDonations;
 import action.export.model.WarningData;
+import action.reminder.ReminderType;
 import action.reminder.model.ProfileStats;
+import action.reminder.model.Reminder;
 import action.upgrades.model.LocationEnum;
 import bot.Config;
 import bot.Member;
@@ -535,6 +537,68 @@ public class ExportUtils {
             databaseUtils.printException(ex);
         }
         return false;
+    }
+
+    public static boolean resetFranchiseRushHour(String name){
+        try {
+            Connection con = databaseUtils.getConnection();
+            PreparedStatement pst = con.prepareStatement("UPDATE franchise SET rush_hour = 0 WHERE name = ?");
+
+            pst.setString(1, name);
+            int rs = pst.executeUpdate();
+            if (rs == 1) {
+                con.close();
+                return true;
+            } else {
+                con.close();
+                return false;
+            }
+        } catch (SQLException ex) {
+            databaseUtils.printException(ex);
+        }
+        return false;
+    }
+
+    public static boolean addFranchiseRushHour(String name, LocalDateTime time){
+        try {
+            Connection con = databaseUtils.getConnection();
+            PreparedStatement pst = con.prepareStatement("UPDATE franchise SET rush_hour_active = ? WHERE name = ?");
+
+            pst.setTimestamp(1, Timestamp.valueOf(time));
+            pst.setString(2, name);
+            int rs = pst.executeUpdate();
+            if (rs == 1) {
+                con.close();
+                return true;
+            } else {
+                con.close();
+                return false;
+            }
+        } catch (SQLException ex) {
+            databaseUtils.printException(ex);
+        }
+        return false;
+    }
+
+
+    public static LocalDateTime loadFranchiseRushHour(String name) {
+        try {
+            Connection con = databaseUtils.getConnection();
+            PreparedStatement pst = con.prepareStatement("SELECT rush_hour_active FROM franchise where name = ?");
+            pst.setString(1, name);
+
+            ResultSet rs = pst.executeQuery();
+
+            while (rs.next()) {
+                return rs.getTimestamp(1).toLocalDateTime();
+            }
+            con.close();
+
+
+        } catch (SQLException ex) {
+            databaseUtils.printException(ex);
+        }
+        return null;
     }
 
     public static boolean updateFranchiseVoteOtEstimate(String name, double voteEstimate, double otEstimate, int vote){

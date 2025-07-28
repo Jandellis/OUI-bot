@@ -1,9 +1,11 @@
 package action.reminder;
 
 import action.Action;
+import action.reminder.model.Boost;
 import action.reminder.model.Profile;
 import action.reminder.model.Reminder;
 import action.reminder.model.TeamEvent;
+import action.upgrades.model.LocationEnum;
 import discord4j.core.object.entity.Message;
 import discord4j.core.spec.EmbedCreateSpec;
 import discord4j.rest.util.Color;
@@ -12,9 +14,13 @@ import reactor.core.publisher.Mono;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 public class EnableProfile extends Action {
 
@@ -72,23 +78,24 @@ public class EnableProfile extends Action {
                             count++;
                         } else {
                             for (Reminder reminder : reminders) {
-                                LocalDateTime time = reminder.getTime().toLocalDateTime();
-                                LocalDateTime now = LocalDateTime.now();
-                                long hours = ChronoUnit.HOURS.between(now, time);
-
-                                long minutes = ChronoUnit.MINUTES.between(now, time) % 60;
-                                long seconds = ChronoUnit.SECONDS.between(now, time) % 60;
-
-                                String display = "";
-                                if (hours > 0) {
-                                    display += hours + " hours, ";
-                                }
-                                if (minutes > 0) {
-                                    display += minutes + " minutes, ";
-                                }
-                                if (seconds > 0) {
-                                    display += seconds + " seconds";
-                                }
+//                                LocalDateTime time = reminder.getTime().toLocalDateTime();
+//                                LocalDateTime now = LocalDateTime.now();
+//                                long hours = ChronoUnit.HOURS.between(now, time);
+//
+//                                long minutes = ChronoUnit.MINUTES.between(now, time) % 60;
+//                                long seconds = ChronoUnit.SECONDS.between(now, time) % 60;
+//
+//                                String display = "";
+//                                if (hours > 0) {
+//                                    display += hours + " hours, ";
+//                                }
+//                                if (minutes > 0) {
+//                                    display += minutes + " minutes, ";
+//                                }
+//                                if (seconds > 0) {
+//                                    display += seconds + " seconds";
+//                                }
+                                String display = getTimeLeft(reminder);
                                 if (!display.equals("")) {
                                     embed.addField(reminder.getType().getName(), display, true);
                                     count++;
@@ -107,6 +114,54 @@ public class EnableProfile extends Action {
                         if (count > 0) {
                             message.getChannel().block().createMessage(embed.build()).block();
                         }
+                        return Mono.empty();
+                    }
+                    if (action.equalsIgnoreCase("boost")) {
+
+                        EmbedCreateSpec.Builder embed = EmbedCreateSpec.builder();
+                        embed.color(Color.SUMMER_SKY);
+                        embed.title("Your Boosts");
+                        // get the boosts for your location, remove the event and franchise boosts
+                        HashMap<LocationEnum,List<Boost>> allBoosts = CreateBoostReminder.getLocationBoosts();
+
+                        //load all reminders, remove the ones that are not boosts
+                        List<Reminder> reminders = ReminderUtils.loadReminder(message.getAuthor().get().getId().asString());
+                        Map<String,Reminder> remindersMap = reminders.stream()
+                                .collect(Collectors.toMap(
+                                reminder -> reminder.getType().getName(),
+                                reminder -> reminder,
+                                (existing, replacement) -> existing  // or choose `replacement`
+                        ));
+
+                        // work out what locations user has. Look at profile data
+                        List<LocationEnum> activeLocations = ReminderUtils.loadLocations(message.getAuthor().get().getId().asString());
+                        activeLocations.sort(Comparator.comparing(LocationEnum::getOrder));
+
+                        //display all the boosts, marking the ones that are remaining and ready to be bought
+
+                        //loop though active locations
+                        for (LocationEnum location : activeLocations) {
+                            List<Boost> boosts = allBoosts.get(location);
+                            if (boosts != null) {
+                                boosts.sort(Comparator.comparing(Boost::getOrder));
+                                StringBuilder sb = new StringBuilder();
+                                for (Boost boost : boosts) {
+                                    sb.append( boost.getName() + " - ");
+                                    Reminder reminder = remindersMap.get(boost.getName());
+                                    String display = "";
+                                    if (reminder == null) {
+                                        display = "\uD83E\uDE99";
+                                    } else {
+                                        display = getTimeLeft(reminder);
+                                    }
+                                    display += "\n";
+                                    sb.append(display);
+
+                                }
+                                embed.addField(location.getPrintName(), sb.toString(), true);
+                            }
+                        }
+                        message.getChannel().block().createMessage(embed.build()).block();
                         return Mono.empty();
                     }
 
@@ -202,6 +257,32 @@ public class EnableProfile extends Action {
 
 
         return Mono.empty();
+    }
+
+    private String getTimeLeft(Reminder reminder) {
+//
+        String result = "<t:"+(reminder.getTime().getTime() / 1000)+":R>";
+        return result;
+//        LocalDateTime time = reminder.getTime().toLocalDateTime();
+//        LocalDateTime now = LocalDateTime.now();
+//        long hours = ChronoUnit.HOURS.between(now, time);
+//
+//
+//
+//        long minutes = ChronoUnit.MINUTES.between(now, time) % 60;
+//        long seconds = ChronoUnit.SECONDS.between(now, time) % 60;
+//
+//        String display = "";
+//        if (hours > 0) {
+//            display += hours + " hours, ";
+//        }
+//        if (minutes > 0) {
+//            display += minutes + " minutes, ";
+//        }
+//        if (seconds > 0) {
+//            display += seconds + " seconds";
+//        }
+//        return display;
     }
 
 }

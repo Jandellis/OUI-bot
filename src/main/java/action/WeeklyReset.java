@@ -30,6 +30,7 @@ public class WeeklyReset extends Action {
 
     int tasksEndHour;
     String tacoBot = "490707751832649738";
+    String rushHourChannel = "1289435874240630825";
 
 
     ScheduledExecutorService executorService = Executors.newScheduledThreadPool(2);
@@ -52,7 +53,11 @@ public class WeeklyReset extends Action {
         try {
             String action = getAction(message);
             if (action != null && hasPermission(message) ) {
-                runTask(message.getChannelId().asString());
+                runTask(message.getChannelId().asString(), false);
+            }
+            action = getAction(message, "cycorrect");
+            if (action != null && hasPermission(message) ) {
+                runTask(message.getChannelId().asString(), true);
             }
         } catch (Exception e) {
             printException(e);
@@ -92,21 +97,22 @@ public class WeeklyReset extends Action {
 
     }
 
-    private void runTask(String channelId) {
+    private void runTask(String channelId, boolean isCorrect) {
 
         try {
             int members = ExportUtils.getMembers("oui");
             double ot = ExportUtils.getFranchiseDouble("oui", FranchiseStatType.ot_estimate);
             double votes = ExportUtils.getFranchiseDouble("oui", FranchiseStatType.vote_estimate);
-            Result result = findBestReward((int)votes, (int)ot, 1, 200);
-            Result resultCurrent = findBestReward((int)votes, (int)ot, members, members);
-            int kickMembers = members - result.members;
+            Result result = findBestReward((int)votes, (int)ot, 1, 200, isCorrect);
+            Result resultCurrent = findBestReward((int)votes, (int)ot, members, members, isCorrect);
+            Result resultkick = findBestReward((int)votes, (int)ot, 1, members, isCorrect);
+            int kickMembers = members - resultkick.members;
 
             client.getChannelById(Snowflake.of(channelId)).createMessage(
-                    "Based on my estimate we should kick " + kickMembers + " members. " +
-                            "\nThe reward is " + result.totalReward + " for " + result.members + " members" +
-                            "\nWith out kicking anyone we should get... " +
-                            "\nThe reward is " + resultCurrent.totalReward + " for " + resultCurrent.members + " members").block();
+                    "The max reward we can get with our current numbers is " + result.totalReward + " for " + result.members + " members" +
+                    "\nOur Current reward is " + resultCurrent.totalReward + " for " + resultCurrent.members + " members" +
+                    "\nIf we kick **"+kickMembers+"** the reward is  " + resultkick.totalReward + " for " + resultkick.members + " members"
+            ).block();
 
         } catch (Throwable e) {
             printException(e);
@@ -130,7 +136,12 @@ public class WeeklyReset extends Action {
                 logger.info("running update stats");
                 //reset franchise donations for the week
                 ExportUtils.resetFranchiseDonations("oui");
-                runTask("841078057565814845");
+                client.getChannelById(Snowflake.of(rushHourChannel)).createMessage(
+                        "<@&1296069096055636010>, please check for extra rush hours \n</rushhour start:1289034970341314571>"
+                ).block();
+
+
+                runTask("841078057565814845", false);
                 create();
             }
         };
@@ -148,7 +159,6 @@ public class WeeklyReset extends Action {
         LocalDateTime localNow = LocalDateTime.now();
 
         if (!resetTask.isEmpty()) {
-            create();
             runTime = resetTask.get(0).getTime().toLocalDateTime();
             long delay = ChronoUnit.MINUTES.between(localNow, runTime);
             runUpdate(delay);
@@ -163,9 +173,10 @@ public class WeeklyReset extends Action {
 
     }
 
-    public static Result findBestReward(int votes, int overtime, int minMembers, int maxMembers) {
+    public static Result findBestReward(int votes, int overtime, int minMembers, int maxMembers, boolean isCorrect) {
         Result bestResult = new Result(0, 0, 0, 0);
 //        int maxMembers = 200;
+        double multiplier = 1.0;
 
         for (int m = maxMembers; m >= minMembers; m--) {
             // Task 2 – Overtime priority
@@ -173,13 +184,28 @@ public class WeeklyReset extends Action {
             double reward2 = 0;
 
             if (overtime >= 15 * m) {
-                reward2 = 3.0 * m;
+                if (isCorrect) {
+                    multiplier = 3;
+                } else {
+                    multiplier = 3; // remove when they fix the bug
+                }
+                reward2 = multiplier * m;
                 overtimeUsed = 15 * m;
             } else if (overtime >= 10 * m) {
-                reward2 = 2.0 * m;
+                if (isCorrect) {
+                    multiplier = 2;
+                } else {
+                    multiplier = 3; // remove when they fix the bug
+                }
+                reward2 = multiplier * m;
                 overtimeUsed = 10 * m;
             } else if (overtime >= 5 * m) {
-                reward2 = 1.0 * m;
+                if (isCorrect) {
+                    multiplier = 1;
+                } else {
+                    multiplier = 2; // remove when they fix the bug
+                }
+                reward2 = multiplier * m;
                 overtimeUsed = 5 * m;
             } else {
                 continue;
@@ -189,14 +215,29 @@ public class WeeklyReset extends Action {
             int votesUsed = 0;
             double reward1 = 0;
 
-            if (votes >= 3 * m) {
-                reward1 = 1.0 * m;
-                votesUsed = 3 * m;//should be 5
+            if (votes >= 5 * m) {
+                if (isCorrect) {
+                    multiplier = 1;
+                } else {
+                    multiplier = 1; // remove when they fix the bug
+                }
+                reward1 = multiplier * m;
+                votesUsed = 5 * m;
+            } else if (votes >= 3 * m) {
+                if (isCorrect) {
+                    multiplier = 0.6;
+                } else {
+                    multiplier = 1; // remove when they fix the bug
+                }
+                reward1 = multiplier * m;
+                votesUsed = 3 * m;
             } else if (votes >= 1 * m) {
-                reward1 = 0.6 * m;
-                votesUsed = 1 * m; //should be 3
-            } else if (votes >= 1 * m) {
-                reward1 = 0.2 * m;
+                if (isCorrect) {
+                    multiplier = 0.2;
+                } else {
+                    multiplier = 0.6; // remove when they fix the bug
+                }
+                reward1 = multiplier * m;
                 votesUsed = 1 * m;
             } else {
                 continue;

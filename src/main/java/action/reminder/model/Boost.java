@@ -8,11 +8,13 @@ public class Boost {
     double duration;
 
     LocationEnum location;
+    int order;
 
-    public Boost(String name, double duration, LocationEnum location) {
+    public Boost(String name, double duration, LocationEnum location, int order) {
         this.name = name;
         this.duration = duration;
         this.location = location;
+        this.order = order;
     }
 
     public String getName() {
@@ -25,5 +27,9 @@ public class Boost {
 
     public LocationEnum getLocation() {
         return location;
+    }
+
+    public int getOrder() {
+        return order;
     }
 }

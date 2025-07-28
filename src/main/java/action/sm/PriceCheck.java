@@ -5,6 +5,8 @@ import action.reminder.ReminderUtils;
 import action.reminder.model.Profile;
 import action.sm.model.Alert;
 import action.sm.model.AlertType;
+import action.sm.model.SauceMarketStats;
+import action.sm.model.SauceMarketStreak;
 import action.sm.model.SystemReminderType;
 import bot.Config;
 import bot.Sauce;
@@ -15,7 +17,6 @@ import discord4j.core.object.entity.Message;
 import discord4j.core.spec.EmbedCreateSpec;
 import discord4j.core.spec.MessageCreateSpec;
 import discord4j.rest.util.Color;
-import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -47,10 +48,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class PriceCheck extends Action {
 
@@ -65,6 +68,7 @@ public class PriceCheck extends Action {
     int cheapPrice = 45;
     List<String> smUpdateChannels;
     boolean hideSS;
+    Map<Integer, Double> streakOdds;
 
 
     ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
@@ -79,6 +83,42 @@ public class PriceCheck extends Action {
         cheapPrice = Integer.parseInt(config.get("cheapPrice"));
         smUpdateChannels = Arrays.asList(config.get("smUpdateChannels").split(","));
         hideSS = Boolean.parseBoolean(config.get("hideSS", "true"));
+
+        // Load the streak odds
+        streakOdds = new HashMap<>();
+        streakOdds.put(15, 0.99);
+        streakOdds.put(14, 0.99);
+        streakOdds.put(13, 0.99);
+        streakOdds.put(12, 0.99);
+        streakOdds.put(11, 0.99);
+        streakOdds.put(10, 0.99);
+        streakOdds.put(9, 0.99);
+        streakOdds.put(8, 0.99);
+        streakOdds.put(7, 0.99);
+        streakOdds.put(6, 0.99);
+        streakOdds.put(5, 0.99);
+        streakOdds.put(4, 0.99);
+        streakOdds.put(3, 0.99);
+        streakOdds.put(2, 0.99);
+        streakOdds.put(1, 0.99);
+        streakOdds.put(0, 0.99);
+        streakOdds.put(-1, 0.99);
+        streakOdds.put(-2, 0.99);
+        streakOdds.put(-3, 0.99);
+        streakOdds.put(-4, 0.99);
+        streakOdds.put(-5, 0.99);
+        streakOdds.put(-6, 0.99);
+        streakOdds.put(-7, 0.99);
+        streakOdds.put(-8, 0.99);
+        streakOdds.put(-9, 0.99);
+        streakOdds.put(-10, 0.99);
+        streakOdds.put(-11, 0.99);
+        streakOdds.put(-12, 0.99);
+        streakOdds.put(-13, 0.99);
+        streakOdds.put(-14, 0.99);
+        streakOdds.put(-15, 0.99);
+
+
     }
 
     public void loadPrices() {
@@ -260,13 +300,17 @@ public class PriceCheck extends Action {
             embed.title("Sauce Market");
             embed.description("------------------");
 
-            addSauce(SauceObjectPrices.get(Sauce.salsa), embed);
-            addSauce(SauceObjectPrices.get(Sauce.hotsauce), embed);
-            addSauce(SauceObjectPrices.get(Sauce.guacamole), embed);
-            addSauce(SauceObjectPrices.get(Sauce.pico), embed);
-            addSauce(SauceObjectPrices.get(Sauce.chipotle), embed);
+            List<SauceMarketStats> stats = Utils.loadHistoryStatsNoSecret();
+            Map<String, SauceMarketStreak> streaks = new HashMap<>();// Utils.loadStreakLength();
+            Map<Integer, Map<Integer, Integer>> changeCount = Utils.getChangeCount();
+
+            addSauce(SauceObjectPrices.get(Sauce.salsa), embed, stats, streaks, changeCount);
+            addSauce(SauceObjectPrices.get(Sauce.hotsauce), embed, stats, streaks, changeCount);
+            addSauce(SauceObjectPrices.get(Sauce.guacamole), embed, stats, streaks, changeCount);
+            addSauce(SauceObjectPrices.get(Sauce.pico), embed, stats, streaks, changeCount);
+            addSauce(SauceObjectPrices.get(Sauce.chipotle), embed, stats, streaks, changeCount);
             if (hasSS && !hideSS) {
-                addSauce(SauceObjectPrices.get(Sauce.secret_sauce), embed);
+                addSauce(SauceObjectPrices.get(Sauce.secret_sauce), embed, stats, streaks, changeCount);
             }
 
             printCheap(SauceObjectPrices);
@@ -329,11 +373,57 @@ public class PriceCheck extends Action {
 
     }
 
-    private void addSauce(SauceObject sauce, EmbedCreateSpec.Builder embed) {
+    private void addSauce(SauceObject sauce, EmbedCreateSpec.Builder embed, List<SauceMarketStats> sauceMarketStats, Map<String, SauceMarketStreak> streaks, Map<Integer, Map<Integer, Integer>> changeCount) {
         String name = sauce.getSauce().getUppercaseName();
 
 
         int change = sauce.getPrice() - sauce.getOldPrice();
+        // find the streak
+        // say the odds of the streak continues
+        // the odds of the price change to 15-7,6--2, -3--6, -7-15
+        // price change -15 to -7 use the windows of 15 to 2 and 1 to -15
+        // price change -6 to -3 use the windows of 15 to 7 and 6 to -6 and -7 to -15
+        // price change -2 to 6 use the windows of 15 to 7 and 6 to -2 and -3 to -6 and -7 to -15
+        // price change 7 to 15 use the windows of 15 to 0 and -1 to -15
+
+        int finalChange = change;
+//        SauceMarketStats changeStats = sauceMarketStats.stream().filter(stat -> stat.getChange() == finalChange).findFirst().orElse(null);
+        String changeOdds = "";
+//        if (changeStats != null) {
+//            changeOdds = "\n\uD83D\uDCC8 " + changeStats.getPositive() + "%, \uD83D\uDCC9 " + changeStats.getNegative() + "%, ↔ " + changeStats.getZero() + "%";
+//        }
+        Map<Integer, Integer> singleChange  = changeCount.get(finalChange);
+
+        if (finalChange >= -15 && finalChange <= -7) {
+            changeOdds = buildChangeOdds(
+                    singleChange,
+                    Arrays.asList(new int[]{15, 2}, new int[]{1, -15}),
+                    Arrays.asList("$[15 to 2]", "$[1 to -15]")
+            );
+        } else if (finalChange >= -6 && finalChange <= -3) {
+            changeOdds = buildChangeOdds(
+                    singleChange,
+                    Arrays.asList(new int[]{15, 7}, new int[]{6, -6}, new int[]{-7, -15}),
+                    Arrays.asList("$[15 to 7]", "$[6 to -6]", "$[-7 to -15]")
+            );
+        } else if (finalChange >= -2 && finalChange <= 6) {
+            changeOdds = buildChangeOdds(
+                    singleChange,
+                    Arrays.asList(new int[]{15, 7}, new int[]{6, -2}, new int[]{-3, -6}, new int[]{-7, -15}),
+                    Arrays.asList("$[15 to 7]", "$[6 to -2]", "$[-3 to -6]", "$[-7 to -15]")
+            );
+        } else if (finalChange >= 7 && finalChange <= 15) {
+            changeOdds = buildChangeOdds(
+                    singleChange,
+                    Arrays.asList(new int[]{15, 0}, new int[]{-1, -15}),
+                    Arrays.asList("$[15 to 0]", "$[-1 to -15]")
+            );
+        } else {
+            changeOdds = "\nNo valid change range detected.";
+        }
+
+
+
         String direction = " | <a:up:1015020767244714004> +$" + change;
         if (change < 0) {
             change = change * -1;
@@ -348,13 +438,66 @@ public class PriceCheck extends Action {
         String line = "\n------------------------------------";
 
 
-        embed.addField(name, "$" + sauce.getPrice() + direction + stats + line, false);
+        embed.addField(name, "$" + sauce.getPrice() + direction + stats + changeOdds + line, false);
 
 
 //        embed.addField(sauce.getSauce().getName(), "$" + sauce.getPrice(), true);
 //        embed.addField("Change", direction, false);
 
     }
+
+
+    private static String buildChangeOdds(
+            Map<Integer, Integer> data,
+            List<int[]> windows,
+            List<String> labels
+    ) {
+        DecimalFormat df = new DecimalFormat("0.00");
+        List<Double> percentages = new ArrayList<>();
+        AtomicInteger total = new AtomicInteger();
+
+        // Calculate total
+        data.values().forEach(total::addAndGet);
+
+        // Sum values in each window
+        for (int[] window : windows) {
+            AtomicInteger windowSum = new AtomicInteger();
+            int start = window[0];
+            int end = window[1];
+
+            data.forEach((key, value) -> {
+                if (key <= start && key >= end) {
+                    windowSum.addAndGet(value);
+                }
+            });
+
+            double percent = total.get() > 0
+                    ? (double) windowSum.get() / total.get() * 100
+                    : 0.0;
+            percentages.add(percent);
+        }
+
+        // Build output string
+        StringBuilder result = new StringBuilder();
+        for (int i = 0; i < labels.size(); i++) {
+            double percentage = percentages.get(i);
+            String formatted = df.format(percentage);
+
+            if (percentage > 50.0) {
+                formatted = "**" + formatted + "**";
+            }
+
+            result.append(labels.get(i))
+                    .append("\n")
+                    .append(formatted)
+                    .append("%");
+
+        }
+
+
+        return result.toString();
+    }
+
 
 
     public void printCheap(HashMap<Sauce, SauceObject> prices) {

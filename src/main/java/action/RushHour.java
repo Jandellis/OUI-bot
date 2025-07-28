@@ -147,8 +147,21 @@ public class RushHour extends Action implements EmbedAction {
                         ping = "<@&" + franchiseConfig.getRushHour() + "> ";
                         if (franchiseConfig.getName().equals("OUI")) {
                             runEnd(60);
-                            runWarn(28*60 - 30);
-                            runStart(28*60 - 5);
+                            boolean doWarnings = true;
+
+                            List<SystemReminder> start = Utils.loadReminder(SystemReminderType.rushHourStart);
+                            if (!start.isEmpty()) {
+                                LocalDateTime rushHourStart = start.get(0).getTime().toLocalDateTime();
+                                LocalDateTime now = LocalDateTime.now();
+                                if (rushHourStart.isAfter(now.plusHours(1))) {
+                                    doWarnings = false;
+                                }
+
+                            }
+                            if (doWarnings) {
+                                runWarn(28*60 - 30);
+                                runStart(28*60 - 5);
+                            }
                         }
                     }
 
@@ -199,6 +212,8 @@ public class RushHour extends Action implements EmbedAction {
     public void runEnd(long delay) {
         LocalDateTime time = LocalDateTime.now().plusMinutes(delay);
         Utils.addReminder(SystemReminderType.rushHourEnd, Timestamp.valueOf(time), "", "");
+        ExportUtils.addFranchiseRushHour("oui" , time);
+
         Runnable taskWrapper = () -> {
             logger.info("running rushHour end");
             end();
@@ -232,6 +247,15 @@ public class RushHour extends Action implements EmbedAction {
             Utils.deleteReminder(SystemReminderType.rushHourEnd);
             ZonedDateTime utcTime = ZonedDateTime.now(ZoneOffset.UTC);
             ZonedDateTime startTime = utcTime.plusHours(27);
+
+
+            List<SystemReminder> start = Utils.loadReminder(SystemReminderType.rushHourStart);
+            if (!start.isEmpty()) {
+                startTime = start.get(0).getTime().toLocalDateTime().atZone(ZoneOffset.UTC).plusMinutes(5);
+
+            }
+
+
             client.getChannelById(Snowflake.of(rushHourChannel)).createMessage("Thanks for joining us, the next rush hour will start in 27 hours - <t:"+startTime.toEpochSecond()+":R> at <t:"+startTime.toEpochSecond()+":f>").block();
         }
     }

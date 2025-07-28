@@ -53,6 +53,7 @@ public class Help extends Action {
                     sb.append("When you do something that I will create a reminder for that and i will tell you if im missing any cooldowns by reacting with the first letter\n");
 
                     sb.append("Type `cyrm list` to view your current reminders\n");
+                    sb.append("Type `cyrm boost` to view your boost status\n");
 
                     sb.append("\n");
                     sb.append("You can also add a custom emote for me to react with\n");

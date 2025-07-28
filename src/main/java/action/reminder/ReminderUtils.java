@@ -1019,6 +1019,28 @@ public class ReminderUtils {
         return stats;
     }
 
+    public static List<LocationEnum> loadLocations(String id) {
+        List<LocationEnum> locations = new ArrayList<>();
+        try {
+            Connection con = databaseUtils.getConnection();
+            String sql = "SELECT location FROM profile_stats  " +
+                    "WHERE name = ? " +
+                    " group by location";
+            PreparedStatement pst = con.prepareStatement(sql);
+            pst.setString(1, id);
+
+            ResultSet rs = pst.executeQuery();
+            while (rs.next()) {
+                LocationEnum location = LocationEnum.getLocation(rs.getString(1));
+                locations.add(location);
+            }
+            con.close();
+
+        } catch (SQLException ex) {
+            databaseUtils.printException(ex);
+        }
+        return locations;
+    }
 
     public static List<FlexStats> loadFlexStats(int daysAgoEnd, int days, List<String> ids) {
         List<FlexStats> stats = new ArrayList<>();
