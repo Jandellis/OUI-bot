@@ -221,9 +221,13 @@ public class ReminderUtils {
 
     public static List<Reminder> loadReminder() {
         List<Reminder> reminders = new ArrayList<>();
-        try (Connection con = databaseUtils.getConnection();
-             PreparedStatement pst = con.prepareStatement("SELECT name, type, reminder_time, channel, id FROM reminder ");
-             ResultSet rs = pst.executeQuery()) {
+        LocalDateTime now = LocalDateTime.now().plusSeconds(70);
+        Timestamp timestamp = Timestamp.valueOf(now);
+        try {
+             Connection con = databaseUtils.getConnection();
+             PreparedStatement pst = con.prepareStatement("SELECT name, type, reminder_time, channel, id FROM reminder where reminder_time < ?");
+             pst.setTimestamp(1, timestamp);
+             ResultSet rs = pst.executeQuery();
 
             while (rs.next()) {
                 Reminder reminder = new Reminder(rs.getString(1), ReminderType.getReminderType(rs.getString(2)), rs.getTimestamp(3), rs.getString(4));

@@ -81,10 +81,13 @@ public class Import extends Action {
 //            return null;
 //        }
 
-
+        String auther;
         if (message.getInteraction().isPresent() && message.getInteraction().get().getName().contains("franchise memberdata export")) {
             actionData = message.getId().asString();
+            auther = message.getInteraction().get().getUser().getId().asString();
 
+        } else {
+            auther = message.getAuthor().get().getId().asString();
         }
 
 
@@ -95,26 +98,27 @@ public class Import extends Action {
             int uncleanlimit = 7;
 
             return message.getChannel().flatMap(channel -> {
-                logger.info("starting import 2");
 
-                FranchiseConfig franchiseConfig = ExportUtils.getFranchiseConfig(message.getGuildId().get().asString());
-
-                channel.createMessage("Starting import").block();
-
-
-                // have franchise table, this has all the config for roles
-
-                Message data = channel.getMessageById(messageId).block();
-
-
-                //download file
-                String url = data.getData().attachments().get(0).url();
-                //get franchise name from url
-                String [] name = url.split("/");
-                String franchiseName = name[name.length -1 ].split("_")[0];
-
-                KickList kickList = new KickList();
                 try {
+                    logger.info("starting import 2");
+
+                    FranchiseConfig franchiseConfig = ExportUtils.getFranchiseConfig(message.getGuildId().get().asString());
+
+                    channel.createMessage("Starting import").block();
+
+
+                    // have franchise table, this has all the config for roles
+
+                    Message data = channel.getMessageById(messageId).block();
+
+
+                    //download file
+                    String url = data.getData().attachments().get(0).url();
+                    //get franchise name from url
+                    String [] name = url.split("/");
+                    String franchiseName = name[name.length -1 ].split("_")[0];
+
+                    KickList kickList = new KickList();
                     kickList = Clean.main(url, franchiseName + "historic.csv", worklimit, uncleanlimit, Timestamp.from(data.getTimestamp()), franchiseName);
                     logger.info("processed data");
                     HashMap<Long, List<ExportData>> history = ExportUtils.loadMemberHistory(franchiseName);
@@ -362,9 +366,9 @@ public class Import extends Action {
                     }
 
 
-                    Instant reminderTime = message.getTimestamp().plus(23, ChronoUnit.HOURS);
+                    Instant reminderTime = message.getTimestamp().plus(4, ChronoUnit.HOURS);
 
-                    Reminder reminder = ReminderUtils.addReminder(message.getAuthor().get().getId().asString(), ReminderType.importData, Timestamp.from(reminderTime), message.getChannelId().asString());
+                    Reminder reminder = ReminderUtils.addReminder(auther, ReminderType.importData, Timestamp.from(reminderTime), message.getChannelId().asString());
                     DoReminder doReminder = new DoReminder(gateway, client);
                     doReminder.runReminder(reminder);
 

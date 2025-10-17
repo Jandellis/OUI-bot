@@ -6,6 +6,7 @@ import action.reminder.model.Profile;
 import action.reminder.model.Reminder;
 import action.reminder.model.ReminderSettings;
 import action.reminder.model.TeamEvent;
+import action.sm.CleanUp;
 import discord4j.common.util.Snowflake;
 import discord4j.core.DiscordClient;
 import discord4j.core.GatewayDiscordClient;
@@ -22,11 +23,17 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static action.reminder.ReminderType.*;
 
@@ -64,13 +71,17 @@ public class DoReminder extends Action {
      * @param reminder
      */
     public void runReminder(Reminder reminder) {
+        runReminder(reminder, new ArrayList<>());
+    }
+
+    public void runReminder(Reminder reminder, List<Reminder> combinedBoostReminders) {
         try {
             Runnable taskWrapper = new Runnable() {
 
                 @Override
                 public void run() {
                     logger.info("running reminder");
-                    remind(reminder);
+                    remind(reminder, combinedBoostReminders);
                 }
 
             };
@@ -80,13 +91,19 @@ public class DoReminder extends Action {
             if (now.isBefore(reminderTime)) {
                 Duration delay = Duration.between(LocalDateTime.now(), reminderTime);
 
-                if (delay.getSeconds() < 65) {
+                if (delay.getSeconds() < 70) {
                     logger.info("reminder for " + reminder.getName() + " at " + formatter.format(reminderTime) + " of " + reminder.getType().getName() + " sleep for " + delay.getSeconds());
 
                     ReminderUtils.lockReminder(reminder);
+                    for (Reminder boostReminder : combinedBoostReminders) {
+                        ReminderUtils.lockReminder(boostReminder);
+                    }
                     executorService.schedule(taskWrapper, delay.getSeconds(), TimeUnit.SECONDS);
                 } else {
                     ReminderUtils.unlockReminder(reminder);
+                    for (Reminder boostReminder : combinedBoostReminders) {
+                        ReminderUtils.unlockReminder(boostReminder);
+                    }
                 }
             } else {
                 logger.info("deleting old reminder");
@@ -101,7 +118,8 @@ public class DoReminder extends Action {
 
     }
 
-    private void remind(Reminder reminder) {
+    private void remind(Reminder reminder, List<Reminder> combinedBoostReminders) {
+
         logger.info("Doing reminder for " + reminder.getName() + " of " + reminder.getType().getName());
         // check that reminder still exists in the db
 
@@ -212,15 +230,18 @@ public class DoReminder extends Action {
                 || reminder.getType() == survey
                 || reminder.getType() == incentives
                 || reminder.getType() == franchiseTasks
+                ||reminder.getType() == importData
         ) {
 
             if (hasPermission(profile.getName(), Long.parseLong(recruiter))) {
                 msg = msg.replace("{ping}", "<@&" + recruiter + ">");
-                if (reminder.getType() == franchiseTasks) {
-                    // post in the office channel
-                    reminder.setChannel("841078057565814845");
-                } else {
-                    reminder.setChannel("842352482034515998");
+                if (reminder.getType() != importData) {
+                    if (reminder.getType() == franchiseTasks) {
+                        // post in the office channel
+                        reminder.setChannel("841078057565814845");
+                    } else {
+                        reminder.setChannel("842352482034515998");
+                    }
                 }
             }
 
@@ -261,7 +282,9 @@ public class DoReminder extends Action {
             }
         }
 
-        msg = msg.replace("{task}", reminder.getType().getName());
+        if (!reminder.getType().boost) {
+            msg = msg.replace("{task}", reminder.getType().getName());
+        }
 
         String command = "";
         boolean doReminder = true;
@@ -343,11 +366,54 @@ public class DoReminder extends Action {
                 break;
             default:
                 //boosts off cooldown
-                command = "</shop:1203826207414554696> at " + CreateBoostReminder.getBoost(reminder.getType().getName()).getLocation().getName();
-                doReminder = reminderSettings.isBoost();
-                if (!hasTask) {
-                    command = command + " **" + reminder.getType().getName() + "**";
+//                StringBuilder boostCommand = new StringBuilder();
+//                String join = "";
+//                for (Reminder boostReminder : combinedBoostReminders) {
+//                    boostCommand.append(join)
+//                            .append(boostReminder.getName())
+//                            .append(" at ")
+//                            .append(CreateBoostReminder.getBoost(boostReminder.getType().getName()).getLocation().getName());
+//
+//                    join = ", ";
+//                }
+
+
+
+                // Group reminders by location
+                Map<String, List<Reminder>> remindersByLocation = combinedBoostReminders.stream()
+                        .collect(Collectors.groupingBy(
+                                r -> CreateBoostReminder.getBoost(r.getType().getName()).getLocation().getPrintName()
+                        ));
+
+                StringBuilder boostCommand = new StringBuilder();
+                String locationJoin = "\n";
+
+                for (Map.Entry<String, List<Reminder>> entry : remindersByLocation.entrySet()) {
+                    String location = entry.getKey();
+                    List<Reminder> reminders = entry.getValue();
+
+                    boostCommand.append(locationJoin).append("**").append(location).append("**").append(" - ");
+
+                    // Join boost names for this location
+                    String boosts = reminders.stream()
+                            .map(r -> r.getType().getName())
+                            .collect(Collectors.joining(", "));
+
+                    boostCommand.append(boosts);
+
                 }
+                //something like this
+                // Location 1: Boost A, Boost B, Boost C, Boost D, Boost E | Location 2: Boost X, Boost Y
+
+
+                command = "</shop:1203826207414554696> at " + boostCommand;
+                doReminder = reminderSettings.isBoost();
+                String task = "Boosts";
+                if (!msg.contains("{cmd}")) {
+                    task = boostCommand.toString();
+                }
+                msg = msg.replace("{task}", task);
+
         }
 
         msg = msg.replace("{cmd}", command);
@@ -374,27 +440,30 @@ public class DoReminder extends Action {
                 ReminderUtils.deleteReminder(reminder);
             } else {
                 ReminderUtils.deleteReminder(reminder.getName(), reminder.getType());
+                for (Reminder boostReminder : combinedBoostReminders) {
+                    ReminderUtils.deleteReminder(boostReminder);
+                }
             }
         }
     }
 
     private void remindCatnip(Reminder reminder, Profile profile, String msg) {
-        if (profile.getUserName().equals( "844458414586724362") && reminder.getType() == tips) {
+        if (reminder.getName().equals("844458414586724362") && reminder.getType() == tips) {
             gateway.getUserById(Snowflake.of("799569881108447262")).block().getPrivateChannel().flatMap(channel -> {
                 channel.createMessage("Hey <@799569881108447262>, triggers tip is ready! " + msg).block();
                 logger.info("sent DM");
                 return Mono.empty();
-            });
+            }).block();
         }
-
     }
 
     public void startUp() {
 
         logger.info("Creating reminders on reboot");
-        for (Reminder reminder : ReminderUtils.loadReminder()) {
-            runReminder(reminder);
-        }
+//        for (Reminder reminder : ReminderUtils.loadReminder()) {
+//            runReminder(reminder);
+//        }
+        scheduleReminders(true);
 
         Runnable taskWrapper = new Runnable() {
 
@@ -448,6 +517,23 @@ public class DoReminder extends Action {
                             giveawayAdd.doAction(gateway.getMessageById(Snowflake.of(giveawayChannel), Snowflake.of(messageData.id())).block());
                         }
                     }
+
+
+                    messageDataList = getMessagesOfChannel(client.getChannelById(Snowflake.of("1360632309174370325")));
+
+                    for (MessageData messageData : messageDataList) {
+                        boolean reacted = false;
+                        if (messageData.content().contains("1360718731226910742")) {
+                            reacted = true;
+                        }
+
+                        if (!reacted) {
+                            CleanUp cleanUp = new CleanUp();
+                            cleanUp.action(gateway, client);
+
+                            cleanUp.doAction(gateway.getMessageById(Snowflake.of("1360632309174370325"), Snowflake.of(messageData.id())).block());
+                        }
+                    }
                 } catch (Exception e) {
                     printException(e);
 
@@ -458,7 +544,7 @@ public class DoReminder extends Action {
                         logger.info("Sleeping for 60sec until next reminder check");
                         Thread.sleep(60000);
                         logger.info("doing reminder check");
-                        scheduleReminders();
+                        scheduleReminders(false);
                     } catch (Throwable e) {
                         printException(e);
                     }
@@ -483,10 +569,33 @@ public class DoReminder extends Action {
         return Mono.empty();
     }
 
-    public void scheduleReminders() {
+    public void scheduleReminders(boolean skipLock) {
+        HashMap<String, List<Reminder>> boostReminders = new HashMap<>();
+        List<Reminder> remindersDB;
+        if (skipLock) {
+            remindersDB = ReminderUtils.loadReminder();
+        } else {
+            remindersDB = ReminderUtils.loadReminderWindow();
+        }
 
-        for (Reminder reminder : ReminderUtils.loadReminderWindow()) {
-            runReminder(reminder);
+        for (Reminder reminder : remindersDB) {
+            if (reminder.getType().boost) {
+                if (!boostReminders.containsKey(reminder.getName())) {
+                    boostReminders.put(reminder.getName(), new ArrayList<>());
+                }
+                boostReminders.get(reminder.getName()).add(reminder);
+            } else {
+                runReminder(reminder);
+            }
+        }
+        for (Map.Entry<String, List<Reminder>> entry : boostReminders.entrySet()) {
+            List<Reminder> reminders = entry.getValue();
+            Reminder lastReminder = reminders.stream()
+                    .max(Comparator.comparing(Reminder::getTime))
+                    .orElse(null); // returns null if list is empty
+
+            runReminder(lastReminder, reminders);
         }
     }
+
 }

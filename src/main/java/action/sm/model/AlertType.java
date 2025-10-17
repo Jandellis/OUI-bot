@@ -4,7 +4,8 @@ public enum AlertType {
     high("high"),
     drop("drop"),
     rise("rise"),
-    low("low");
+    low("low"),
+    simple("simple");
 
     private String name;
 

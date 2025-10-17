@@ -105,7 +105,11 @@ public class CreateProfile extends Action implements EmbedAction {
 
                             String line = embed.fields().get().get(0).value().split("\n")[0];
                             //replace up, replace taco, replace (), hq building
-                            String shackName = line.replace("\uD83D\uDD3A ", "").replace("\uD83C\uDF2E", "").replace(" ()", "").replace(" \uD83C\uDFDB", "");
+                            String shackName = line.replace("\uD83D\uDD3A ", "")
+                                    .replace("\uD83C\uDF2E", "")
+                                    .replace("<:GrayTaco:1405794284350869567>", "")
+                                    .replace(" ()", "")
+                                    .replace(" \uD83C\uDFDB", "");
                             Status status = Status.getStatus(embed.footer().get().text());
                             if (id == null) {
                                 id = embed.thumbnail().get().url().get().replace("https://cdn.discordapp.com/avatars/", "").split("/")[0];

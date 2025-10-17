@@ -68,7 +68,7 @@ public class GiveawayAdd extends Action implements EmbedAction {
 
         try {
             for (EmbedData embed : embedData) {
-                if (embed.description().toOptional().isPresent()) {
+                if (embed.description().toOptional().isPresent() && message.getChannelId().asString().equals(giveawayChannel) ) {
 
 
                     String line = embed.description().get();

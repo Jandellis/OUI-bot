@@ -12,6 +12,7 @@ import reactor.core.publisher.Mono;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+@Deprecated
 public class DoAlerts extends Action {
     String bbBot = "801210683483619438";
     String smUpdate;

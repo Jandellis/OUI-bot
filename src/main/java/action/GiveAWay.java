@@ -20,9 +20,12 @@ import discord4j.discordjson.json.MessageData;
 import discord4j.rest.http.client.ClientException;
 import discord4j.rest.util.Color;
 import reactor.core.publisher.Mono;
+import sheets.SheetReader;
 
 import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.sql.Timestamp;
+import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -172,9 +175,18 @@ public class GiveAWay extends Action {
         message.addReaction(ReactionEmoji.unicode(react)).block();
 
 
-        LocalDateTime endTime = now.plusDays(1);
-//        LocalDateTime endTime = now.plusMinutes(2);
+        LocalDateTime endTime = now.plusDays(1).withMinute(1);
         Utils.addReminder(SystemReminderType.giveaway, Timestamp.valueOf(endTime), msg.id().toString(), winner);
+        if (now.getDayOfWeek() == DayOfWeek.FRIDAY) {
+            SheetReader reader = new SheetReader();
+            try {
+                dmMe(reader.getDutyForTomorrow());
+            }catch (Throwable e) {
+                printException(e);
+//                throw new RuntimeException(e);
+            }
+        }
+
 
         runGiveAWay(ChronoUnit.MINUTES.between(now, endTime));
 

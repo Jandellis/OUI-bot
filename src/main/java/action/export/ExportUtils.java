@@ -107,6 +107,61 @@ public class ExportUtils {
     }
 
 
+    public static HashMap<Long, List<ExportData>> loadMemberHistoryNoGordon(LocalDateTime start, LocalDateTime end, String franchise) {
+        HashMap<Long, List<ExportData>> history = new HashMap<>();
+
+        try {
+            Connection con = databaseUtils.getConnection();
+            Statement st = con.createStatement();
+
+
+            PreparedStatement pst = con.prepareStatement("SELECT m.export_time, m.name, m.shack_name, m.income, m.shifts, m.weekly_shifts, m.tips, m.donations, m.happy, m.overtime, m.votes, m.franchise " +
+                    "FROM member_data m, profile p " +
+                    "WHERE m.export_time > ? and " +
+                    " p.name = m.name and " +
+                    " p.status != 'gordon' and " +
+                    "m.franchise = ? and " +
+                    "m.export_time < ?  ORDER BY m.export_time ");
+            pst.setTimestamp(1, Timestamp.valueOf(start));
+            pst.setString(2, franchise);
+            pst.setTimestamp(3, Timestamp.valueOf(end));
+            ResultSet rs = pst.executeQuery();
+            while (rs.next()) {
+                Timestamp exportTime = rs.getTimestamp(1);
+
+                Member member = new Member(Long.parseLong(rs.getString(2)),
+                        rs.getString(3),
+                        rs.getInt(4),
+                        rs.getInt(5),
+                        rs.getInt(6),
+                        rs.getInt(7),
+                        rs.getLong(8),
+                        rs.getDouble(9),
+                        rs.getInt(10),
+                        rs.getInt(11),
+                        rs.getString(12)
+
+                );
+                ExportData data = new ExportData(member, exportTime);
+                if (history.containsKey(member.getId())) {
+                    history.get(member.getId()).add(data);
+                } else {
+                    List<ExportData> dataList = new ArrayList<>();
+                    dataList.add(data);
+                    history.put(member.getId(), dataList);
+                }
+            }
+
+
+            st.executeBatch();
+            con.close();
+        } catch (SQLException ex) {
+            databaseUtils.printException(ex);
+        }
+        return history;
+    }
+
+
     public static void addMember(Member member, Timestamp exportTime) {
         Connection con;
         try {
@@ -207,6 +262,23 @@ public class ExportUtils {
                 pst.setLong(2, donation);
                 return pst.execute();
             }
+        } catch (SQLException ex) {
+            databaseUtils.printException(ex);
+        }
+        return false;
+    }
+
+
+    public static boolean updateDonationLog(String id, long donation, Timestamp donation_time) {
+        try {
+            Connection con = databaseUtils.getConnection();
+            PreparedStatement pst;
+
+            pst = con.prepareStatement("INSERT INTO donation_log (name, amount, donation_time) VALUES (?, ?, ?)");
+            pst.setString(1, id);
+            pst.setLong(2, donation);
+            pst.setTimestamp(3, donation_time);
+            return pst.execute();
         } catch (SQLException ex) {
             databaseUtils.printException(ex);
         }

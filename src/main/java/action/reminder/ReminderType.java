@@ -1,16 +1,16 @@
 package action.reminder;
 
 public enum ReminderType {
-    work("work"),
-    grind("grind"),
-    tips("tips"),
-    ot("overtime"),
-    vote("vote"),
-    daily("daily"),
-    clean("clean"),
-    gift("gifts"),
-    importData("importData"),
-    postAd("postAd"),
+    work("work", false),
+    grind("grind", false),
+    tips("tips", false),
+    ot("overtime", false),
+    vote("vote", false),
+    daily("daily", false),
+    clean("clean", false),
+    gift("gifts", false),
+    importData("importData", false),
+    postAd("postAd", false),
 
     //city
     happy("Happy Hour"),
@@ -56,26 +56,34 @@ public enum ReminderType {
     jukebox("Jukebox"),
 
     //event
-    flyers("Flyers"),
-    twirler("Sign Twirler"),
-    refreshments("Refreshments"),
-    music("Music"),
-    festival("Festival"),
-    eventClean("Event Clean"),
-    eventOvertime("Event Overtime"),
+    flyers("Flyers", false),
+    twirler("Sign Twirler", false),
+    refreshments("Refreshments", false),
+    music("Music", false),
+    festival("Festival", false),
+    eventClean("Event Clean", false),
+    eventOvertime("Event Overtime", false),
 
-    rewards("Rewards"),
-    menu("Menu"),
-    training("Training"),
-    survey("Survey"),
-    incentives("Incentives"),
-    franchiseTasks("Franchise Tasks");
+    //franchise
+    rewards("Rewards", false),
+    menu("Menu", false),
+    training("Training", false),
+    survey("Survey", false),
+    incentives("Incentives", false),
+    franchiseTasks("Franchise Tasks", false);
 
 
     String name;
+    boolean boost;
 
     ReminderType(String name) {
         this.name = name;
+        this.boost = true;
+    }
+
+    ReminderType(String name, boolean boost) {
+        this.name = name;
+        this.boost = boost;
     }
 
     public String getName() {

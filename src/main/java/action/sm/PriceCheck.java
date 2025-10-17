@@ -5,6 +5,8 @@ import action.reminder.ReminderUtils;
 import action.reminder.model.Profile;
 import action.sm.model.Alert;
 import action.sm.model.AlertType;
+import action.sm.model.ChangeRange;
+import action.sm.model.Drop;
 import action.sm.model.SauceMarketStats;
 import action.sm.model.SauceMarketStreak;
 import action.sm.model.SystemReminderType;
@@ -204,6 +206,9 @@ public class PriceCheck extends Action {
             logger.info("Loading alerts");
             HashMap<String, StringBuilder> alerts = new HashMap<>();
 
+            Map<Integer, Map<Integer, Integer>> changeCount = Utils.getChangeCount();
+            Map<Integer, ChangeRange> changeRanges = new HashMap<>();
+
             for (Alert alert : Utils.loadAlerts()) {
                 logger.info(alert);
                 if (!alerts.containsKey(alert.getName())) {
@@ -226,6 +231,10 @@ public class PriceCheck extends Action {
                 if (alert.getType() == AlertType.low) {
                     int price = alert.getPrice();
                     alerts.get(alert.getName()).append(printLow(prices, price, alert.getName(), alert.getTrigger()));
+                }
+                if (alert.getType() == AlertType.simple) {
+                    HashMap<Integer, Integer> saucePrices = Utils.loadLast3(Sauce.getSauce(alert.getTrigger()));
+                    alerts.get(alert.getName()).append(printSimple(saucePrices, Sauce.getSauce(alert.getTrigger()), alert));
                 }
 
             }
@@ -302,7 +311,6 @@ public class PriceCheck extends Action {
 
             List<SauceMarketStats> stats = Utils.loadHistoryStatsNoSecret();
             Map<String, SauceMarketStreak> streaks = new HashMap<>();// Utils.loadStreakLength();
-            Map<Integer, Map<Integer, Integer>> changeCount = Utils.getChangeCount();
 
             addSauce(SauceObjectPrices.get(Sauce.salsa), embed, stats, streaks, changeCount);
             addSauce(SauceObjectPrices.get(Sauce.hotsauce), embed, stats, streaks, changeCount);
@@ -398,25 +406,25 @@ public class PriceCheck extends Action {
             changeOdds = buildChangeOdds(
                     singleChange,
                     Arrays.asList(new int[]{15, 2}, new int[]{1, -15}),
-                    Arrays.asList("$[15 to 2]", "$[1 to -15]")
+                    Arrays.asList("\uD83D\uDCC8 $15 to $2", "\uD83D\uDCC9 $1 to $-15")
             );
         } else if (finalChange >= -6 && finalChange <= -3) {
             changeOdds = buildChangeOdds(
                     singleChange,
                     Arrays.asList(new int[]{15, 7}, new int[]{6, -6}, new int[]{-7, -15}),
-                    Arrays.asList("$[15 to 7]", "$[6 to -6]", "$[-7 to -15]")
+                    Arrays.asList("\uD83D\uDCC8 $15 to $7", "↔\uFE0F $6 to $-6", "\uD83D\uDCC9 $-7 to $-15")
             );
         } else if (finalChange >= -2 && finalChange <= 6) {
             changeOdds = buildChangeOdds(
                     singleChange,
                     Arrays.asList(new int[]{15, 7}, new int[]{6, -2}, new int[]{-3, -6}, new int[]{-7, -15}),
-                    Arrays.asList("$[15 to 7]", "$[6 to -2]", "$[-3 to -6]", "$[-7 to -15]")
+                    Arrays.asList("\uD83D\uDCC8 $15 to $7", "\uD83D\uDD3C $6 to $-2", "\uD83D\uDD3D $ -3 to $-6", "\uD83D\uDCC9 $-7 to $-15")
             );
         } else if (finalChange >= 7 && finalChange <= 15) {
             changeOdds = buildChangeOdds(
                     singleChange,
                     Arrays.asList(new int[]{15, 0}, new int[]{-1, -15}),
-                    Arrays.asList("$[15 to 0]", "$[-1 to -15]")
+                    Arrays.asList("\uD83D\uDCC8 $15 to $0", "\uD83D\uDCC9 $-1 to $-15")
             );
         } else {
             changeOdds = "\nNo valid change range detected.";
@@ -445,6 +453,54 @@ public class PriceCheck extends Action {
 //        embed.addField("Change", direction, false);
 
     }
+
+    private static Boolean buySauce(int price, int change) {
+
+        if (change >= -15 && change <= -7) {
+            if (price <= 20) {
+                return true;
+            }
+        } else if (change >= -6 && change <= -3) {
+            if (price <= 35) {
+                return true;
+            }
+        } else if (change >= -2 && change <= 6) {
+            if (price <= 65) {
+                return true;
+            }
+        } else if (change >= 7 && change <= 15) {
+            if (price <= 80) {
+                return true;
+            }
+        } else {
+            return false;
+        }
+
+        return false;
+    }
+
+
+    private static Boolean sellSauce(int price, int change) {
+
+        if (change >= -15 && change <= -7) {
+            if (price > 60) {
+                return true;
+            }
+        } else if (change >= -6 && change <= -3) {
+            if (price > 80) {
+                return true;
+            }
+        } else if (change >= -2 && change <= 6) {
+            return false;
+        } else if (change >= 7 && change <= 15) {
+            return false;
+        } else {
+            return false;
+        }
+
+        return false;
+    }
+
 
 
     private static String buildChangeOdds(
@@ -478,19 +534,25 @@ public class PriceCheck extends Action {
         }
 
         // Build output string
-        StringBuilder result = new StringBuilder();
+        StringBuilder result = new StringBuilder("\n-----**Next Hour Odds**-----");
         for (int i = 0; i < labels.size(); i++) {
             double percentage = percentages.get(i);
             String formatted = df.format(percentage);
+            String start = "";
+            String end = "";
 
             if (percentage > 50.0) {
-                formatted = "**" + formatted + "**";
+                start = "**";
+                end = "**";
             }
 
-            result.append(labels.get(i))
-                    .append("\n")
+            result.append("\n")
+                    .append(start)
+                    .append(labels.get(i))
+                    .append(" | ")
                     .append(formatted)
-                    .append("%");
+                    .append("%")
+                    .append(end);
 
         }
 
@@ -641,6 +703,46 @@ public class PriceCheck extends Action {
             return sb.toString();
         else {
             logger.info("No low sauce");
+            return "";
+        }
+    }
+
+    public String printSimple(HashMap<Integer, Integer> prices, Sauce sauce, Alert alert ) {
+
+        //loop through prices
+        //find current change for sauce
+        // ask if should buy or sell
+        // if user owns sauce and should sell, tell them to sell
+        // if user does not own sauce and should buy, tell them to buy
+
+        StringBuilder sb = new StringBuilder();
+        AtomicBoolean action = new AtomicBoolean(false);
+
+        Integer now = prices.get(0);
+        Integer hour1 = prices.get(1);
+
+        logger.info("now: " + now + ", hour + 1: " + hour1);
+
+        if (hour1 == null) {
+            hour1 = now;
+        }
+
+        Integer dif = now - hour1;
+        if (sellSauce(now, dif) && alert.getPrice() == Drop.owned.getPrice()) {
+            logger.info("price is +" + now + " and change is " + dif + " sell " + sauce.getUppercaseName());
+            sb.append("\n <a:reddown:1015028786292592701>  **SELL** " + sauce.getUppercaseName() + " is falling $" + now +" down " + dif);
+            action.set(true);
+        }
+        if (buySauce(now, dif) && alert.getPrice() == Drop.watchlist.getPrice()) {
+            logger.info("price is +" + now + " and change is " + dif + " buy " + sauce.getUppercaseName());
+            sb.append("\n <a:greenup:1015028862368878723>  **BUY** " + sauce.getUppercaseName() + " price is $"+now + " high chance price will go higher");
+            action.set(true);
+        }
+
+        if (action.get())
+            return sb.toString();
+        else {
+            logger.info("No simple actions sauce");
             return "";
         }
     }

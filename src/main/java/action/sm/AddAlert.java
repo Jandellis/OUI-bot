@@ -1,6 +1,14 @@
 package action.sm;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
 import action.Action;
+import action.export.ExportData;
+import action.export.ExportUtils;
+import action.export.model.WeeklyBestData;
 import action.sm.model.Alert;
 import action.sm.model.AlertType;
 import action.sm.model.Drop;
@@ -8,6 +16,8 @@ import action.sm.model.Trigger;
 import action.sm.model.Watch;
 import bot.Sauce;
 import discord4j.core.object.entity.Message;
+import discord4j.core.spec.EmbedCreateSpec;
+import discord4j.rest.util.Color;
 import reactor.core.publisher.Mono;
 
 public class AddAlert extends Action {
@@ -18,6 +28,7 @@ public class AddAlert extends Action {
     String paramDelete;
     String paramHigh;
     String paramLow;
+    String paramSimple;
     String parmaAlert;
     String paramTrigger;
     String paramHelp;
@@ -32,6 +43,7 @@ public class AddAlert extends Action {
         cheapPing = config.get("cheapPing");
         paramDrop = "cySmDrop";
         paramRise = "cySmRise";
+        paramSimple = "cySmSimple";
         paramDelete = "cySmDelete";
         paramHigh = "cySmHigh";
         parmaAlert = "cySmAlert";
@@ -80,6 +92,61 @@ public class AddAlert extends Action {
 
                 Utils.addTrigger(userId, AlertType.rise, Drop.watchlist.getPrice());
                 message.getChannel().block().createMessage("I will alert you when your sauces on your watchlist rise").block();
+            }
+
+
+            action = getAction(message, paramSimple.toLowerCase());
+            if (action != null) {
+                String userId = message.getAuthor().get().getId().asString();
+
+                Utils.addTrigger(userId, AlertType.simple, Drop.watchlist.getPrice());
+                Utils.deleteWatch(userId);
+
+                Utils.addWatch(userId, Sauce.chipotle);
+                Utils.addWatch(userId, Sauce.hotsauce);
+                Utils.addWatch(userId, Sauce.pico);
+                Utils.addWatch(userId, Sauce.salsa);
+                Utils.addWatch(userId, Sauce.guacamole);
+
+                List<Sauce> sauces = new ArrayList<>();
+                Utils.addAlerts(userId, sauces, message.getChannelId().asString());
+                message.getChannel().block().createMessage("I will tell you when its a good deal to buy sauces and when you should sell them").block();
+            }
+
+            action = getAction(message, "cygordon".toLowerCase());
+            if (action != null) {
+                return message.getChannel().flatMap(channel -> {
+                    EmbedCreateSpec.Builder embed = EmbedCreateSpec.builder();
+                    try {
+                        LocalDateTime oneWeek = LocalDateTime.of(2025, 8, 4, 20, 0, 0);
+                        LocalDateTime now = LocalDateTime.of(2025, 8, 19, 4, 0, 0);
+                        ;
+
+                        HashMap<Long, List<ExportData>> history = ExportUtils.loadMemberHistoryNoGordon(oneWeek, now, "OUI");
+
+
+                        List<WeeklyBestData> overtime = new ArrayList<>();
+
+                        history.forEach((id, dataList) -> {
+                            //get old entry
+                            int startOvertime = dataList.get(0).getMember().getOvertime();
+
+                            //get current entry
+                            int endOvertime = dataList.get(dataList.size() - 1).getMember().getOvertime();
+                            overtime.add(new WeeklyBestData(id, endOvertime - startOvertime));
+                        });
+                        WeeklyBestData.sort(overtime);
+                        embed = EmbedCreateSpec.builder();
+                        embed.color(Color.SUMMER_SKY);
+                        embed.title("Gordon giveaway");
+                        embed.addField("Overtime", getBest(overtime, false), false);
+                        channel.createMessage(embed.build()).block();
+                    } catch (Exception e) {
+                        printException(e);
+                    }
+
+                    return  Mono.empty();
+                });
             }
 
             action = getAction(message, paramDelete.toLowerCase());
@@ -186,8 +253,18 @@ public class AddAlert extends Action {
             }
 
             if (message.getContent().equalsIgnoreCase(paramHelp)) {
-                StringBuilder sb = new StringBuilder("I can help you monitor the price of your sauces. ");
-                sb.append("To set me up, first create some triggers.\n");
+                StringBuilder sb = new StringBuilder("I can help you monitor the price of your sauces. There is two modes, advanced or simple\n");
+                message.getChannel().block().createMessage(sb.toString()).block();
+                sb = new StringBuilder();
+                sb.append("\n:small_orange_diamond: **Simple** :small_orange_diamond:\n");
+                sb.append("To set up simple, run `" + paramSimple + "` then run `/saucemarket list` and I will tell you when its a good deal to buy sauces and when you should sell them!\n\n");
+
+                message.getChannel().block().createMessage(sb.toString()).block();
+                sb = new StringBuilder();
+                sb.append("\n:small_orange_diamond: **Advanced** :small_orange_diamond:\n");
+//                message.getChannel().block().createMessage(sb.toString()).block();
+//                sb = new StringBuilder();
+                sb.append("To set up advanced, first create some triggers.\n");
                 sb.append(" :small_blue_diamond: **" + paramDrop + " <" + Drop.both.getName() + "|" + Drop.owned.getName() + "|" + Drop.watchlist.getName() + "> **- add trigger for price dropping more than $10 in one hour or 2 hours in a row. Example `" + paramDrop + " " + Drop.owned.getName() + "`\n");
 //                sb.append(" :small_blue_diamond: **" + paramRise + " **- add trigger for price rising more than $10 in one hour. Example `" + paramRise + "`\n");
                 sb.append(" :small_blue_diamond: **" + paramHigh + " <price>** - add trigger when price hits that. Example `" + paramHigh + " 150`\n");
@@ -214,6 +291,31 @@ public class AddAlert extends Action {
         }
 
         return Mono.empty();
+    }
+
+
+
+    private String getBest(List<WeeklyBestData> weeklyBestData,  boolean money) {
+
+        StringBuilder sb = new StringBuilder();
+        int count = 0;
+        for (WeeklyBestData data : weeklyBestData) {
+            if (count == 20) {
+                break;
+            }
+            count++;
+
+            String value = "";
+            if (money) {
+                value = "$";
+            }
+            value = value + String.format("%,d", data.getValue());
+//            builder.addField(count + start, "**"+ count + "**<@"+ data.getId() +"> - " + value, false);
+
+
+            sb.append("**" + count + "** - <@" + data.getId() + "> - " + value + "\n");
+        }
+        return sb.toString();
     }
 
 }

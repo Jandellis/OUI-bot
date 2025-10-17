@@ -334,3 +334,61 @@ alter table franchise add donations bigint;
 alter table franchise add vote_estimate double;
 alter table franchise add ot_estimate double;
 alter table franchise add votes int;
+alter table franchise add rush_hour int;
+alter table franchise add rush_hour_active timestamp;
+
+
+CREATE TABLE IF NOT EXISTS donation_log (
+    id serial PRIMARY KEY,
+    name VARCHAR(25),
+    amount int,
+    donation_time timestamp
+);
+
+CREATE TABLE IF NOT EXISTS shopping_items_history (
+    id serial PRIMARY KEY,
+    item_name VARCHAR(255),
+    store_item_name VARCHAR(255),
+    store VARCHAR(30),
+    price double,
+    on_sale boolean,
+    discount double,
+    import_time timestamp
+);
+CREATE TABLE IF NOT EXISTS shopping_items (
+    id serial PRIMARY KEY,
+    name VARCHAR(255),
+    store_name VARCHAR(255),
+    store VARCHAR(30)
+);
+CREATE TABLE IF NOT EXISTS shopping_list (
+    id serial PRIMARY KEY,
+    user VARCHAR(255),
+    item_name  VARCHAR(255),
+    sale boolean
+);
+
+
+CREATE TABLE IF NOT EXISTS questions (
+    id serial PRIMARY KEY,
+    crossword_day date,
+    questions VARCHAR(255),
+    answer VARCHAR(255),
+    direction VARCHAR(255),
+    number VARCHAR(255)
+);
+
+CREATE TABLE IF NOT EXISTS crossword (
+    id serial PRIMARY KEY,
+    crossword_day date,
+    guess VARCHAR(255)
+);
+
+CREATE TABLE IF NOT EXISTS guesses (
+    id serial PRIMARY KEY,
+    name VARCHAR(25),
+    start_time timestamp,
+    guess VARCHAR(255),
+    crossword_day date,
+    message_id VARCHAR(255)
+)

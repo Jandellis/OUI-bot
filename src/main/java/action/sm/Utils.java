@@ -292,14 +292,22 @@ public class Utils {
                         st.addBatch("insert into sm_alerts (name, alert_type, sm_trigger, price, channel) " +
                                 "VALUES ('" + name + "', '" + trigger.getType() + "', '" + sauce + "', " + trigger.getPrice() + ", '" + channel + "')");
                     }
+                    //simple will not work with secret sauce
+                    if (trigger.getType() == AlertType.simple && sauce != Sauce.secret_sauce) {
+                        st.addBatch("insert into sm_alerts (name, alert_type, sm_trigger, price, channel) " +
+                                "VALUES ('" + name + "', '" + trigger.getType() + "', '" + sauce + "', " + Drop.owned.getPrice() + ", '" + channel + "')");
+                    }
                 }
             }
             for (Watch watch : watches) {
                 for (Trigger trigger : triggers) {
                     // alert is low, or drop type
-                    // for drop if its on watch list and both
+                    // for drop or simple if its on watch list and both
                     // but not if they own the sauce
-                    if ((trigger.getType() == AlertType.low || trigger.getType() == AlertType.rise) && !sauces.contains(watch.getSauce()) || (
+                    if ((trigger.getType() == AlertType.low ||
+                            trigger.getType() == AlertType.rise ||
+                            (trigger.getType() == AlertType.simple && watch.getSauce() != Sauce.secret_sauce))
+                            && !sauces.contains(watch.getSauce()) || (
                             trigger.getType() == AlertType.drop && (
                                     trigger.getDrop() == Drop.both || trigger.getDrop() == Drop.watchlist
                             )

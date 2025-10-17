@@ -30,6 +30,7 @@ public class Karen extends Action implements EmbedAction {
     String param5;
     String param6;
     String param7;
+    String param8;
 
     public Karen() {
         param = "Someone left a tip for";
@@ -37,7 +38,8 @@ public class Karen extends Action implements EmbedAction {
         param3 = "I want to buy";
         param4 = "Sell Game";
         param5 = "Math Game";
-        param6 = "Unscramble Game";
+        param6 = "Unscramble Modal Game";
+        param8 = "Unscramble Button Game";
         param7 = "Trivia Game";
         customerChannel = "840942880775471114";
         customerChannel2 = "1162172605541920811";
@@ -67,8 +69,8 @@ public class Karen extends Action implements EmbedAction {
 //                        String userId = message.getData().interaction().get().user().id().toString();
 //
 //                        String action = message.getData().interaction().get().name();
-////                        dmMe( userId+"message" + message.toString());
-////                        dmMe( userId+action+"message" +message.getData().embeds().size());
+//                        dmMe( userId+"message" + message.toString());
+//                        dmMe( userId+action+"message" +message.getData().embeds().size());
 //                        if (action.toLowerCase().contains("remove") || action.toLowerCase().contains("upgrade")) {
 ////                            try {
 ////                                Thread.sleep(1000);
@@ -122,7 +124,7 @@ public class Karen extends Action implements EmbedAction {
                                     return channel.createMessage("<@&" + customerPing + "> Karen is here, with math :speaking_head:");
                                 });
                             }
-                            if (embed.getTitle().get().contains(param6)){
+                            if (embed.getTitle().get().contains(param6) || embed.getTitle().get().contains(param8)){
                                 logger.info("got unscramble");
                                 return message.getChannel().flatMap(channel -> {
                                     channel.createMessage("Unscramble was " + question[1]).block();
@@ -175,7 +177,7 @@ public class Karen extends Action implements EmbedAction {
                                     return channel.createMessage("Customer arrived with math, got any grapes? <@&" + customerPingPond + ">");
                                 });
                             }
-                            if (embed.getTitle().get().contains(param6)){
+                            if (embed.getTitle().get().contains(param6) || embed.getTitle().get().contains(param8)){
                                 logger.info("got unscramble");
                                 return message.getChannel().flatMap(channel -> {
                                     channel.createMessage("Unscramble was " + question[1]).block();

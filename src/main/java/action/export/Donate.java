@@ -14,6 +14,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.sql.Timestamp;
 import java.util.List;
 
 
@@ -56,6 +57,7 @@ public class Donate extends Action {
                     logger.info("Member donated " + memberId + ", $" + donation);
 
                     ExportUtils.updateMemberDonations(memberId, donation);
+                    ExportUtils.updateDonationLog(memberId, donation, Timestamp.from(message.getTimestamp()));
 
 
                     try {

@@ -1,26 +1,15 @@
 package action;
 
-import java.sql.Timestamp;
 import java.time.DayOfWeek;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
-import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.time.*;
-import java.util.concurrent.*;
 
-import action.export.ExportUtils;
-import action.export.model.FranchiseStatType;
-import action.sm.Utils;
-import action.sm.model.SystemReminder;
-import action.sm.model.SystemReminderType;
 import discord4j.common.util.Snowflake;
 import discord4j.core.object.entity.Message;
-import discord4j.discordjson.json.ChannelModifyRequest;
 import reactor.core.publisher.Mono;
 
 public class CookOff extends Action {
@@ -64,12 +53,11 @@ public class CookOff extends Action {
         scheduler.schedule(() -> {
             try {
                 logger.info("🔔 CookOff "+cookOffType+"Reminder triggered at: " + ZonedDateTime.now(zoneId));
+                // Schedule the next one
+                scheduleNextReminder(ZonedDateTime.now(zoneId));
 
                 //post message to channel
                 client.getChannelById(Snowflake.of("1362036275821019196")).createMessage("<@&1362018134827208714>, Cookoff in "+cookOffType+" now at <#" + cookOffChannelLink + "> ").block();
-
-                // Schedule the next one
-                scheduleNextReminder(ZonedDateTime.now(zoneId));
             } catch (Throwable e) {
                 printException(e);
             }
