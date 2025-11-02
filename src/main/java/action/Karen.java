@@ -45,10 +45,10 @@ public class Karen extends Action implements EmbedAction {
         customerChannel2 = "1162172605541920811";
         customerChannel3 = "1165959960388190259";
         customerPing = "931599227824517151";
-        customerPingPond = "1242154110304915478";
-        customerChannelPond = "1229039354664452217";
-        customerChannelPond2 = "1247100235369680937";
-        customerChannelPond3 = "1247203300126756904";
+//        customerPingPond = "1242154110304915478";
+//        customerChannelPond = "1229039354664452217";
+//        customerChannelPond2 = "1247100235369680937";
+//        customerChannelPond3 = "1247203300126756904";
 
     }
 
@@ -142,63 +142,63 @@ public class Karen extends Action implements EmbedAction {
                     }
                 }
             }
-            if (message.getChannelId().asString().equals(customerChannelPond) ||
-                    message.getChannelId().asString().equals(customerChannelPond2) ||
-                    message.getChannelId().asString().equals(customerChannelPond3)) {
-
-                if (message.getData().author().id().asString().equals(customerBot)) {
-                    if (message.getContent().contains(param2) || message.getContent().contains(param3)) {
-                        logger.info("got sell");
-
-                        return message.getChannel().flatMap(channel -> {
-                            return channel.createMessage("Customer arrived with sell, got any grapes? <@&" + customerPingPond + ">");
-                        });
-                    }
-                    if (message.getContent().contains(param)) {
-                        logger.info("got unscramble");
-                        return message.getChannel().flatMap(channel -> {
-                            return channel.createMessage("Customer arrived with unscramble, got any grapes? <@&" + customerPingPond + ">");
-                        });
-                    }
-                    for (Embed embed: message.getEmbeds()){
-                        if (embed.getTitle().isPresent() && embed.getDescription().isPresent()) {
-
-                            String [] question = embed.getDescription().get().split("`");
-                            if (embed.getTitle().get().contains(param4)){
-                                logger.info("got sell");
-                                return message.getChannel().flatMap(channel -> {
-                                    return channel.createMessage("Customer arrived with sell, got any grapes? <@&" + customerPingPond + ">");
-                                });
-                            }
-                            if (embed.getTitle().get().contains(param5)){
-                                logger.info("got math");
-                                return message.getChannel().flatMap(channel -> {
-                                    channel.createMessage("Bill was " + question[1]).block();
-                                    return channel.createMessage("Customer arrived with math, got any grapes? <@&" + customerPingPond + ">");
-                                });
-                            }
-                            if (embed.getTitle().get().contains(param6) || embed.getTitle().get().contains(param8)){
-                                logger.info("got unscramble");
-                                return message.getChannel().flatMap(channel -> {
-                                    channel.createMessage("Unscramble was " + question[1]).block();
-                                    return channel.createMessage("Customer arrived with unscramble, got any grapes? <@&" + customerPingPond + ">");
-                                });
-                            }
-                            if (embed.getTitle().get().contains(param7)){
-                                logger.info("got trivia");
-                                return message.getChannel().flatMap(channel -> {
-                                    channel.createMessage("Question was " + question[1]).block();
-                                    return channel.createMessage("Customer arrived with trivia, got any grapes? <@&" + customerPingPond + ">");
-                                });
-                            }
-                        }
-                    }
-                }
-
-
-
-
-            }
+//            if (message.getChannelId().asString().equals(customerChannelPond) ||
+//                    message.getChannelId().asString().equals(customerChannelPond2) ||
+//                    message.getChannelId().asString().equals(customerChannelPond3)) {
+//
+//                if (message.getData().author().id().asString().equals(customerBot)) {
+//                    if (message.getContent().contains(param2) || message.getContent().contains(param3)) {
+//                        logger.info("got sell");
+//
+//                        return message.getChannel().flatMap(channel -> {
+//                            return channel.createMessage("Customer arrived with sell, got any grapes? <@&" + customerPingPond + ">");
+//                        });
+//                    }
+//                    if (message.getContent().contains(param)) {
+//                        logger.info("got unscramble");
+//                        return message.getChannel().flatMap(channel -> {
+//                            return channel.createMessage("Customer arrived with unscramble, got any grapes? <@&" + customerPingPond + ">");
+//                        });
+//                    }
+//                    for (Embed embed: message.getEmbeds()){
+//                        if (embed.getTitle().isPresent() && embed.getDescription().isPresent()) {
+//
+//                            String [] question = embed.getDescription().get().split("`");
+//                            if (embed.getTitle().get().contains(param4)){
+//                                logger.info("got sell");
+//                                return message.getChannel().flatMap(channel -> {
+//                                    return channel.createMessage("Customer arrived with sell, got any grapes? <@&" + customerPingPond + ">");
+//                                });
+//                            }
+//                            if (embed.getTitle().get().contains(param5)){
+//                                logger.info("got math");
+//                                return message.getChannel().flatMap(channel -> {
+//                                    channel.createMessage("Bill was " + question[1]).block();
+//                                    return channel.createMessage("Customer arrived with math, got any grapes? <@&" + customerPingPond + ">");
+//                                });
+//                            }
+//                            if (embed.getTitle().get().contains(param6) || embed.getTitle().get().contains(param8)){
+//                                logger.info("got unscramble");
+//                                return message.getChannel().flatMap(channel -> {
+//                                    channel.createMessage("Unscramble was " + question[1]).block();
+//                                    return channel.createMessage("Customer arrived with unscramble, got any grapes? <@&" + customerPingPond + ">");
+//                                });
+//                            }
+//                            if (embed.getTitle().get().contains(param7)){
+//                                logger.info("got trivia");
+//                                return message.getChannel().flatMap(channel -> {
+//                                    channel.createMessage("Question was " + question[1]).block();
+//                                    return channel.createMessage("Customer arrived with trivia, got any grapes? <@&" + customerPingPond + ">");
+//                                });
+//                            }
+//                        }
+//                    }
+//                }
+//
+//
+//
+//
+//            }
 
         } catch (Exception e) {
             printException(e);

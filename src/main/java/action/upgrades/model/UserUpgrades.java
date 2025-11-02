@@ -9,6 +9,7 @@ public class UserUpgrades {
     int currentCost = 0;
     double value = 0.0;
     int boost = 0;
+    String emote = ":person_raising_hand:";
 
     public UserUpgrades(String name, String location, String upgrade, int progress) {
         this.name = name;
@@ -71,5 +72,16 @@ public class UserUpgrades {
 
     public void setBoost(int boost) {
         this.boost = boost;
+    }
+
+    public String getEmote() {
+        return emote;
+    }
+    public void setEmote(boolean hire) {
+        if (hire) {
+            emote = ":person_raising_hand:";
+        } else {
+            emote = ":wrench:";
+        }
     }
 }

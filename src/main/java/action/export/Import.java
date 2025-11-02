@@ -106,6 +106,11 @@ public class Import extends Action {
 
                     channel.createMessage("Starting import").block();
 
+                    Instant reminderTime = message.getTimestamp().plus(4, ChronoUnit.HOURS);
+                    Reminder reminder = ReminderUtils.addReminder(auther, ReminderType.importData, Timestamp.from(reminderTime), message.getChannelId().asString());
+                    DoReminder doReminder = new DoReminder(gateway, client);
+                    doReminder.runReminder(reminder);
+
 
                     // have franchise table, this has all the config for roles
 
@@ -366,13 +371,11 @@ public class Import extends Action {
                     }
 
 
-                    Instant reminderTime = message.getTimestamp().plus(4, ChronoUnit.HOURS);
 
-                    Reminder reminder = ReminderUtils.addReminder(auther, ReminderType.importData, Timestamp.from(reminderTime), message.getChannelId().asString());
-                    DoReminder doReminder = new DoReminder(gateway, client);
-                    doReminder.runReminder(reminder);
+
 
                 } catch (Exception e) {
+                    channel.createMessage("Failed to import data, please import manually").block();
                     printException(e);
                 }
 

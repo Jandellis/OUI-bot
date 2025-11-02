@@ -34,6 +34,12 @@ public enum ReminderType {
     Chairs("Beach Chairs"),
     Helicopter("Helicopter Tours"),
 
+    Cannon("Merch Cannon"),
+    VictoryParade("Victory Parade"),
+    Light("Light Show"),
+    Autograph("Autograph Signing"),
+    Gameday("Gameday Promotion"),
+
     //Amusement
     Gift("Gift Shop"),
     Painting("Face Painting"),
@@ -94,7 +100,7 @@ public enum ReminderType {
         if (name.toLowerCase().equals("event clean"))
             return eventClean;
         for (ReminderType value : values()) {
-            if (name.toLowerCase().contains(value.name.toLowerCase()))
+            if (name.toLowerCase().equals(value.name.toLowerCase()))
                 return value;
         }
         return null;

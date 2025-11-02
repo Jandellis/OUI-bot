@@ -3,6 +3,7 @@ package action.reminder;
 import action.Action;
 import action.reminder.model.Boost;
 import action.reminder.model.Profile;
+import action.reminder.model.ProfileStats;
 import action.reminder.model.Reminder;
 import action.upgrades.model.LocationEnum;
 import discord4j.common.util.Snowflake;
@@ -74,6 +75,13 @@ public class CreateBoostReminder extends Action implements EmbedAction {
         boosts.put("Parasailing", new Boost("Parasailing", 6, LocationEnum.beach,3 ));
         boosts.put("Beach Chairs", new Boost("Beach Chairs", 8, LocationEnum.beach, 4));
         boosts.put("Helicopter Tours", new Boost("Helicopter Tours", 24, LocationEnum.beach, 5));
+
+        //stadium
+        boosts.put("Merch Cannon", new Boost("Merch Cannon", 4, LocationEnum.stadium, 1));
+        boosts.put("Victory Parade", new Boost("Victory Parade", 4, LocationEnum.stadium, 2));
+        boosts.put("Autograph Signing", new Boost("Autograph Signing", 6, LocationEnum.stadium,3 ));
+        boosts.put("Light Show", new Boost("Light Show", 8, LocationEnum.stadium, 4));
+        boosts.put("Gameday Promotion", new Boost("Gameday Promotion", 24, LocationEnum.stadium, 5));
 
         //mall
         boosts.put("Lunch Discount", new Boost("Lunch Discount", 4, LocationEnum.mall, 1));
@@ -188,13 +196,36 @@ public class CreateBoostReminder extends Action implements EmbedAction {
 //                                createReminder(boosts.get("Live Music"), message, profile);
 //                            } else {
 
+                            LocationEnum location = getLocation(embed);
+                            boolean franchise = false;
+
+                            // if location is amusement part and boost = Parade
+                            if (desc.contains("Parade") && location == LocationEnum.amusement) {
+                                createReminder(boosts.get("Parade"), message, profile);
+                            } else {
+
                                 for (Boost boost : boosts.values()) {
                                     if (desc.contains(boost.getName())) {
                                         logger.info("creating reminder for " + boost.getName());
                                         createReminder(boost, message, profile);
+                                        if (boost.getLocation() == LocationEnum.franchise) {
+                                            franchise = true;
+                                        }
                                     }
                                 }
-//                            }
+                            }
+                            // look at the footer to see the balance and save that
+                            Long balance = getBalance(embed);
+                            // only save balance if its not a franchise
+                            if (balance != null && !franchise) {
+                                ProfileStats profileStats = new ProfileStats(userId.get());
+                                profileStats.setImportTime(Timestamp.from(Instant.now()));
+                                profileStats.setLocation(location);
+                                profileStats.setIncome(-1L);
+                                profileStats.setBalance(balance);
+                                ReminderUtils.addProfileStats(profileStats);
+                            }
+
                         }
 
                     }

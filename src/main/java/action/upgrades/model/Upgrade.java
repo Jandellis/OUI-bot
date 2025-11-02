@@ -8,6 +8,7 @@ public class Upgrade {
     int max;
     Integer position;
     boolean optional = false;
+    boolean hire = false;
 
     public Upgrade(String name, String fullName, int boost, int cost, int max) {
         this.name = name;
@@ -48,5 +49,13 @@ public class Upgrade {
 
     public int getBoost() {
         return boost;
+    }
+
+    public boolean isHire() {
+        return hire;
+    }
+
+    public void setHire(boolean hire) {
+        this.hire = hire;
     }
 }

@@ -41,6 +41,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Timestamp;
 import java.text.DecimalFormat;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
@@ -123,8 +124,52 @@ public class PriceCheck extends Action {
 
     }
 
+    public static boolean isInOddMonthWindow(LocalDate date) {
+        int month = date.getMonthValue();
+
+        // Find nearest odd month (current or previous)
+        int oddMonth = (month % 2 == 1) ? month : month - 1;
+        if (oddMonth <= 0) {
+            oddMonth = 1; // handle January edge case
+        }
+
+        int year = date.getYear();
+        // If oddMonth > current month, go back one year
+        if (oddMonth > month) {
+            year -= 1;
+        }
+
+        LocalDate startOfOddMonth = LocalDate.of(year, oddMonth, 1);
+        LocalDate startWindow = startOfOddMonth.minusWeeks(1).minusDays(1);
+        LocalDate endWindow = startOfOddMonth.plusWeeks(2).plusDays(1); // end of 2nd week
+
+        return !date.isBefore(startWindow) && !date.isAfter(endWindow);
+    }
+
+
+    public static boolean isInOddMonthWindow2(LocalDate date) {
+        int month = date.getMonthValue();
+
+        // Find the current odd month or next upcoming odd month
+        int oddMonth = (month % 2 == 1) ? month : month + 1;
+        if (oddMonth > 12) {
+            oddMonth = 11; // cap at November
+        }
+
+        int year = date.getYear();
+        LocalDate startOfOddMonth = LocalDate.of(year, oddMonth, 1);
+        LocalDate startWindow = startOfOddMonth.minusDays(2);             // 2 days before
+        LocalDate endWindow = startOfOddMonth.plusWeeks(1).plusDays(3);   // 3 days after it ends
+
+        return !date.isBefore(startWindow) && !date.isAfter(endWindow);
+    }
+
     public void loadPrices() {
         try {
+            //for a week before the start of the odd month until the end of the 2nd week, display ss
+            hideSS = !isInOddMonthWindow2(LocalDate.now());
+            logger.info("Should hide SS " + isInOddMonthWindow2(LocalDate.now()));
+
 
 
             WebClient webClient = new WebClient();

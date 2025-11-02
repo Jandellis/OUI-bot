@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -381,8 +382,11 @@ public class DoReminder extends Action {
 
                 // Group reminders by location
                 Map<String, List<Reminder>> remindersByLocation = combinedBoostReminders.stream()
+                        .sorted(Comparator.comparingInt(r -> CreateBoostReminder.getBoost(r.getType().getName()).getLocation().getOrder()))
                         .collect(Collectors.groupingBy(
-                                r -> CreateBoostReminder.getBoost(r.getType().getName()).getLocation().getPrintName()
+                                r -> CreateBoostReminder.getBoost(r.getType().getName()).getLocation().getPrintName(),
+                                LinkedHashMap::new, // preserves insertion order
+                                Collectors.toList()
                         ));
 
                 StringBuilder boostCommand = new StringBuilder();

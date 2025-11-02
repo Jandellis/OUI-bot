@@ -16,9 +16,15 @@ public class Location {
     public void addUpgrade(String name, String fullName, int boost, int cost, int max) {
         upgrades.put(name, new Upgrade(name, fullName, boost, cost, max));
     }
-    public void addUpgrade(String name, String fullName, int boost, int cost, int max, boolean optional) {
+    public void addUpgrade(String name, String fullName, int boost, int cost, int max, boolean hire) {
+        Upgrade upgrade = new Upgrade(name, fullName, boost, cost, max);
+        upgrade.setHire(hire);
+        upgrades.put(name, upgrade);
+    }
+    public void addUpgrade(String name, String fullName, int boost, int cost, int max, boolean hire, boolean optional) {
         Upgrade upgrade = new Upgrade(name, fullName, boost, cost, max);
         upgrade.setOptional(optional);
+        upgrade.setHire(hire);
         upgrades.put(name, upgrade);
     }
 

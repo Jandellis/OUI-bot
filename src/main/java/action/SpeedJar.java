@@ -160,8 +160,8 @@ public class SpeedJar extends Action {
         if (details.isActive()) {
             details.setActive(false);
             details.resetMessages();
-            client.getChannelById(Snowflake.of(speedJarChannel)).createMessage("Thanks for playing speed jar, locked channel for 11.5 hours").block();
         }
+        client.getChannelById(Snowflake.of(speedJarChannel)).createMessage("Thanks for playing speed jar, locked channel for 11.5 hours").block();
     }
 
     private void unlock() {

@@ -4,6 +4,7 @@ import action.Action;
 import action.reminder.EmbedAction;
 import action.reminder.ReminderUtils;
 import action.reminder.model.Profile;
+import action.upgrades.model.GroupData;
 import action.upgrades.model.Location;
 import action.upgrades.model.LocationEnum;
 import action.upgrades.model.Upgrade;
@@ -19,11 +20,14 @@ import reactor.core.publisher.Mono;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class BuyUpgrade extends Action implements EmbedAction {
 
@@ -33,6 +37,7 @@ public class BuyUpgrade extends Action implements EmbedAction {
     Location mall = new Location(LocationEnum.mall);
     Location city = new Location(LocationEnum.city);
     Location shack = new Location(LocationEnum.shack);
+    Location stadium = new Location(LocationEnum.stadium);
     Location beach = new Location(LocationEnum.beach);
     Location cantina = new Location(LocationEnum.cantina);
     Location amusement = new Location(LocationEnum.amusement);
@@ -53,13 +58,13 @@ public class BuyUpgrade extends Action implements EmbedAction {
 
 
         //hire
-        mall.addUpgrade("cashier", "Cashier", 10, 250, 35);
-        mall.addUpgrade("associate", "Inventory Associate", 15, 500, 35);
-        mall.addUpgrade("janitor", "Janitor", 20, 1000, 35);
-        mall.addUpgrade("security", "Security Guard", 25, 2000, 30);
-        mall.addUpgrade("sales", "Sales Associate", 40, 2500, 35);
-        mall.addUpgrade("leader", "Team Leader", 65, 3500, 35);
-        mall.addUpgrade("manager", "Store Manager", 150, 5000, 35);
+        mall.addUpgrade("cashier", "Cashier", 10, 250, 35, true);
+        mall.addUpgrade("associate", "Inventory Associate", 15, 500, 35, true);
+        mall.addUpgrade("janitor", "Janitor", 20, 1000, 35, true);
+        mall.addUpgrade("security", "Security Guard", 25, 2000, 30, true);
+        mall.addUpgrade("sales", "Sales Associate", 40, 2500, 35, true);
+        mall.addUpgrade("leader", "Team Leader", 65, 3500, 35, true);
+        mall.addUpgrade("manager", "Store Manager", 150, 5000, 35, true);
         //deco
         mall.addUpgrade("chair", "Chair", 5, 150, 40);
         mall.addUpgrade("booth", "Booth", 10, 500, 35);
@@ -81,11 +86,11 @@ public class BuyUpgrade extends Action implements EmbedAction {
         mall.addUpgrade("appliances", "Better Appliances", 90, 1200, 30);
         mall.addUpgrade("tipjar", "Cooler Tip Jar", 40, 500, 35);
         //kiosk
-        mall.addUpgrade("taco", "Taco Shop", 50, 7500, 20, true);
-        mall.addUpgrade("repair", "Phone Repair", 100, 15000, 15, true);
-        mall.addUpgrade("froyo", "Froyo Shop", 250, 50000, 15, true);
-        mall.addUpgrade("photo", "Photo Booths", 400, 150000, 10, true);
-        mall.addUpgrade("merch", "TacoShack Merch", 2500, 5000000, 1, true);
+        mall.addUpgrade("taco", "Taco Shop", 50, 7500, 20, false, true);
+        mall.addUpgrade("repair", "Phone Repair", 100, 15000, 15, false, true);
+        mall.addUpgrade("froyo", "Froyo Shop", 250, 50000, 15, false, true);
+        mall.addUpgrade("photo", "Photo Booths", 400, 150000, 10, false, true);
+        mall.addUpgrade("merch", "TacoShack Merch", 2500, 5000000, 1, false, true);
 
         locations.add(mall);
 
@@ -104,13 +109,13 @@ public class BuyUpgrade extends Action implements EmbedAction {
         city.addUpgrade("appliances", "Better Appliances", 90, 1200, 30);
         city.addUpgrade("tipjar", "Cooler Tip Jar", 40, 500, 35);
         //hire
-        city.addUpgrade("apprentice", "Apprentice Chef", 10, 250, 45);
-        city.addUpgrade("cook", "Cook", 20, 600, 45);
-        city.addUpgrade("advertiser", "Advertiser", 20, 700, 45);
-        city.addUpgrade("greeter", "Greeter", 25, 800, 45);
-        city.addUpgrade("sous", "Sous Chef", 40, 1200, 45);
-        city.addUpgrade("head", "Head Chef", 65, 2000, 40);
-        city.addUpgrade("executive", "Executive Chef", 150, 5000, 45);
+        city.addUpgrade("apprentice", "Apprentice Chef", 10, 250, 45, true);
+        city.addUpgrade("cook", "Cook", 20, 600, 45, true);
+        city.addUpgrade("advertiser", "Advertiser", 20, 700, 45, true);
+        city.addUpgrade("greeter", "Greeter", 25, 800, 45, true);
+        city.addUpgrade("sous", "Sous Chef", 40, 1200, 45, true);
+        city.addUpgrade("head", "Head Chef", 65, 2000, 40, true);
+        city.addUpgrade("executive", "Executive Chef", 150, 5000, 45, true);
         //deco
         city.addUpgrade("banner", "Banner", 5, 150, 50);
         city.addUpgrade("sign", "Neon Sign", 10, 500, 50);
@@ -118,11 +123,11 @@ public class BuyUpgrade extends Action implements EmbedAction {
         city.addUpgrade("artwork", "Artwork", 150, 100000, 8);
         city.addUpgrade("chandelier", "Chandelier", 1750, 5000000, 8);
         //cart
-        city.addUpgrade("buns", "Buns", 50, 7500, 30, true);
-        city.addUpgrade("condiments", "Condiments", 100, 10000, 25, true);
-        city.addUpgrade("beverages", "Beverages", 275, 50000, 20, true);
-        city.addUpgrade("coolers", "Coolers", 450, 250000, 15, true);
-        city.addUpgrade("grill", "Grill", 800, 1000000, 10, true);
+        city.addUpgrade("buns", "Buns", 50, 7500, 30, false, true);
+        city.addUpgrade("condiments", "Condiments", 100, 10000, 25, false, true);
+        city.addUpgrade("beverages", "Beverages", 275, 50000, 20, false, true);
+        city.addUpgrade("coolers", "Coolers", 450, 250000, 15, false, true);
+        city.addUpgrade("grill", "Grill", 800, 1000000, 10, false, true);
 
         locations.add(city);
 
@@ -142,13 +147,13 @@ public class BuyUpgrade extends Action implements EmbedAction {
         amusement.addUpgrade("appliances", "Better Appliances", 90, 1200, 30);
         amusement.addUpgrade("tipjar", "Cooler Tip Jar", 40, 500, 35);
         //hire
-        amusement.addUpgrade("apprentice", "Apprentice Chef", 10, 250, 45);
-        amusement.addUpgrade("cook", "Cook", 20, 600, 45);
-        amusement.addUpgrade("advertiser", "Advertiser", 20, 700, 45);
-        amusement.addUpgrade("greeter", "Greeter", 25, 800, 45);
-        amusement.addUpgrade("sous", "Sous Chef", 40, 1200, 45);
-        amusement.addUpgrade("head", "Head Chef", 65, 2000, 40);
-        amusement.addUpgrade("executive", "Executive Chef", 150, 5000, 45);
+        amusement.addUpgrade("apprentice", "Apprentice Chef", 10, 250, 45, true);
+        amusement.addUpgrade("cook", "Cook", 20, 600, 45, true);
+        amusement.addUpgrade("advertiser", "Advertiser", 20, 700, 45, true);
+        amusement.addUpgrade("greeter", "Greeter", 25, 800, 45, true);
+        amusement.addUpgrade("sous", "Sous Chef", 40, 1200, 45, true);
+        amusement.addUpgrade("head", "Head Chef", 65, 2000, 40, true);
+        amusement.addUpgrade("executive", "Executive Chef", 150, 5000, 45, true);
         //deco
         amusement.addUpgrade("benches", "Benches", 5, 100, 50);
         amusement.addUpgrade("speaker", "Speaker", 10, 250, 50);
@@ -156,12 +161,12 @@ public class BuyUpgrade extends Action implements EmbedAction {
         amusement.addUpgrade("fireworks", "Fireworks Display", 150, 20000, 8);
         amusement.addUpgrade("plushies", "Taco Plushies", 500, 1500000, 5);
         //Attractions
-        amusement.addUpgrade("toss", "Bottle Toss", 50, 5000, 20, true);
-        amusement.addUpgrade("arcade", "Arcade Games", 100, 8500, 15, true);
-        amusement.addUpgrade("carnival", "Carnival Games", 250, 25000, 10, true);
-        amusement.addUpgrade("carousel", "Carousel", 400, 150000, 5, true);
-        amusement.addUpgrade("coaster", "Roller Coaster", 2000, 750000, 10, true);
-        amusement.addUpgrade("ferris", "Ferris Wheel", 6000, 50000000, 1, true);
+        amusement.addUpgrade("toss", "Bottle Toss", 50, 5000, 20, false, true);
+        amusement.addUpgrade("arcade", "Arcade Games", 100, 8500, 15, false, true);
+        amusement.addUpgrade("carnival", "Carnival Games", 250, 25000, 10, false, true);
+        amusement.addUpgrade("carousel", "Carousel", 400, 150000, 5, false, true);
+        amusement.addUpgrade("coaster", "Roller Coaster", 2000, 750000, 10, false, true);
+        amusement.addUpgrade("ferris", "Ferris Wheel", 6000, 50000000, 1, false, true);
 
         locations.add(amusement);
 
@@ -181,13 +186,13 @@ public class BuyUpgrade extends Action implements EmbedAction {
         shack.addUpgrade("appliances", "Better Appliances", 90, 1200, 30);
         shack.addUpgrade("tipjar", "Cooler Tip Jar", 40, 500, 35);
         //hire
-        shack.addUpgrade("apprentice", "Apprentice Chef", 10, 250, 35);
-        shack.addUpgrade("cook", "Cook", 20, 600, 35);
-        shack.addUpgrade("advertiser", "Advertiser", 20, 700, 35);
-        shack.addUpgrade("greeter", "Greeter", 25, 800, 35);
-        shack.addUpgrade("sous", "Sous Chef", 40, 1200, 35);
-        shack.addUpgrade("head", "Head Chef", 65, 2000, 30);
-        shack.addUpgrade("executive", "Executive Chef", 150, 5000, 35);
+        shack.addUpgrade("apprentice", "Apprentice Chef", 10, 250, 35, true);
+        shack.addUpgrade("cook", "Cook", 20, 600, 35, true);
+        shack.addUpgrade("advertiser", "Advertiser", 20, 700, 35, true);
+        shack.addUpgrade("greeter", "Greeter", 25, 800, 35, true);
+        shack.addUpgrade("sous", "Sous Chef", 40, 1200, 35, true);
+        shack.addUpgrade("head", "Head Chef", 65, 2000, 30, true);
+        shack.addUpgrade("executive", "Executive Chef", 150, 5000, 35, true);
         //deco
         shack.addUpgrade("flowers", "Flowers", 5, 100, 40);
         shack.addUpgrade("ornaments", "Ornaments", 10, 200, 35);
@@ -195,11 +200,11 @@ public class BuyUpgrade extends Action implements EmbedAction {
         shack.addUpgrade("mural", "Mural", 100, 15000, 5);
         shack.addUpgrade("statue", "Taco Statue", 500, 500000, 3);
         //truck
-        shack.addUpgrade("register", "Register", 50, 5000, 20, true);
-        shack.addUpgrade("assistant", "Assistant", 100, 10000, 15, true);
-        shack.addUpgrade("driver", "Truck Driver", 250, 25000, 10, true);
-        shack.addUpgrade("kitchen", "Kitchen", 400, 100000, 5, true);
-        shack.addUpgrade("engine", "Engine", 1000, 1000000, 3, true);
+        shack.addUpgrade("register", "Register", 50, 5000, 20, false, true);
+        shack.addUpgrade("assistant", "Assistant", 100, 10000, 15, false, true);
+        shack.addUpgrade("driver", "Truck Driver", 250, 25000, 10, false, true);
+        shack.addUpgrade("kitchen", "Kitchen", 400, 100000, 5, false, true);
+        shack.addUpgrade("engine", "Engine", 1000, 1000000, 3, false, true);
         locations.add(shack);
 
 
@@ -218,13 +223,13 @@ public class BuyUpgrade extends Action implements EmbedAction {
         beach.addUpgrade("appliances", "Better Appliances", 90, 1200, 30);
         beach.addUpgrade("tipjar", "Cooler Tip Jar", 40, 500, 35);
         //hire
-        beach.addUpgrade("apprentice", "Apprentice Chef", 10, 250, 40);
-        beach.addUpgrade("cook", "Cook", 20, 600, 40);
-        beach.addUpgrade("advertiser", "Advertiser", 20, 700, 40);
-        beach.addUpgrade("greeter", "Greeter", 25, 800, 40);
-        beach.addUpgrade("sous", "Sous Chef", 40, 1200, 40);
-        beach.addUpgrade("head", "Head Chef", 65, 2000, 35);
-        beach.addUpgrade("executive", "Executive Chef", 150, 5000, 40);
+        beach.addUpgrade("apprentice", "Apprentice Chef", 10, 250, 40, true);
+        beach.addUpgrade("cook", "Cook", 20, 600, 40, true);
+        beach.addUpgrade("advertiser", "Advertiser", 20, 700, 40, true);
+        beach.addUpgrade("greeter", "Greeter", 25, 800, 40, true);
+        beach.addUpgrade("sous", "Sous Chef", 40, 1200, 40, true);
+        beach.addUpgrade("head", "Head Chef", 65, 2000, 35, true);
+        beach.addUpgrade("executive", "Executive Chef", 150, 5000, 40, true);
         //deco
         beach.addUpgrade("shells", "Sea Shells", 5, 100, 40);
         beach.addUpgrade("umbrella", "Umbrella", 10, 250, 40);
@@ -232,12 +237,51 @@ public class BuyUpgrade extends Action implements EmbedAction {
         beach.addUpgrade("tanks", "Fish Tanks", 125, 20000, 5);
         beach.addUpgrade("fountain", "Taco Fountain", 500, 1500000, 3);
         //stand
-        beach.addUpgrade("decals", "Decals", 50, 5000, 25, true);
-        beach.addUpgrade("wheels", "Wheels", 100, 8500, 15, true);
-        beach.addUpgrade("mixers", "Mixers", 250, 25000, 15, true);
-        beach.addUpgrade("server", "Server", 400, 150000, 5, true);
-        beach.addUpgrade("freezer", "Freezer", 750, 750000, 10, true);
+        beach.addUpgrade("decals", "Decals", 50, 5000, 25, false, true);
+        beach.addUpgrade("wheels", "Wheels", 100, 8500, 15, false, true);
+        beach.addUpgrade("mixers", "Mixers", 250, 25000, 15, false, true);
+        beach.addUpgrade("server", "Server", 400, 150000, 5, false, true);
+        beach.addUpgrade("freezer", "Freezer", 750, 750000, 10, false, true);
         locations.add(beach);
+
+
+
+        //ad
+        stadium.addUpgrade("newspaper", "Newspaper Ad", 10, 350, 40);
+        stadium.addUpgrade("radio", "Radio Ad", 20, 650, 35);
+        stadium.addUpgrade("email", "Email Campaign", 30, 1000, 35);
+        stadium.addUpgrade("internet", "Internet Ad", 50, 2000, 40);
+        stadium.addUpgrade("jumbotron", "Jumbotron", 160, 5500, 20);
+        stadium.addUpgrade("blimp", "Advertising Blimp", 200, 250000, 4);
+        //up
+        stadium.addUpgrade("paint", "New Paint", 10, 250, 40);
+        stadium.addUpgrade("furniture", "New Furniture", 20, 600, 35);
+        stadium.addUpgrade("bathrooms", "Nicer Bathrooms", 25, 800, 35);
+        stadium.addUpgrade("billboard", "Billboard", 35, 1000, 30);
+        stadium.addUpgrade("appliances", "Better Appliances", 90, 1200, 30);
+        stadium.addUpgrade("tipjar", "Cooler Tip Jar", 40, 500, 35);
+        //hire
+        stadium.addUpgrade("dishwasher", "Dishwasher", 10, 250, 40, true);
+        stadium.addUpgrade("cashier", "Cashier", 10, 250, 40, true);
+        stadium.addUpgrade("bartender", "Bartender", 35, 1000, 45, true);
+        stadium.addUpgrade("vendor", "Seat Vendor", 35, 1000, 45, true);
+        stadium.addUpgrade("frycook", "Fry Cook", 40, 1200, 40, true);
+        stadium.addUpgrade("linecook", "Line Cook", 65, 2000, 35, true);
+        stadium.addUpgrade("supervisor", "Supervisor", 150, 5000, 40, true);
+        //deco
+        stadium.addUpgrade("garlands", "Turf Garlands", 5, 100, 45);
+        stadium.addUpgrade("flags", "Pennant Flags", 15, 500, 45);
+        stadium.addUpgrade("ledsign", "LED Sign", 45, 2000, 40);
+        stadium.addUpgrade("logo", "Logo", 125, 20000, 10);
+        stadium.addUpgrade("livestream", "Livestream TVs", 500, 1000000, 4);
+        //stand
+        stadium.addUpgrade("giftbags", "Gift Bags", 50, 8000, 25, false, true);
+        stadium.addUpgrade("minibar", "Minibar", 120, 12500, 20, false, true);
+        stadium.addUpgrade("catering", "Catering Service", 250, 40000, 20, false, true);
+        stadium.addUpgrade("lounge", "Lounge Area", 380, 125000, 15, false, true);
+        stadium.addUpgrade("fieldaccess", "Field Access", 2000, 2000000, 5, false, true);
+        locations.add(stadium);
+
 
 
 
@@ -257,13 +301,13 @@ public class BuyUpgrade extends Action implements EmbedAction {
         cantina.addUpgrade("appliances", "Better Appliances", 90, 1200, 30);
         cantina.addUpgrade("tipjar", "Cooler Tip Jar", 40, 500, 35);
         //hire
-        cantina.addUpgrade("dishwasher", "Dishwasher", 10, 250, 50);
-        cantina.addUpgrade("cashier", "Cashier", 10, 250, 50);
-        cantina.addUpgrade("server", "Server", 20, 600, 50);
-        cantina.addUpgrade("bartender", "Bartender", 35, 1000, 55);
-        cantina.addUpgrade("sous", "Sous Chef", 40, 1200, 50);
-        cantina.addUpgrade("head", "Head Chef", 65, 2000, 45);
-        cantina.addUpgrade("manager", "Store Manager", 150, 5000, 50);
+        cantina.addUpgrade("dishwasher", "Dishwasher", 10, 250, 50, true);
+        cantina.addUpgrade("cashier", "Cashier", 10, 250, 50, true);
+        cantina.addUpgrade("server", "Server", 20, 600, 50, true);
+        cantina.addUpgrade("bartender", "Bartender", 35, 1000, 55, true);
+        cantina.addUpgrade("sous", "Sous Chef", 40, 1200, 50, true);
+        cantina.addUpgrade("head", "Head Chef", 65, 2000, 45, true);
+        cantina.addUpgrade("manager", "Store Manager", 150, 5000, 50, true);
         //deco
         cantina.addUpgrade("barstools", "Barstools", 5, 175, 70);
         cantina.addUpgrade("skulls", "Sugar Skulls", 15, 650, 55);
@@ -271,12 +315,12 @@ public class BuyUpgrade extends Action implements EmbedAction {
         cantina.addUpgrade("tiles", "Mosaic Tiles", 80, 50000, 30);
         cantina.addUpgrade("mirrors", "Vintage Mirrors", 850, 1000000, 18);
         //stage
-        cantina.addUpgrade("discolights", "Disco Lights", 50, 8000, 30, true);
-        cantina.addUpgrade("sound", "Sound System", 110, 12500, 25, true);
-        cantina.addUpgrade("spotlight", "Spotlight", 260, 40000, 20, true);
-        cantina.addUpgrade("microphones", "Microphones", 420, 200000, 15, true);
-        cantina.addUpgrade("lyrics", "Lyrics", 750, 800000, 10, true);
-        cantina.addUpgrade("pyrotechnics", "Pyrotechnics", 1500, 10000000, 1, true);
+        cantina.addUpgrade("discolights", "Disco Lights", 50, 8000, 30, false, true);
+        cantina.addUpgrade("sound", "Sound System", 110, 12500, 25, false, true);
+        cantina.addUpgrade("spotlight", "Spotlight", 260, 40000, 20, false, true);
+        cantina.addUpgrade("microphones", "Microphones", 420, 200000, 15, false, true);
+        cantina.addUpgrade("lyrics", "Lyrics", 750, 800000, 10, false, true);
+        cantina.addUpgrade("pyrotechnics", "Pyrotechnics", 1500, 10000000, 1, false, true);
 
         locations.add(cantina);
 
@@ -290,10 +334,10 @@ public class BuyUpgrade extends Action implements EmbedAction {
         hq.addUpgrade("Task Booster", "Task Booster", 150, 10000000, 4);
 
         //Employees
-        hq.addUpgrade("Secretary", "Secretary", 100, 1000000, 20);
-        hq.addUpgrade("Treasurer", "Treasurer", 200, 1750000, 20);
-        hq.addUpgrade("Chief Financial Officer", "Chief Financial Officer", 300, 2500000, 10);
-        hq.addUpgrade("Chief Executive Officer", "Chief Executive Officer", 500, 5000000, 10);
+        hq.addUpgrade("Secretary", "Secretary", 100, 1000000, 20, true);
+        hq.addUpgrade("Treasurer", "Treasurer", 200, 1750000, 20, true);
+        hq.addUpgrade("Chief Financial Officer", "Chief Financial Officer", 300, 2500000, 10, true);
+        hq.addUpgrade("Chief Executive Officer", "Chief Executive Officer", 500, 5000000, 10, true);
         locations.add(hq);
 
         event.addUpgrade("Worker Efficiency", "Worker Efficiency", 700, 1000, 25);
@@ -376,7 +420,7 @@ public class BuyUpgrade extends Action implements EmbedAction {
 
                             EmbedCreateSpec.Builder embed = EmbedCreateSpec.builder();
                             embed.color(Color.SUMMER_SKY);
-                            embed.title("Your upgrades");
+                            embed.title("Your upgrades - " + location.getName().getPrintName());
                             String commands = "</hire:1203826200452137022>, </advertisements:1203826194500288593>, </upgrades:1203826209532682311>, </decorations:1203826197352677417>, ";
                             switch (locationEnum) {
                                 case shack:
@@ -387,6 +431,9 @@ public class BuyUpgrade extends Action implements EmbedAction {
                                     break;
                                 case beach:
                                     commands = commands + "</stand:1006354978153169010>";
+                                    break;
+                                case stadium:
+                                    commands = commands + "</suite:1429616125984899132>";
                                     break;
                                 case city:
                                     commands = commands + "</cart:1006354977721176142>";
@@ -420,6 +467,7 @@ public class BuyUpgrade extends Action implements EmbedAction {
                                 newUp.setCurrentCost(location.getCost(userUpgrades.getUpgrade(), i + 1));
                                 newUp.setValue(newUp.getCurrentCost() / up.getBoost());
                                 newUp.setBoost(up.getBoost());
+                                newUp.setEmote(up.isHire());
                                 total.add(newUp);
                             }
 
@@ -493,7 +541,7 @@ public class BuyUpgrade extends Action implements EmbedAction {
                                     value = String.format("%,d", upgrade.getCurrentCost());
                                     String boost = "";
                                     boost = String.format("%,d", upgrade.getBoost());
-                                    String line = count + " - `" + upgrade.getUpgrade() + "` - **$" + value + "**";
+                                    String line = count +" - "+upgrade.getEmote()+" `" + upgrade.getUpgrade() + "` - **$" + value + "**";
                                     int space = 35;
                                     if (location.getName() == LocationEnum.hq) {
                                         space = 60;
@@ -564,18 +612,52 @@ public class BuyUpgrade extends Action implements EmbedAction {
                                 title = " - Grouped";
                                 String[] lines = sb.toString().split("\n");
                                 List<String> sorted = new ArrayList();
+                                //1 - :wrench: newspaper - **$350** (+$10)
                                 for (String line : lines) {
-                                    sorted.add(line.split(" - `")[1]);
+                                    sorted.add(line.split(" - :")[1]);
                                 }
                                 Collections.sort(sorted);
                                 sb = new StringBuilder();
-                                count = 1;
+//                                count = 1;
+//                                for (String line : sorted) {
+//
+//                                    sb.append(count + " - :" + line + "\n");
+//                                    count++;
+//
+//                                }
+                                Map<String, GroupData> grouped = new LinkedHashMap<>();
+//                                Pattern linePattern = Pattern.compile("^(.*?)\\s*-\\s*\\$(\\d+)\\s*\\(\\+\\$(\\d+)\\)$");
+//                                Pattern linePattern = Pattern.compile("^(.*?)\\s*-\\s*\\$(\\d+)\\s*\\((.*?)\\)$");
+//                                Pattern linePattern = Pattern.compile("^\\d+\\s*-\\s*(:\\w+:\\s*\\w+)\\s*-\\s*\\$(\\d+)\\s*\\((.*?)\\)$");
+//                                Pattern linePattern = Pattern.compile(
+//                                        "^\\d+\\s*-\\s*(:\\w+:\\s*`[^`]+`)\\s*-\\s*\\*\\*\\$(\\d+)\\*\\*\\s*\\*\\((.*?)\\)\\*$"
+//                                );
+                                Pattern linePattern = Pattern.compile(
+                                        "^\\s*([\\w:.-]+\\s*`([^`]+)`)\\s*-\\s*\\*\\*\\$([0-9]{1,3}(?:,[0-9]{3})*)\\*\\*\\s*\\*\\((.*?)\\)\\*\\s*$"
+                                );
+                                title += " (x"+sorted.size()+")";
+
                                 for (String line : sorted) {
+                                    Matcher matcher = linePattern.matcher(line.trim());
+                                    if (matcher.find()) {
+                                        //1 - :wrench: newspaper - $350 (+$10)
+                                        String category = matcher.group(1).trim(); // e.g. "wrench: newspaper"
+                                        int amount = Integer.parseInt(matcher.group(3).replace(",", "")); //350
+                                        String boost = matcher.group(4).trim(); // 10
 
-                                    sb.append(count + " - `" + line + "\n");
-                                    count++;
-
+                                        // Key groups by both category and (+$X)
+                                        String key = category + " (+$" + boost + ")";
+                                        grouped.computeIfAbsent(key, k -> new GroupData(category, boost))
+                                                .addAmount(amount);
+                                    }
                                 }
+
+                                int index = 1;
+                                for (GroupData g : grouped.values()) {
+                                    sb.append(String.format("%d - :%s (x%d) - **$%,d** *(%s)*\n",
+                                            index++, g.category, g.count, g.totalAmount, g.boost));
+                                }
+
 
                             }
                         }
@@ -584,7 +666,7 @@ public class BuyUpgrade extends Action implements EmbedAction {
 
                         EmbedCreateSpec.Builder embed = EmbedCreateSpec.builder();
                         embed.color(Color.SUMMER_SKY);
-                        embed.title("Your upgrades" + title);
+                        embed.title("Your upgrades - " + location.getName().getPrintName() + " " + title);
 //                        embed.addField(title, sb.toString(), false);
                         embed.description(sb.toString());
                         embed.addField("Total Cost", "$" + String.format("%,d", totalCost), true);
@@ -615,7 +697,7 @@ public class BuyUpgrade extends Action implements EmbedAction {
 
                             EmbedCreateSpec.Builder embed = EmbedCreateSpec.builder();
                             embed.color(Color.SUMMER_SKY);
-                            embed.title("Your upgrades");
+                            embed.title("Your upgrades - " + location.getName().getPrintName());
                             String commands = "</hire:1006354977847001159>, </advertisements:1006354977721176137>, </upgrades:1006354978274820107>, </decorations:1006354977788268620>, ";
                             switch (locationEnum) {
                                 case shack:
@@ -626,6 +708,9 @@ public class BuyUpgrade extends Action implements EmbedAction {
                                     break;
                                 case beach:
                                     commands = commands + "</stand:1006354978153169010>";
+                                    break;
+                                case stadium:
+                                    commands = commands + "</suite:1429616125984899132>";
                                     break;
                                 case city:
                                     commands = commands + "</cart:1006354977721176142>";
@@ -676,6 +761,7 @@ public class BuyUpgrade extends Action implements EmbedAction {
                                 newUp.setCurrentCost(location.getCost(userUpgrades.getUpgrade(), i + 1));
                                 newUp.setValue(newUp.getCurrentCost() / up.getBoost());
                                 newUp.setBoost(up.getBoost());
+                                newUp.setEmote(up.isHire());
                                 total.add(newUp);
                             }
                         });
@@ -691,13 +777,13 @@ public class BuyUpgrade extends Action implements EmbedAction {
                                 totalCost.addAndGet(location.getCost(upgrade.getName(), i + 1));
                                 int boost = upgrade.getBoost();
                                 if (upgrade.getName().equals("appliances") ||
-                                        upgrade.getName().equals("tipjar") ||
-                                        upgrade.getName().equals("Customer Service Department") ||
-                                        upgrade.getName().equals("Food Services Department") ||
-                                        upgrade.getName().equals("Overtime Management") ||
-                                        upgrade.getName().equals("Lunch Rush Initiative") ||
-                                        upgrade.getName().equals("Task Booster")||
-                                        upgrade.getName().equals("Worker Efficiency")) {
+                                    upgrade.getName().equals("tipjar") ||
+                                    upgrade.getName().equals("Customer Service Department") ||
+                                    upgrade.getName().equals("Food Services Department") ||
+                                    upgrade.getName().equals("Overtime Management") ||
+                                    upgrade.getName().equals("Lunch Rush Initiative") ||
+                                    upgrade.getName().equals("Task Booster")||
+                                    upgrade.getName().equals("Worker Efficiency")) {
                                     boost = 0;
                                 }
                                 totalBoost.addAndGet(boost);
@@ -717,13 +803,13 @@ public class BuyUpgrade extends Action implements EmbedAction {
                             if (upgrade.getCurrentCost() > 0) {
                                 countLeft++;
                                 costLeft = costLeft + upgrade.getCurrentCost();
-                                if (!upgrade.getName().equals("appliances") &&
-                                        !upgrade.getUpgrade().equals("tipjar") &&
-                                        !upgrade.getUpgrade().equals("Customer Service Department") &&
-                                        !upgrade.getUpgrade().equals("Food Services Department") &&
-                                        !upgrade.getUpgrade().equals("Overtime Management") &&
-                                        !upgrade.getUpgrade().equals("Lunch Rush Initiative") &&
-                                        !upgrade.getUpgrade().equals("Task Booster")) {
+                                if (!upgrade.getUpgrade().equals("appliances") &&
+                                    !upgrade.getUpgrade().equals("tipjar") &&
+                                    !upgrade.getUpgrade().equals("Customer Service Department") &&
+                                    !upgrade.getUpgrade().equals("Food Services Department") &&
+                                    !upgrade.getUpgrade().equals("Overtime Management") &&
+                                    !upgrade.getUpgrade().equals("Lunch Rush Initiative") &&
+                                    !upgrade.getUpgrade().equals("Task Booster")) {
                                     boostLeft = boostLeft + upgrade.getBoost();
 //                                    logger.info("Added boost  " + upgrade.getUpgrade() + " $"+upgrade.getBoost());
 //                                } else {
@@ -735,7 +821,7 @@ public class BuyUpgrade extends Action implements EmbedAction {
 
                         EmbedCreateSpec.Builder embed = EmbedCreateSpec.builder();
                         embed.color(Color.SUMMER_SKY);
-                        embed.title("Upgrade stats for " + location.getName().getName());
+                        embed.title("Upgrade stats - " + location.getName().getPrintName());
                         StringBuilder sb = new StringBuilder("```");
                         sb.append("Total Spent            $" + String.format("%,d", (totalCost.get() - costLeft)) + " \n");
                         sb.append("Total Remaining        $" + String.format("%,d", costLeft) + " \n");
@@ -896,6 +982,9 @@ public class BuyUpgrade extends Action implements EmbedAction {
         }
         if (name.contains("Ice Cream Stand")) {
             name = "beach";
+        }
+        if (name.contains("VIP Suite")) {
+            name = "stadium";
         }
         if (name.contains("Hotdog Cart")) {
             name = "city";

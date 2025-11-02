@@ -4,6 +4,7 @@ import action.export.ExportUtils;
 import action.export.model.FranchiseConfig;
 import action.reminder.ReminderUtils;
 import action.reminder.model.Profile;
+import action.upgrades.model.LocationEnum;
 import bot.Config;
 import discord4j.common.util.Snowflake;
 import discord4j.core.DiscordClient;
@@ -267,6 +268,45 @@ public abstract class Action {
                     printException(e);
                 })
                 .then();
+    }
+
+    protected LocationEnum getLocation(EmbedData embedData) {
+        if (embedData != null && embedData.footer().toOptional().isPresent()) {
+            String location = embedData.footer().get().text();
+            if (location.contains("\n")){
+                String[] footer = location.split("\n");
+                location = footer[footer.length-1];
+            }
+            location = location.split(" \\| ")[1];
+            if (location.endsWith("#0")) {
+                location = location.replace("#0", "");
+            }
+            //remove shack from location, so its just the name
+            //also remove the emote at the start then we are left with the name
+            location = location.replace("Shack", "").trim();
+            String[] split = location.split(" ");
+            location = split[split.length-1];
+
+            LocationEnum locationEnum = LocationEnum.getLocation(location);
+            return locationEnum;
+
+        }
+        return LocationEnum.shack;
+    }
+
+
+    protected Long getBalance(EmbedData embedData) {
+        if (embedData != null && embedData.footer().toOptional().isPresent()) {
+            String balance = embedData.footer().get().text();
+            if (balance.contains("\n")){
+                String[] footer = balance.split("\n");
+                balance = footer[0];
+            }
+            balance = balance.split("\\$")[1];
+            balance = balance.replaceAll(",", "").trim();
+            return Long.parseLong(balance);
+        }
+        return null;
     }
 
     protected String getId(Message message, EmbedData embedData) {

@@ -28,6 +28,7 @@ import org.knowm.xchart.XYSeries;
 import org.knowm.xchart.style.Styler;
 import reactor.core.publisher.Mono;
 
+import java.awt.*;
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -80,12 +81,13 @@ public class ProfileStatsCommand extends SlashCommand {
                             SelectMenu.Option.of("Shack", "shack"),
                             SelectMenu.Option.of("Mall", "mall"),
                             SelectMenu.Option.of("Beach", "beach"),
+                            SelectMenu.Option.of("Stadium", "stadium"),
                             SelectMenu.Option.of("Amusement", "amusement"),
                             SelectMenu.Option.of("City", "city"),
                             SelectMenu.Option.of("Cantina", "cantina"),
                             SelectMenu.Option.of("Hq", "hq")
                     ).withMinValues(1) // Minimum selection
-                    .withMaxValues(7); // Maximum selection
+                    .withMaxValues(8); // Maximum selection
 
             return event.reply()
                     .withEphemeral(false)
@@ -169,14 +171,12 @@ public class ProfileStatsCommand extends SlashCommand {
         return chartName;
     }
 
-
     private XYChart readData(List<ProfileStats> data, List<LocationEnum> locations, String type, Boolean compressGraph) {
         String locationName = "all";
         if (locations != null && locations.size()== 1) {
-            locationName = locations.get(0).getName();
+            locationName = locations.get(0).getPrintName();
         }
         // Create Chart
-//        logger.info("getting builder");
         String title = "Balance for " + locationName;
         if (type.equalsIgnoreCase("income")) {
             title = "Income for " + locationName;
@@ -184,35 +184,16 @@ public class ProfileStatsCommand extends SlashCommand {
         XYChart chart = new XYChartBuilder().width(900).height(600)
                 .title(title)
                 .xAxisTitle("Time")
-//                .yAxisTitle("$")
                 .build();
-//        logger.info("got builder");
 
         // Customize Chart
         chart.getStyler().setLegendPosition(Styler.LegendPosition.InsideNW);
         chart.getStyler().setDefaultSeriesRenderStyle(XYSeries.XYSeriesRenderStyle.Line);
-//        chart.getStyler().setYAxisLabelAlignment(Styler.TextAlignment.Right);
         chart.getStyler().setYAxisDecimalPattern("$#,###");
         chart.getStyler().setPlotMargin(0);
         if (!compressGraph) {
             chart.getStyler().setYAxisMin(0d);
         }
-//        chart.getStyler().setPlotContentSize(.95);
-
-
-//        XYSeriesCollection dataset = new XYSeriesCollection();
-//        JSONParser jsonParser = new JSONParser();
-
-//        Object obj = jsonParser.parse(data);
-
-//        for (Sauce sauce : Sauce.values()) {
-//            XYSeries series = new XYSeries(sauce.getUppercaseName());
-
-//            Long price = Integer.parseInt(((JSONObject) ((JSONObject) obj).get(sauce.getName())).get("price").toString());
-//            JSONArray history = (JSONArray) ((JSONObject) ((JSONObject) obj).get(sauce.getName())).get("history");
-
-//            series.add(0, price);
-
 
         if (locations == null || locations.size() > 1) {
 
@@ -234,59 +215,27 @@ public class ProfileStatsCommand extends SlashCommand {
                     }
                 }
                 if (xData.size() > 0)
-                    chart.addSeries(locationEnum.getName(), xData, yData);
+                    chart.addSeries(locationEnum.getPrintName(), xData, yData);
             }
         } else {
 
             List<Timestamp> xData = new ArrayList<>();
             List<Long> yData = new ArrayList<>();
-//            xData.add(0);
-//            yData.add(price);
             for (ProfileStats dataPoint : data) {
-//            for (int i = 0; i < history.size(); i++) {
                 Long value = dataPoint.getBalance();
                 if (type.equalsIgnoreCase("income")) {
                     value = dataPoint.getIncome();
                 }
                 Timestamp position = dataPoint.getImportTime();
-//                series.add(position, value);
                 if (value > 0) {
                     xData.add(position);
                     yData.add(value);
                 }
             }
-//            dataset.addSeries(series);
             chart.addSeries(type, xData, yData);
         }
-//        }
 
         return chart;
     }
 
-
-    public static String getHumanReadablePriceFromNumber(long number) {
-
-        if (number >= 1000000000000L) {
-            return String.format("%.2f Trillion", number / 1000000000000.0);
-        }
-        if (number >= 1000000000) {
-            return String.format("%.2f Billion", number / 1000000000.0);
-        }
-
-        if (number >= 1000000) {
-            return String.format("%.2f Million", number / 1000000.0);
-        }
-
-        if (number >= 100000) {
-//            return String.format("%.2fL", number/ 100000.0);
-            return String.format("%,d", number);
-        }
-
-        if (number >= 1000) {
-//            return String.format("%.2fK", number/ 1000.0);
-            return String.format("%,d", number);
-        }
-        return String.valueOf(number);
-
-    }
 }
