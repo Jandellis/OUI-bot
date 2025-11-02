@@ -37,6 +37,10 @@
                     "value": "beach"
                 },
                 {
+                    "name": "Stadium",
+                    "value": "stadium"
+                },
+                {
                     "name": "Amusement",
                     "value": "amusement"
                 },
