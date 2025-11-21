@@ -74,7 +74,7 @@ public class SauceMarketStatsCommand extends SlashCommand {
 
                 // Maybe try https://github.com/knowm/XChart
                 //https://github.com/knowm/XChart#heatmapchart
-                List<SauceMarketStats> stats = Utils.loadHistoryStats();
+                List<SauceMarketStats> stats = Utils.loadHistoryStatsNoSecret();
 //                StringBuilder desc = new StringBuilder();
 ////                desc.append("`This table shows the chance of the next hour price going up or down based on the current price change \n");
 //                desc.append("`\n");

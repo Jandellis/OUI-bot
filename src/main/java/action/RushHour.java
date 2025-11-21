@@ -78,6 +78,9 @@ public class RushHour extends Action implements EmbedAction {
         giveawayShower = config.get("giveawayChannel");
         giveawayRole = config.get("giveawayRole");
         react = "\uD83C\uDF89";
+
+        react = "<:rh:1431319493136879717>";
+//        react = "<a:pocketWave:1016913321213050892>";
         recruiter = Long.parseLong(config.get("recruiter"));
         chefRole = Long.parseLong(config.get("chefRole"));
         openGiveaway = Boolean.parseBoolean(config.get("openGiveaway", "false"));
@@ -88,6 +91,26 @@ public class RushHour extends Action implements EmbedAction {
     public Mono<Object> doAction(Message message) {
         try {
 
+            String action = getAction(message, "cyrush");
+
+            if ((action != null && action.equalsIgnoreCase("start"))
+                    || message.getContent().equalsIgnoreCase("!rush")  &&
+                    (message.getAuthor().get().getId().asString().equals("292839877563908097")
+                    || message.getAuthor().get().getId().asString().equals("695518297168281640")
+                    || message.getAuthor().get().getId().asString().equals("762526280435367986"))) {
+                createRushHour(message);
+            }
+            if (action != null && action.equalsIgnoreCase("join")){
+
+                Instant rushHourEnd = message.getTimestamp().plus(60, ChronoUnit.MINUTES);
+                ReminderUtils.addRushHour(message.getAuthor().get().getId().asString(), Timestamp.from(rushHourEnd));
+                react(message, react);
+            }
+            if (action != null && action.equalsIgnoreCase("leave")){
+                Instant rushHourEnd = message.getTimestamp();
+                ReminderUtils.addRushHour(message.getAuthor().get().getId().asString(), Timestamp.from(rushHourEnd));
+                react(message, react);
+            }
 
         } catch (Exception e) {
             printException(e);
@@ -101,20 +124,28 @@ public class RushHour extends Action implements EmbedAction {
     protected Mono<Object> doReactionEvent(ReactionAddEvent reactionAddEvent) {
 
         try {
+            boolean reaction = false;
 
             if (reactionAddEvent.getEmoji().asUnicodeEmoji().isPresent()){
                 if (reactionAddEvent.getEmoji().asUnicodeEmoji().get().getRaw().equals(react)) {
+                    reaction = true;
+                }
+            }
 
-                    //got reaction
-                    Message message = reactionAddEvent.getMessage().block();
-                    if (message.getAuthor().isPresent()
-                            && message.getAuthor().get().getId().asLong() == 962878786066595911L
-                            && message.getContent().contains("Rush hour event now")) {
 
-                        Instant rushHourEnd = message.getTimestamp().plus(60, ChronoUnit.MINUTES);
-                        ReminderUtils.addRushHour(reactionAddEvent.getUserId().asString(), Timestamp.from(rushHourEnd));
-                    }
+            if (reactionAddEvent.getEmoji().asCustomEmoji().isPresent()){
+                if (reactionAddEvent.getEmoji().asCustomEmoji().get().asFormat().equals(react)) {
+                    reaction = true;
+                }
+            }
+            if (reaction) {
+                Message message = reactionAddEvent.getMessage().block();
+                if (message.getAuthor().isPresent()
+                        && message.getAuthor().get().getId().asLong() == 962878786066595911L
+                        && message.getContent().contains("Rush hour event now")) {
 
+                    Instant rushHourEnd = message.getTimestamp().plus(60, ChronoUnit.MINUTES);
+                    ReminderUtils.addRushHour(reactionAddEvent.getUserId().asString(), Timestamp.from(rushHourEnd));
                 }
             }
         } catch (Exception e) {
@@ -124,61 +155,71 @@ public class RushHour extends Action implements EmbedAction {
         return Mono.empty();
     }
 
+    private void createRushHour(Message message) {
+        message.getChannel().flatMap(channel -> {
+            FranchiseConfig franchiseConfig;
+            if (message.getGuildId().isPresent()) {
+                logger.info("!!!!!!!!!!!!!!!! " + message.getGuildId().get().asString());
+
+
+                franchiseConfig = ExportUtils.getFranchiseConfig(message.getGuildId().get().asString());
+            } else {
+                franchiseConfig = null;
+            }
+
+            String ping = "";
+            if (franchiseConfig != null
+                    && franchiseConfig.getRushHour() != null
+                    && !franchiseConfig.getRushHour().isEmpty()) {
+                ping = "<@&" + franchiseConfig.getRushHour() + "> ";
+
+                logger.info("!!!!!!!!!!!!!!!! " + franchiseConfig);
+                if (franchiseConfig.getName().equals("OUI")) {
+                    runEnd(60);
+                    boolean doWarnings = true;
+
+                    List<SystemReminder> start = Utils.loadReminder(SystemReminderType.rushHourStart);
+                    if (!start.isEmpty()) {
+                        LocalDateTime rushHourStart = start.get(0).getTime().toLocalDateTime();
+                        LocalDateTime now = LocalDateTime.now();
+                        if (rushHourStart.isAfter(now.plusHours(1))) {
+                            doWarnings = false;
+                        }
+
+                    }
+                    if (doWarnings) {
+                        runWarn(28*60 - 30);
+                        runStart(28*60 - 5);
+                    }
+                }
+            }
+
+            /**
+             * do 30 min warning
+             * ping nafda and me at start time
+             * its started
+             * crete system reminder for 60min time       - rush hour end
+             * create system reminder for 27.5 hours time - 30min warning
+             * create system reminder for 28 hours time   - nafda amd me start ping
+             * 60 min after starts, say thanks for joining, next one will start in 27 hours
+             */
+
+            Message pingMsg = channel.createMessage("Rush hour event now, " + ping + "react with " + react + " to get updated reminders for the next 60 minutes").block();
+//            pingMsg.addReaction(ReactionEmoji.unicode(react)).block();
+            react(pingMsg, react);
+            return Mono.empty();
+        }).block();
+    }
+
 
 
     @Override
     public Mono<Object> handleEmbedAction(Message message, List<EmbedData> embedData) {
-        FranchiseConfig franchiseConfig;
-        if (message.getGuildId().isPresent()) {
-             franchiseConfig = ExportUtils.getFranchiseConfig(message.getGuildId().get().asString());
-        } else {
-            franchiseConfig = null;
-        }
-
 
         if (message.getData().author().id().asString().equals(tacoBot)) {
             if ( embedData.get(0).title().toOptional().isPresent() &&
                     embedData.get(0).title().get().contains("Rush Hour Event Started!")) {
-                message.getChannel().flatMap(channel -> {
-                    String ping = "";
-                    if (franchiseConfig != null
-                            && franchiseConfig.getRushHour() != null
-                            && !franchiseConfig.getRushHour().isEmpty()) {
-                        ping = "<@&" + franchiseConfig.getRushHour() + "> ";
-                        if (franchiseConfig.getName().equals("OUI")) {
-                            runEnd(60);
-                            boolean doWarnings = true;
-
-                            List<SystemReminder> start = Utils.loadReminder(SystemReminderType.rushHourStart);
-                            if (!start.isEmpty()) {
-                                LocalDateTime rushHourStart = start.get(0).getTime().toLocalDateTime();
-                                LocalDateTime now = LocalDateTime.now();
-                                if (rushHourStart.isAfter(now.plusHours(1))) {
-                                    doWarnings = false;
-                                }
-
-                            }
-                            if (doWarnings) {
-                                runWarn(28*60 - 30);
-                                runStart(28*60 - 5);
-                            }
-                        }
-                    }
-
-                    /**
-                     * do 30 min warning
-                     * ping nafda and me at start time
-                     * its started
-                     * crete system reminder for 60min time       - rush hour end
-                     * create system reminder for 27.5 hours time - 30min warning
-                     * create system reminder for 28 hours time   - nafda amd me start ping
-                     * 60 min after starts, say thanks for joining, next one will start in 27 hours
-                     */
-
-                    Message pingMsg = channel.createMessage("Rush hour event now, " + ping + "react with " + react + " to get updated reminders for the next 60 minutes").block();
-                    pingMsg.addReaction(ReactionEmoji.unicode(react)).block();
-                    return Mono.empty();
-                }).block();
+                createRushHour(message);
 
             }
 

@@ -5,6 +5,9 @@ import action.export.ExportUtils;
 import action.reminder.model.Profile;
 import action.reminder.model.Reminder;
 import action.reminder.model.ReminderSettings;
+import action.sm.Utils;
+import action.sm.model.SystemReminder;
+import action.sm.model.SystemReminderType;
 import discord4j.common.util.Snowflake;
 import discord4j.core.object.Embed;
 import discord4j.core.object.entity.Message;
@@ -375,21 +378,32 @@ public class CreateReminder extends Action implements EmbedAction {
 
     private void checkRushHour(Message message, Profile profile) {
         logger.info("Checking rush hour");
-        if (message.getGuildId().isPresent()) {
+        if (message.getGuildId().isPresent() && profile != null && profile.getEnabled()) {
                 if (message.getGuildId().get().asString().equals("840395541791768599")) {
                     logger.info("In OUI");
                     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
-                    if (profile != null && profile.getRushHourEnd() != null) {
+                    if ( profile.getRushHourEnd() != null) {
                         logger.info("User rush hour end at " + formatter.format(profile.getRushHourEnd().toLocalDateTime()));
                     }
                     LocalDateTime rushHour = ExportUtils.loadFranchiseRushHour("oui");
-                    logger.info("OUI rush hour warn at " + formatter.format(rushHour));
-                    if (rushHour != null && profile != null
+//                    logger.info("OUI rush hour warn at " + formatter.format(rushHour));
+                    if (rushHour != null
                             && profile.getRushHourEnd() != null
                             && profile.getRushHourEnd().toLocalDateTime().isBefore(LocalDateTime.now())) {
 
                         if (LocalDateTime.now().isBefore(rushHour)) {
                             String msg = "A Rush Hour is active now, come join <#1289435874240630825>";
+                            message.getChannel().block().createMessage(msg).block();
+                        }
+                    }
+
+                    //if me
+                    if ((profile.getName().equals("292839877563908097")
+                            || profile.getName().equals("695518297168281640")
+                            || profile.getName().equals("762526280435367986"))) {
+                        List<SystemReminder> warn = Utils.loadReminder(SystemReminderType.rushHourStart);
+                        if (warn.isEmpty()) {
+                            String msg = "Go start the rush hour <#1289435874240630825>";
                             message.getChannel().block().createMessage(msg).block();
                         }
                     }
@@ -664,30 +678,30 @@ public class CreateReminder extends Action implements EmbedAction {
 
         }
     }
-
-    private void react(Message message, Profile profile) {
-        if (!profile.getEnabled())
-            return;
-        String react;
-        if (profile == null) {
-            react = defaultReact;
-        } else {
-            react = profile.getEmote();
-            if (react == null || react.equals("")) {
-                react = defaultReact;
-            }
-        }
-
-        if (react.startsWith("<")) {
-            String[] emote = react.split(":");
-            Long id = Long.parseLong(emote[2].replace(">", ""));
-            String name = emote[1];
-            boolean animated = true;
-            message.addReaction(ReactionEmoji.of(id, name, true)).block();
-        } else {
-            message.addReaction(ReactionEmoji.unicode(react)).block();
-        }
-    }
+//
+//    private void react(Message message, Profile profile) {
+//        if (!profile.getEnabled())
+//            return;
+//        String react;
+//        if (profile == null) {
+//            react = defaultReact;
+//        } else {
+//            react = profile.getEmote();
+//            if (react == null || react.equals("")) {
+//                react = defaultReact;
+//            }
+//        }
+//
+//        if (react.startsWith("<")) {
+//            String[] emote = react.split(":");
+//            Long id = Long.parseLong(emote[2].replace(">", ""));
+//            String name = emote[1];
+//            boolean animated = true;
+//            message.addReaction(ReactionEmoji.of(id, name, true)).block();
+//        } else {
+//            message.addReaction(ReactionEmoji.unicode(react)).block();
+//        }
+//    }
 
 //
 //    private void checkMessageAgain(Message message) {

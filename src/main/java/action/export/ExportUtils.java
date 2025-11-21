@@ -1,5 +1,6 @@
 package action.export;
 
+import action.export.model.DonationLog;
 import action.export.model.Donations;
 import action.export.model.FranchiseConfig;
 import action.export.model.FranchiseStatType;
@@ -283,6 +284,32 @@ public class ExportUtils {
             databaseUtils.printException(ex);
         }
         return false;
+    }
+
+    public static List<DonationLog> getDonationLog(int days) {
+        List<DonationLog> stats = new ArrayList<>();
+
+        try {
+            LocalDateTime now = LocalDateTime.now().minusDays(days);
+            Timestamp timestamp = Timestamp.valueOf(now);
+            Connection con = databaseUtils.getConnection();
+            String sql = "SELECT amount, donation_time FROM donation_log  " +
+                    "WHERE donation_time > ? ";
+            sql += "order by donation_time";
+            PreparedStatement pst = con.prepareStatement(sql);
+            pst.setTimestamp(1, timestamp);
+            ResultSet rs = pst.executeQuery();
+
+            while (rs.next()) {
+                DonationLog stat = new DonationLog(rs.getLong(1), rs.getTimestamp(2));
+                stats.add(stat);
+            }
+            con.close();
+
+        } catch (SQLException ex) {
+            databaseUtils.printException(ex);
+        }
+        return stats;
     }
 
     public static boolean clearWarning(String id) {

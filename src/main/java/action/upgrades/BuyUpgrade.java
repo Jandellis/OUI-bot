@@ -912,8 +912,8 @@ public class BuyUpgrade extends Action implements EmbedAction {
 
                             Profile profile = ReminderUtils.loadProfileById(id);
                             if (profile != null) {
-                                react(message, profile, false);
-                                react(message, profile, true);//:arrows_counterclockwise:
+                                react(message, profile);
+                                react(message, reloadEmote);//:arrows_counterclockwise:
                             }
                         }
                     }
@@ -937,7 +937,7 @@ public class BuyUpgrade extends Action implements EmbedAction {
 
                                 Profile profile = ReminderUtils.loadProfileById(id);
                                 if (profile != null) {
-                                    react(message, profile, false);
+                                    react(message, profile);
                                 }
                             }
                         }
@@ -953,27 +953,27 @@ public class BuyUpgrade extends Action implements EmbedAction {
 }
 
 
-    private void react(Message message, Profile profile, boolean refresh) {
-        if (!profile.getEnabled())
-            return;
-        String react = profile.getEmote();
-        if (react == null || react.equals("")) {
-            react = defaultReact;
-        }
-        if (refresh) {
-            react = reloadEmote;
-        }
-
-        if (react.startsWith("<")) {
-            String[] emote = react.split(":");
-            Long id = Long.parseLong(emote[2].replace(">", ""));
-            String name = emote[1];
-            boolean animated = true;
-            message.addReaction(ReactionEmoji.of(id, name, true)).block();
-        } else {
-            message.addReaction(ReactionEmoji.unicode(react)).block();
-        }
-    }
+//    private void react(Message message, Profile profile, boolean refresh) {
+//        if (!profile.getEnabled())
+//            return;
+//        String react = profile.getEmote();
+//        if (react == null || react.equals("")) {
+//            react = defaultReact;
+//        }
+//        if (refresh) {
+//            react = reloadEmote;
+//        }
+//
+//        if (react.startsWith("<")) {
+//            String[] emote = react.split(":");
+//            Long id = Long.parseLong(emote[2].replace(">", ""));
+//            String name = emote[1];
+//            boolean animated = true;
+//            message.addReaction(ReactionEmoji.of(id, name, true)).block();
+//        } else {
+//            message.addReaction(ReactionEmoji.unicode(react)).block();
+//        }
+//    }
 
     private Location getLocation(String name, String desc, String footer) {
 

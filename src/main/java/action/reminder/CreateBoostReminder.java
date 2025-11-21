@@ -200,20 +200,26 @@ public class CreateBoostReminder extends Action implements EmbedAction {
                             boolean franchise = false;
 
                             // if location is amusement part and boost = Parade
-                            if (desc.contains("Parade") && location == LocationEnum.amusement) {
-                                createReminder(boosts.get("Parade"), message, profile);
-                            } else {
+//                            if (desc.contains("Parade") && location == LocationEnum.amusement) {
+//                                createReminder(boosts.get("Parade"), message, profile);
+//                            } else {
 
                                 for (Boost boost : boosts.values()) {
-                                    if (desc.contains(boost.getName())) {
-                                        logger.info("creating reminder for " + boost.getName());
-                                        createReminder(boost, message, profile);
-                                        if (boost.getLocation() == LocationEnum.franchise) {
+                                    if (boost.getLocation() == location) {
+                                        if (desc.contains(boost.getName())) {
+                                            logger.info("creating reminder for " + boost.getName());
+                                            createReminder(boost, message, profile);
+                                        }
+                                    }
+                                    if (boost.getLocation() == LocationEnum.franchise) {
+                                        if (desc.contains(boost.getName())) {
+                                            logger.info("creating reminder for " + boost.getName());
+                                            createReminder(boost, message, profile);
                                             franchise = true;
                                         }
                                     }
                                 }
-                            }
+//                            }
                             // look at the footer to see the balance and save that
                             Long balance = getBalance(embed);
                             // only save balance if its not a franchise
@@ -337,24 +343,15 @@ public class CreateBoostReminder extends Action implements EmbedAction {
         react(message, profile);
     }
 
-    private void react(Message message, Profile profile) {
-        if (!profile.getEnabled())
-            return;
-        String react = profile.getEmote();
-        if (react == null || react.equals("")) {
-            react = defaultReact;
-        }
-
-        if (react.startsWith("<")) {
-            String[] emote = react.split(":");
-            Long id = Long.parseLong(emote[2].replace(">", ""));
-            String name = emote[1];
-            boolean animated = true;
-            message.addReaction(ReactionEmoji.of(id, name, true)).block();
-        } else {
-            message.addReaction(ReactionEmoji.unicode(react)).block();
-        }
-    }
+//    private void react(Message message, Profile profile) {
+//        if (!profile.getEnabled())
+//            return;
+//        String react = profile.getEmote();
+//        if (react == null || react.equals("")) {
+//            react = defaultReact;
+//        }
+//        react(message, react);
+//    }
 
 //
 //    @Override

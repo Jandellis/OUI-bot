@@ -506,4 +506,46 @@ public abstract class Action {
         return found.get();
     }
 
+    protected void react(Message message, Profile profile) {
+        if (!profile.getEnabled())
+            return;
+        String react;
+        if (profile == null) {
+            react = defaultReact;
+        } else {
+            react = profile.getEmote();
+            if (react == null || react.equals("")) {
+                react = defaultReact;
+            }
+        }
+        react(message, react);
+    }
+
+//    protected void react(Message message, String react) {
+//        if (react.startsWith("<")) {
+//            String[] emote = react.split(":");
+//            Long id = Long.parseLong(emote[2].replace(">", ""));
+//            String name = emote[1];
+//            boolean animated = true;
+//            message.addReaction(ReactionEmoji.of(id, name, true)).block();
+//        } else {
+//            message.addReaction(ReactionEmoji.unicode(react)).block();
+//        }
+//    }
+
+    protected void react(Message message, String react) {
+        if (react.startsWith("<")) {
+            String[] emote = react.split(":");
+            // Strip everything that isn’t a number (handles >, spaces, etc.)
+            String idStr = emote[2].replaceAll("\\D", "");
+            long id = Long.parseLong(idStr);
+
+            String name = emote[1];
+            boolean animated = react.startsWith("<a:");
+
+            message.addReaction(ReactionEmoji.custom(Snowflake.of(id), name, animated)).block();
+        } else {
+            message.addReaction(ReactionEmoji.unicode(react)).block();
+        }
+    }
 }

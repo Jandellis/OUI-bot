@@ -1,8 +1,15 @@
 package action.reminder;
 
 import action.Action;
+import action.export.ExportUtils;
+import action.export.model.FranchiseConfig;
+import action.sm.Utils;
+import action.sm.model.SystemReminder;
+import action.sm.model.SystemReminderType;
+import discord4j.common.util.Snowflake;
 import discord4j.core.object.Embed;
 import discord4j.core.object.entity.Message;
+import discord4j.core.object.reaction.ReactionEmoji;
 import discord4j.core.spec.EmbedCreateSpec;
 import discord4j.rest.util.Color;
 import reactor.core.publisher.Mono;
@@ -64,6 +71,7 @@ public class Help extends Action {
                     sb.append("Type `cymsg <message>`, for example, type `cymsg Hey {ping} get back to {task} now! {cmd}` \n");
                     sb.append("Type `cymsg delete`, to reset to the default \n\n");
                     sb.append("Type `cyrm history <limit>`, the higher the history, the more message I will go back and check who was the owner of a message\n");
+                    sb.append("Type `cyrush join`, to join a rush hour with out reacting or `cyrush leave` to leave early\n");
                     message.getChannel().block().createMessage(sb.toString()).block();
 
                     sb = new StringBuilder();

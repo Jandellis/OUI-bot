@@ -47,6 +47,7 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -72,6 +73,7 @@ public class PriceCheck extends Action {
     List<String> smUpdateChannels;
     boolean hideSS;
     Map<Integer, Double> streakOdds;
+    int tasksEndHour;
 
 
     ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
@@ -86,6 +88,7 @@ public class PriceCheck extends Action {
         cheapPrice = Integer.parseInt(config.get("cheapPrice"));
         smUpdateChannels = Arrays.asList(config.get("smUpdateChannels").split(","));
         hideSS = Boolean.parseBoolean(config.get("hideSS", "true"));
+        tasksEndHour = Integer.parseInt(config.get("tasksEndHour"));
 
         // Load the streak odds
         streakOdds = new HashMap<>();
@@ -147,7 +150,7 @@ public class PriceCheck extends Action {
     }
 
 
-    public static boolean isInOddMonthWindow2(LocalDate date) {
+    public boolean isInOddMonthWindow2(LocalDateTime date) {
         int month = date.getMonthValue();
 
         // Find the current odd month or next upcoming odd month
@@ -157,9 +160,9 @@ public class PriceCheck extends Action {
         }
 
         int year = date.getYear();
-        LocalDate startOfOddMonth = LocalDate.of(year, oddMonth, 1);
-        LocalDate startWindow = startOfOddMonth.minusDays(2);             // 2 days before
-        LocalDate endWindow = startOfOddMonth.plusWeeks(1).plusDays(3);   // 3 days after it ends
+        LocalDateTime startOfOddMonth = LocalDateTime.of(year, oddMonth, 1, tasksEndHour,0,0);
+        LocalDateTime startWindow = startOfOddMonth.minusDays(1);             // 2 days before
+        LocalDateTime endWindow = startOfOddMonth.plusWeeks(1).plusDays(2);   // 3 days after it ends
 
         return !date.isBefore(startWindow) && !date.isAfter(endWindow);
     }
@@ -167,8 +170,8 @@ public class PriceCheck extends Action {
     public void loadPrices() {
         try {
             //for a week before the start of the odd month until the end of the 2nd week, display ss
-            hideSS = !isInOddMonthWindow2(LocalDate.now());
-            logger.info("Should hide SS " + isInOddMonthWindow2(LocalDate.now()));
+            hideSS = !isInOddMonthWindow2(LocalDateTime.now());
+            logger.info("Should hide SS " + isInOddMonthWindow2(LocalDateTime.now()));
 
 
 
@@ -363,7 +366,16 @@ public class PriceCheck extends Action {
             addSauce(SauceObjectPrices.get(Sauce.pico), embed, stats, streaks, changeCount);
             addSauce(SauceObjectPrices.get(Sauce.chipotle), embed, stats, streaks, changeCount);
             if (hasSS && !hideSS) {
-                addSauce(SauceObjectPrices.get(Sauce.secret_sauce), embed, stats, streaks, changeCount);
+                SauceObject ss = SauceObjectPrices.get(Sauce.secret_sauce);
+                addSauce(ss, embed, stats, streaks, changeCount);
+                int change = ss.getPrice() - ss.getOldPrice();
+                if (change > 0) {
+                    // going up
+                    client.getChannelById(Snowflake.of("840395542394568707")).createMessage("https://tenor.com/view/kpop-demon-hunters-up-up-up-golden-kpop-demon-hunters-golden-we%27re-going-up-up-up-gif-11139720539903983313").block();
+                }
+                if (change < 0) {
+                    client.getChannelById(Snowflake.of("840395542394568707")).createMessage("https://tenor.com/view/rafiki-oops-trip-fall-drop-gif-4172581").block();
+                }
             }
 
             printCheap(SauceObjectPrices);

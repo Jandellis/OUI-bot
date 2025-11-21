@@ -132,24 +132,24 @@ public class GiveawayAdd extends Action implements EmbedAction {
 
     String defaultReact = "\uD83D\uDC4B";
 
-    private void react(Message message, Profile profile) {
-        if (!profile.getEnabled())
-            return;
-        String react = profile.getEmote();
-        if (react == null || react.equals("")) {
-            react = defaultReact;
-        }
-
-        if (react.startsWith("<")) {
-            String[] emote = react.split(":");
-            Long id = Long.parseLong(emote[2].replace(">", ""));
-            String name = emote[1];
-            boolean animated = true;
-            message.addReaction(ReactionEmoji.of(id, name, true)).block();
-        } else {
-            message.addReaction(ReactionEmoji.unicode(react)).block();
-        }
-    }
+//    private void react(Message message, Profile profile) {
+//        if (!profile.getEnabled())
+//            return;
+//        String react = profile.getEmote();
+//        if (react == null || react.equals("")) {
+//            react = defaultReact;
+//        }
+//
+//        if (react.startsWith("<")) {
+//            String[] emote = react.split(":");
+//            Long id = Long.parseLong(emote[2].replace(">", ""));
+//            String name = emote[1];
+//            boolean animated = true;
+//            message.addReaction(ReactionEmoji.of(id, name, true)).block();
+//        } else {
+//            message.addReaction(ReactionEmoji.unicode(react)).block();
+//        }
+//    }
 
 
     public static List<MessageData> getMessagesOfChannel(Message message) {
