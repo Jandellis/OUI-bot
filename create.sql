@@ -391,4 +391,6 @@ CREATE TABLE IF NOT EXISTS guesses (
     guess VARCHAR(255),
     crossword_day date,
     message_id VARCHAR(255)
-)
+);
+
+ALTER TABLE donation_log MODIFY amount BIGINT;

@@ -114,4 +114,21 @@ public class FranchiseConfig {
     public void setRushHour(String rushHour) {
         this.rushHour = rushHour;
     }
+
+    @Override
+    public String toString() {
+        return "FranchiseConfig{" +
+                "guild='" + guild + '\'' +
+                ", name='" + name + '\'' +
+                ", warning='" + warning + '\'' +
+                ", warning2='" + warning2 + '\'' +
+                ", warning3='" + warning3 + '\'' +
+                ", flex='" + flex + '\'' +
+                ", recruiter='" + recruiter + '\'' +
+                ", immunity='" + immunity + '\'' +
+                ", giveawayRole='" + giveawayRole + '\'' +
+                ", court='" + court + '\'' +
+                ", rushHour='" + rushHour + '\'' +
+                '}';
+    }
 }

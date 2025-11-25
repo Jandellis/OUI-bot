@@ -3,6 +3,7 @@ package bot;
 import action.Colour;
 import action.CookOff;
 import action.CookOffDonator;
+import action.Flip;
 import action.FranchiseStat;
 import action.GiveAWay;
 import action.GiveawayAdd;
@@ -20,6 +21,7 @@ import action.WeeklyReset;
 import action.Welcome;
 import action.export.Donate;
 import action.export.Import;
+import action.export.Import2;
 import action.reminder.CreateBoostReminder;
 import action.reminder.CreateProfile;
 import action.reminder.CreateReminder;
@@ -35,6 +37,7 @@ import action.sm.CleanUp;
 import action.sm.PriceCheck;
 import action.sm.UpdateAlerts;
 import action.upgrades.BuyUpgrade;
+import crossword.Crossword;
 import database.DatabaseUtils;
 import discord4j.common.util.Snowflake;
 import discord4j.core.DiscordClient;
@@ -72,6 +75,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.TimeZone;
 
 public class Bot {
 
@@ -305,7 +309,8 @@ public class Bot {
                     return printOnLogin.and(handlePingCommand)
 //                            .and(input(gateway))
 //                            .and(gift(gateway))
-                            .and(new Import().action(gateway, client))
+                            .and(new Import2().action(gateway, client))
+                            .and(new Crossword().action(gateway, client))
                             .and(report(gateway))
                             .and(new Warn().action(gateway, client))
                             .and(new Hit().action(gateway, client))
@@ -344,7 +349,8 @@ public class Bot {
 //                            .and(new FranchiseStat().action(gateway, client))
                             .and(new WeeklyReset().action(gateway, client))
                             .and(new Sleep().action(gateway, client))
-                            .and(new Donate().action(gateway, client));
+                            .and(new Donate().action(gateway, client))
+                            .and(new Flip().action(gateway, client));
 //                            .and(reaction)
 //                            .and(new UpdateAlerts().action(gateway, client));
 
