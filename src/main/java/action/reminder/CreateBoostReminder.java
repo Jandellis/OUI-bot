@@ -106,11 +106,11 @@ public class CreateBoostReminder extends Action implements EmbedAction {
 
 
         //Event
-//        boosts.put("Flyers", new Boost("Flyers", 1, LocationEnum.event));
-//        boosts.put("Sign Twirler",new Boost("Sign Twirler", 2, LocationEnum.event));
-//        boosts.put("Refreshments", new Boost("Refreshments", 3, LocationEnum.event));
-//        boosts.put("Music",new Boost("Music", 4, LocationEnum.event));
-//        boosts.put("Festival",new Boost("Festival", 6, LocationEnum.event));
+        boosts.put("Flyers", new Boost("Flyers", 1, LocationEnum.event, 1));
+        boosts.put("Sign Twirler",new Boost("Sign Twirler", 2, LocationEnum.event, 2));
+        boosts.put("Refreshments", new Boost("Refreshments", 3, LocationEnum.event, 3));
+        boosts.put("Music",new Boost("Music", 4, LocationEnum.event, 4));
+        boosts.put("Festival",new Boost("Festival", 6, LocationEnum.event, 5));
 
         boosts.put ("Loyalty Rewards", new Boost("Rewards", 12, LocationEnum.franchise, 1));
         boosts.put ("Seasonal Menu", new Boost("Menu", 18, LocationEnum.franchise, 2));
@@ -205,31 +205,48 @@ public class CreateBoostReminder extends Action implements EmbedAction {
 //                            } else {
 
                                 for (Boost boost : boosts.values()) {
+                                    switch (boost.getLocation()) {
+                                        case event:
+                                        case franchise:
+                                            franchise = true;
+
+                                    }
+
+
                                     if (boost.getLocation() == location) {
                                         if (desc.contains(boost.getName())) {
-                                            logger.info("creating reminder for " + boost.getName());
+                                            logger.info(location.getName() + " -- creating reminder for " + boost.getName());
                                             createReminder(boost, message, profile);
                                         }
                                     }
-                                    if (boost.getLocation() == LocationEnum.franchise) {
-                                        if (desc.contains(boost.getName())) {
-                                            logger.info("creating reminder for " + boost.getName());
-                                            createReminder(boost, message, profile);
-                                            franchise = true;
-                                        }
-                                    }
+//                                    if (boost.getLocation() == LocationEnum.franchise) {
+//                                        if (desc.contains(boost.getName())) {
+//                                            logger.info("creating reminder for " + boost.getName());
+//                                            createReminder(boost, message, profile);
+//                                            franchise = true;
+//                                        }
+//                                    }
+//                                    if (boost.getLocation() == LocationEnum.event) {
+//                                        if (desc.contains(boost.getName())) {
+//                                            logger.info("creating reminder for " + boost.getName());
+//                                            createReminder(boost, message, profile);
+//                                            franchise = true;
+//                                        }
+//                                    }
                                 }
 //                            }
-                            // look at the footer to see the balance and save that
-                            Long balance = getBalance(embed);
-                            // only save balance if its not a franchise
-                            if (balance != null && !franchise) {
-                                ProfileStats profileStats = new ProfileStats(userId.get());
-                                profileStats.setImportTime(Timestamp.from(Instant.now()));
-                                profileStats.setLocation(location);
-                                profileStats.setIncome(-1L);
-                                profileStats.setBalance(balance);
-                                ReminderUtils.addProfileStats(profileStats);
+                            if (!franchise) {
+                                // look at the footer to see the balance and save that
+                                Long balance = getBalance(embed);
+                                // only save balance if its not a franchise
+                                if (balance != null && !franchise) {
+                                    ProfileStats profileStats = new ProfileStats(userId.get());
+                                    profileStats.setImportTime(Timestamp.from(Instant.now()));
+                                    profileStats.setLocation(location);
+                                    profileStats.setIncome(-1L);
+                                    profileStats.setBalance(balance);
+                                    ReminderUtils.addProfileStats(profileStats);
+                                }
                             }
 
                         }

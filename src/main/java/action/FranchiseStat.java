@@ -229,6 +229,7 @@ public class FranchiseStat extends Action implements EmbedAction {
     private void update() {
 
         try {
+            requestSingleFranchise("oui");
             request("https://tacoshack.online/api/leaderboard/franchise/all", false);
 
 //            String tacos = request("https://tacoshack.online/api/franchise/tacos?quantity=25", false);
@@ -288,6 +289,43 @@ public class FranchiseStat extends Action implements EmbedAction {
 
     }
 
+    private void requestSingleFranchise(String franchise)  throws IOException, ParseException {
+        String url = "https://tacoshack.online/api/franchise/" + franchise;
+
+        WebClient webClient = new WebClient();
+        webClient.getOptions().setCssEnabled(false);
+        webClient.getOptions().setJavaScriptEnabled(false);
+        String data = webClient.getPage(url).getWebResponse().getContentAsString();
+        logger.info(data);
+        JSONParser jsonParser = new JSONParser();
+
+        JSONObject obj = (JSONObject)jsonParser.parse(data);
+//        obj.get("memberCount");
+        Long balance = (Long) obj.get("balance");
+        Long sold = (Long) obj.get("tacos");
+        Long income = (Long) obj.get("income");
+        ExportUtils.updateFranchise(
+                FranchiseStatType.balance,
+                balance,
+                franchise
+        );
+
+        ExportUtils.updateFranchise(
+                FranchiseStatType.sold,
+                sold,
+                franchise
+        );
+
+        ExportUtils.updateFranchise(
+                FranchiseStatType.income,
+                income,
+                franchise
+        );
+
+        FranchiseStats franchiseStats = new FranchiseStats(franchise, income, sold, balance, Timestamp.from(Instant.now()));
+        ExportUtils.insertFranchiseStats(franchiseStats);
+    }
+
 
     private void request(String url, boolean money) throws IOException, ParseException {
         WebClient webClient = new WebClient();
@@ -314,7 +352,7 @@ public class FranchiseStat extends Action implements EmbedAction {
 //
             updateChannel(shiftsChannel, "Shifts Worked: " + getValue((JSONObject) obj.get("shifts")));
 
-            updateChannel(boostChannel, "Income Boost: " + getValue((JSONObject) obj.get("income")));
+//            updateChannel(boostChannel, "Income Boost: " + getValue((JSONObject) obj.get("income")));
         } catch ( Exception e) {
             printException(e);
         }

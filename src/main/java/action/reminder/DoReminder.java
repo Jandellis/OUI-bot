@@ -154,11 +154,31 @@ public class DoReminder extends Action {
             return;
 
         String msg = defaultReact + " Boo {ping} go do {cmd}!";
+        boolean groupReminder = false;
+        if (
+                //franchise
+                reminder.getType() == rewards
+                || reminder.getType() == menu
+                || reminder.getType() == training
+                || reminder.getType() == survey
+                || reminder.getType() == incentives
+                || reminder.getType() == franchiseTasks
+                || reminder.getType() == importData
+                //event
+                || reminder.getType() == flyers
+                || reminder.getType() == twirler
+                || reminder.getType() == refreshments
+                || reminder.getType() == music
+                || reminder.getType() == festival
+                || reminder.getType() == eventClean
+        ) {
+            groupReminder = true;
+        }
 
         //if shas sleep, check in sleep time
         //if in sleep time move reminder to end of sleep time
 
-        if (profile.getSleepEnd() != null && profile.getSleepStart() != null) {
+        if (!groupReminder && profile.getSleepEnd() != null && profile.getSleepStart() != null) {
             LocalTime start = profile.getSleepStart().toLocalTime();
             LocalTime end = profile.getSleepEnd().toLocalTime();
 

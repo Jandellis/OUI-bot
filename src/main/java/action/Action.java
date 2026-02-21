@@ -277,7 +277,11 @@ public abstract class Action {
                 String[] footer = location.split("\n");
                 location = footer[footer.length-1];
             }
+            try {
             location = location.split(" \\| ")[1];
+            } catch (Exception e) {
+                return LocationEnum.event;
+            }
             if (location.endsWith("#0")) {
                 location = location.replace("#0", "");
             }

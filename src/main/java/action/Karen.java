@@ -15,6 +15,7 @@ public class Karen extends Action implements EmbedAction {
     String customerChannel;
     String customerChannel2;
     String customerChannel3;
+    String customerChannel4;
     String customerChannelPond;
     String customerChannelPond2;
     String customerChannelPond3;
@@ -44,6 +45,7 @@ public class Karen extends Action implements EmbedAction {
         customerChannel = "840942880775471114";
         customerChannel2 = "1162172605541920811";
         customerChannel3 = "1165959960388190259";
+        customerChannel4 = "1451413132009410731";
         customerPing = "931599227824517151";
 //        customerPingPond = "1242154110304915478";
 //        customerChannelPond = "1229039354664452217";
@@ -57,7 +59,8 @@ public class Karen extends Action implements EmbedAction {
         try {
             if (message.getChannelId().asString().equals(customerChannel) ||
                     message.getChannelId().asString().equals(customerChannel2)||
-                    message.getChannelId().asString().equals(customerChannel3) ){
+                    message.getChannelId().asString().equals(customerChannel3)||
+                    message.getChannelId().asString().equals(customerChannel4) ){
                 if (message.getData().author().id().asString().equals(customerBot)) {
 
                     //check if its an interaction
@@ -214,7 +217,8 @@ public class Karen extends Action implements EmbedAction {
             logger.info("got karen message");
             if (message.getChannelId().asString().equals(customerChannel) ||
                     message.getChannelId().asString().equals(customerChannel2)||
-                    message.getChannelId().asString().equals(customerChannel3) ) {
+                    message.getChannelId().asString().equals(customerChannel3)||
+                    message.getChannelId().asString().equals(customerChannel4) ) {
                 if (message.getData().author().id().asString().equals(customerBot)) {
                     logger.info("got karen message");
 

@@ -415,6 +415,54 @@ public class ExportUtils {
     }
 
 
+    public static boolean updateWarningDataMercy(String id, Timestamp mercyUntil) {
+        try {
+            Connection con = databaseUtils.getConnection();
+            PreparedStatement pst = con.prepareStatement("UPDATE warning_data SET immunity_until = ? WHERE name = ?");
+            pst.setTimestamp(1,mercyUntil);
+            pst.setString(2, id);
+            int rs = pst.executeUpdate();
+            if (rs == 1) {
+                con.close();
+                return true;
+            } else {
+
+                pst = con.prepareStatement("INSERT INTO warning_data (name, immunity_until ) VALUES (?, ?)");
+                pst.setString(1, id);
+                pst.setTimestamp(2, mercyUntil);
+                return pst.execute();
+            }
+        } catch (SQLException ex) {
+            databaseUtils.printException(ex);
+        }
+        return false;
+    }
+
+
+    public static boolean updateWarningDataWarning(String id, Timestamp warningTime) {
+        try {
+            Connection con = databaseUtils.getConnection();
+            PreparedStatement pst = con.prepareStatement("UPDATE warning_data SET last_warning = ? WHERE name = ?");
+            pst.setTimestamp(1,warningTime);
+            pst.setString(2, id);
+            int rs = pst.executeUpdate();
+            if (rs == 1) {
+                con.close();
+                return true;
+            } else {
+
+                pst = con.prepareStatement("INSERT INTO warning_data (name, last_warning ) VALUES (?, ?)");
+                pst.setString(1, id);
+                pst.setTimestamp(2, warningTime);
+                return pst.execute();
+            }
+        } catch (SQLException ex) {
+            databaseUtils.printException(ex);
+        }
+        return false;
+    }
+
+
     public static WarningData loadWarningData(String id) {
         try {
             Connection con = databaseUtils.getConnection();

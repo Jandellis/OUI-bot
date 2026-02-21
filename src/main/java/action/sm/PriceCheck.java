@@ -53,6 +53,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -369,12 +370,35 @@ public class PriceCheck extends Action {
                 SauceObject ss = SauceObjectPrices.get(Sauce.secret_sauce);
                 addSauce(ss, embed, stats, streaks, changeCount);
                 int change = ss.getPrice() - ss.getOldPrice();
-                if (change > 0) {
-                    // going up
-                    client.getChannelById(Snowflake.of("840395542394568707")).createMessage("https://tenor.com/view/kpop-demon-hunters-up-up-up-golden-kpop-demon-hunters-golden-we%27re-going-up-up-up-gif-11139720539903983313").block();
-                }
-                if (change < 0) {
-                    client.getChannelById(Snowflake.of("840395542394568707")).createMessage("https://tenor.com/view/rafiki-oops-trip-fall-drop-gif-4172581").block();
+                try {
+                    if (change > 0) {
+                        // going up
+
+                        List<String> upGifs = new ArrayList<>();
+                        upGifs.add("https://tenor.com/view/kpop-demon-hunters-up-up-up-golden-kpop-demon-hunters-golden-we%27re-going-up-up-up-gif-11139720539903983313");
+                        upGifs.add("https://tenor.com/view/up-higher-100k-btc-bitcoin-gif-10989690255873800070");
+                        upGifs.add("https://tenor.com/view/john-john-crypto-john-the-coin-memecoin-red-candle-gif-3746997840446702790");
+                        upGifs.add("https://tenor.com/view/climb-on-gif-27651199");
+                        upGifs.add("https://tenor.com/view/the-price-just-went-up-dwayne-johnson-frank-jungle-cruise-price-increase-gif-16356043");
+                        Random rand = new Random();
+                        int randomNumber = rand.nextInt(upGifs.size());
+                        client.getChannelById(Snowflake.of("840395542394568707")).createMessage(upGifs.get(randomNumber)).block();
+                    }
+                    if (change < 0) {
+                        List<String> downGifs = new ArrayList<>();
+                        downGifs.add("https://tenor.com/view/rafiki-oops-trip-fall-drop-gif-4172581");
+                        downGifs.add("https://tenor.com/view/tree-killer-logging-cutting-cut-gif-11211868");
+                        downGifs.add("https://tenor.com/view/catch-it-drop-pass-dropped-ball-drops-it-fumble-gif-23993182");
+                        downGifs.add("https://tenor.com/view/fall-falling-gif-19993116");
+                        downGifs.add("https://tenor.com/view/coles-coles-down-down-down-down-down-prices-are-down-gif-14532115");
+                        downGifs.add("https://tenor.com/view/panda-gif-9601528");
+                        Random rand = new Random();
+                        int randomNumber = rand.nextInt(downGifs.size());
+                        client.getChannelById(Snowflake.of("840395542394568707")).createMessage(downGifs.get(randomNumber)).block();
+                    }
+                } catch (Exception e) {
+                    logger.error("Error adding gifs to channel", e);
+                    printException(e);
                 }
             }
 

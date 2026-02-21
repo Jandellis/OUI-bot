@@ -340,14 +340,14 @@ public class BuyUpgrade extends Action implements EmbedAction {
         hq.addUpgrade("Chief Executive Officer", "Chief Executive Officer", 500, 5000000, 10, true);
         locations.add(hq);
 
-        event.addUpgrade("Worker Efficiency", "Worker Efficiency", 700, 1000, 25);
-        event.addUpgrade("Customer Service Training", "Customer Service Training", 10, 1500, 15);
-        event.addUpgrade("Fancier Decor", "Fancier Decor", 20, 2000, 15);
-        event.addUpgrade("Newspaper Ads", "Newspaper Ads", 30, 2500, 20);
-        event.addUpgrade("Better Sign", "Better Sign", 50, 3000, 20);
-        event.addUpgrade("Radio Ads", "Radio Ads", 75, 3500, 25);
-        event.addUpgrade("Email Campaign", "Email Campaign", 100, 4000, 25);
-        event.addUpgrade("Flashy Lights", "Flashy Lights", 250, 5000, 20);
+        event.addUpgrade("Worker Efficiency", "Worker Efficiency", 700, 1000, 40);
+        event.addUpgrade("Customer Service Training", "Customer Service Training", 10, 1500, 25);
+        event.addUpgrade("Fancier Decor", "Fancier Decor", 20, 2000, 25);
+        event.addUpgrade("Newspaper Ads", "Newspaper Ads", 30, 2500, 30);
+        event.addUpgrade("Better Sign", "Better Sign", 50, 3000, 30);
+        event.addUpgrade("Radio Ads", "Radio Ads", 75, 3500, 40);
+        event.addUpgrade("Email Campaign", "Email Campaign", 100, 4000, 40);
+        event.addUpgrade("Flashy Lights", "Flashy Lights", 250, 5000, 30);
         locations.add(event);
 
 

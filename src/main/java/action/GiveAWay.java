@@ -1,5 +1,9 @@
 package action;
 
+import action.export.ExportData;
+import action.export.ExportUtils;
+import action.export.Import2;
+import action.export.model.FranchiseConfig;
 import action.giveaway.model.GiveawayLog;
 import action.giveaway.model.GiveawayWinner;
 import action.reminder.ReminderUtils;
@@ -175,7 +179,11 @@ public class GiveAWay extends Action {
         message.addReaction(ReactionEmoji.unicode(react)).block();
 
 
+
         LocalDateTime endTime = now.plusDays(1).withMinute(1);
+        runGiveAWay(ChronoUnit.MINUTES.between(now, endTime));
+
+        //do sheet reminder
         Utils.addReminder(SystemReminderType.giveaway, Timestamp.valueOf(endTime), msg.id().toString(), winner);
         if (now.getDayOfWeek() == DayOfWeek.FRIDAY) {
             SheetReader reader = new SheetReader();
@@ -187,8 +195,16 @@ public class GiveAWay extends Action {
             }
         }
 
+        //post in Flex
+        FranchiseConfig franchiseConfig = ExportUtils.getFranchiseConfig(guildId);
 
-        runGiveAWay(ChronoUnit.MINUTES.between(now, endTime));
+        HashMap<Long, List<ExportData>> history = ExportUtils.loadMemberHistory(franchiseConfig.getName());
+        Import2 import2 = new Import2();
+        EmbedCreateSpec spec = import2.buildWeeklyEmbed(history, franchiseConfig.getName()).getEmbed();
+        client.getChannelById(Snowflake.of(franchiseConfig.getFlex()))
+                                .createMessage(spec.asRequest()).block();
+
+
 
     }
 

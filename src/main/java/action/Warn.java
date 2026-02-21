@@ -124,14 +124,22 @@ public class Warn extends Action {
                     List<Id> roles = userRoles.get(kickMember.getId());
                     if (roles != null && roles.size() > 0) {
                         roles.forEach(id -> {
-                            if (id.asLong() == Long.parseLong(franchiseConfig.getImmunity()))
+                            if (id.asLong() == Long.parseLong(franchiseConfig.getImmunity())) {
+                                logger.info("User {} has immunity role", kickMember.getId());
                                 imunity.set(true);
-                            if (id.asLong() == Long.parseLong(franchiseConfig.getWarning()))
+                            }
+                            if (id.asLong() == Long.parseLong(franchiseConfig.getWarning())) {
+                                logger.info("User {} has warning role", kickMember.getId());
                                 warning.set(1);
-                            if (id.asLong() == Long.parseLong(franchiseConfig.getWarning2()))
+                            }
+                            if (id.asLong() == Long.parseLong(franchiseConfig.getWarning2())) {
+                                logger.info("User {} has 2nd warning role", kickMember.getId());
                                 warning.set(2);
-                            if (id.asLong() == Long.parseLong(franchiseConfig.getWarning3()))
+                            }
+                            if (id.asLong() == Long.parseLong(franchiseConfig.getWarning3())) {
+                                logger.info("User {} has final warning role", kickMember.getId());
                                 warning.set(3);
+                            }
                         });
                         inServer = true;
                     }
@@ -151,6 +159,7 @@ public class Warn extends Action {
                 // odd is false or number of days not worked is odd
 
                 try {
+                    logger.info("warn member " + kickMember.getId() + " last warning was " + warningData.toString());
                     if (inServer
                             && kickMember.getDaysNoWork() >= level
                             && kickMember.getDaysNoWork() <= max
@@ -158,6 +167,7 @@ public class Warn extends Action {
                             && (warningData.getLastWarning() == null || warningData.getLastWarning().toLocalDateTime().isBefore(twoDaysAgo))) {
                 //                    workList.add("<@" + kickMember.getId() + "> \r\n");
                         warnMember = true;
+                        logger.info("User {} should get warned", kickMember.getId());
 
                     }
 
@@ -184,6 +194,7 @@ public class Warn extends Action {
                             } else {
                                 //set donations to 0
                                 ExportUtils.resetMemberDonations(kickMember.getId().toString());
+                                logger.info("User {} given 1st warning", kickMember.getId());
                                 client.getGuildById(Snowflake.of(franchiseConfig.getGuild())).addMemberRole(
                                         Snowflake.of(kickMember.getId()),
                                         Snowflake.of(franchiseConfig.getWarning()),
@@ -191,6 +202,7 @@ public class Warn extends Action {
                             }
                         }
                         if (warning.get() == 1) {
+                            logger.info("User {} given 2nd warning", kickMember.getId());
                             client.getGuildById(Snowflake.of(franchiseConfig.getGuild())).addMemberRole(
                                     Snowflake.of(kickMember.getId()),
                                     Snowflake.of(franchiseConfig.getWarning2()),
@@ -204,6 +216,7 @@ public class Warn extends Action {
                             if (hasRole(userRoles.get(kickMember.getId()), franchiseConfig.getWarning3())) {
                                 logger.info("Skipping user as they have final warning already " + kickMember.getId());
                             } else {
+                                logger.info("User {} given final warning", kickMember.getId());
                                 client.getGuildById(Snowflake.of(franchiseConfig.getGuild())).addMemberRole(
                                         Snowflake.of(kickMember.getId()),
                                         Snowflake.of(franchiseConfig.getWarning3()),
@@ -216,7 +229,7 @@ public class Warn extends Action {
                         }
                         LocalDateTime now = LocalDateTime.now();
                         warningData.setLastWarning(Timestamp.valueOf(now));
-                        ExportUtils.updateWarningData(warningData);
+                        ExportUtils.updateWarningDataWarning(warningData.getName(), Timestamp.valueOf(now));
                     }
 
                     if (inServer && warnMember) {
@@ -229,7 +242,7 @@ public class Warn extends Action {
 
             //print list of work warnings
             StringBuilder display = new StringBuilder();
-            int count = 0;
+            int count = -2;
             for (String line : workList) {
                 count++;
                 display.append(line);

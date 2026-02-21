@@ -60,42 +60,6 @@ public class Import2 extends Action {
         giveawayRole = config.get("giveawayRole");
         zeroVotes = "1102390411252744312";
     }
-//
-//    @Override
-//    public Mono<Object> doAction(Message message) {
-//        String actionData = getAction(message);
-//        if (actionData == null || !hasPermission(message, true)) return Mono.empty();
-//
-//        String author;
-//        if (message.getInteraction().isPresent() && message.getInteraction().get().getName().contains("franchise memberdata export")) {
-//            actionData = message.getId().asString();
-//            author = message.getInteraction().get().getUser().getId().asString();
-//
-//        } else {
-//            author = message.getAuthor().get().getId().asString();
-//        }
-//
-//        Snowflake messageId = Snowflake.of(actionData);
-//        int workLimit = 5;
-//        int uncleanLimit = 7;
-//
-//        // Single reactive chain returned to caller (no subscribe here)
-//        return message.getChannel()
-//                .flatMap(channel -> channel.createMessage("Starting import").thenReturn(channel))
-//                .flatMap(channel ->
-//                        // run workflow and keep the original channel for followups
-//                        runImportWorkflow(message, messageId, author, workLimit, uncleanLimit)
-//                                .then(channel.createMessage("Importing Done"))
-////                                .thenReturn((Object) "done")
-//                                .then(Mono.empty())
-//                )
-//                .onErrorResume(e -> {
-//                    printException(e);
-//                    return message.getChannel()
-//                            .flatMap(ch -> ch.createMessage("Failed to import data, please import manually"))
-//                            .then(Mono.empty());
-//                });
-//    }
 
     @Override
     public Mono<Object> doAction(Message message) {
@@ -109,35 +73,71 @@ public class Import2 extends Action {
         } else {
             author = message.getAuthor().get().getId().asString();
         }
+        if (actionData == null || !hasPermission(message, true)) return Mono.empty();
 
+        Snowflake messageId = Snowflake.of(actionData);
+        int workLimit = 5;
+        int uncleanLimit = 7;
 
-        if (actionData != null && hasPermission(message, true)) {
-            logger.info("starting import");
-            Snowflake messageId = Snowflake.of(actionData);
-            int workLimit = 5;
-            int uncleanLimit = 7;
-
-            message.getChannel()
-                    .flatMap(channel ->
-                            channel.createMessage("Starting import")
-                                    .then(Mono.fromCallable(() -> {
-                                        logger.info("First step");
-                                        return runImportWorkflow(message, messageId, author, workLimit, uncleanLimit)
-                                                .subscribe(
-                                                        unused -> {},
-                                                        err -> logger.error("Import workflow failed", err)
-                                                );
-                                    }).subscribeOn(Schedulers.boundedElastic()))
-                                    .onErrorResume(e -> channel.createMessage("Failed to import data, please import manually").then(Mono.empty()))
-                    )
-                    .subscribe(result -> logger.info("Workflow completed"));
-
-
-            return Mono.empty();
-        }
-
-        return Mono.empty();
+        // Single reactive chain returned to caller (no subscribe here)
+        return message.getChannel()
+                .flatMap(channel -> channel.createMessage("Starting import").thenReturn(channel))
+                .flatMap(channel ->
+                        // run workflow and keep the original channel for followups
+                        runImportWorkflow(message, messageId, author, workLimit, uncleanLimit)
+                                .then(channel.createMessage("Importing Done"))
+//                                .thenReturn((Object) "done")
+                                .then(Mono.empty())
+                )
+                .onErrorResume(e -> {
+                    printException(e);
+                    return message.getChannel()
+                            .flatMap(ch -> ch.createMessage("Failed to import data, please import manually"))
+                            .then(Mono.empty());
+                });
     }
+
+//    @Override
+//    public Mono<Object> doAction(Message message) {
+//        String actionData = getAction(message);
+//
+//        String author;
+//        if (message.getInteraction().isPresent() && message.getInteraction().get().getName().contains("franchise memberdata export")) {
+//            actionData = message.getId().asString();
+//            author = message.getInteraction().get().getUser().getId().asString();
+//
+//        } else {
+//            author = message.getAuthor().get().getId().asString();
+//        }
+//
+//
+//        if (actionData != null && hasPermission(message, true)) {
+//            logger.info("starting import");
+//            Snowflake messageId = Snowflake.of(actionData);
+//            int workLimit = 5;
+//            int uncleanLimit = 7;
+//
+//            message.getChannel()
+//                    .flatMap(channel ->
+//                            channel.createMessage("Starting import")
+//                                    .then(Mono.fromCallable(() -> {
+//                                        logger.info("First step");
+//                                        return runImportWorkflow(message, messageId, author, workLimit, uncleanLimit)
+//                                                .subscribe(
+//                                                        unused -> {},
+//                                                        err -> logger.error("Import workflow failed", err)
+//                                                );
+//                                    }).subscribeOn(Schedulers.boundedElastic()))
+//                                    .onErrorResume(e -> channel.createMessage("Failed to import data, please import manually").then(Mono.empty()))
+//                    )
+//                    .subscribe(result -> logger.info("Workflow completed"));
+//
+//
+//            return Mono.empty();
+//        }
+//
+//        return Mono.empty();
+//    }
 
 
     private Mono<Void> runImportWorkflow(
@@ -150,6 +150,7 @@ public class Import2 extends Action {
 
         Snowflake guildId = message.getGuildId().get();
         FranchiseConfig franchiseConfig = ExportUtils.getFranchiseConfig(guildId.asString());
+        RestGuild guild = client.getGuildById(guildId);
 
         return message.getChannel()
                 .flatMap(channel -> channel.createMessage("Starting import 2")
@@ -176,37 +177,48 @@ public class Import2 extends Action {
                                         }) // wrap blocking/CPU work
                                         .subscribeOn(Schedulers.boundedElastic())
                         )
-                        .flatMap(tuple -> channel.createMessage(tuple.getT2()).thenReturn(tuple))
-                        .flatMap(tuple -> client.getChannelById(Snowflake.of(franchiseConfig.getFlex()))
-                                .createMessage(tuple.getT2().asRequest())
-                                .thenReturn(tuple.getT1()))
-                        .flatMap(historyWithGiveaway -> loadRoles(historyWithGiveaway.history, guildId).map(userRoles -> Tuples.of(historyWithGiveaway, userRoles)))
-                        .flatMap(tuple -> channel.createMessage("Loaded Roles").then(Mono.just(tuple)))
-                        .flatMap(tuple -> checkRoles(tuple.getT1().history, franchiseConfig.getName(), tuple.getT2(), message).then(Mono.just(tuple)))
-                        .flatMap(tuple -> processOUI(tuple.getT2(), franchiseConfig, channel, tuple.getT1().giveawayData))
-                        .flatMap(tuple -> channel.createMessage("Importing Done").then(Mono.just(tuple)))
+                        .flatMap(tuple -> channel.createMessage(tuple.getT2()).thenReturn(tuple.getT1()))
+                        //removed this to not post to flex
+//                        .flatMap(tuple -> client.getChannelById(Snowflake.of(franchiseConfig.getFlex()))
+//                                .createMessage(tuple.getT2().asRequest())
+//                                .thenReturn(tuple.getT1()))
+                        .flatMap(historyWithGiveaway -> loadRoles(historyWithGiveaway.history, guild).map(userRoles -> Tuples.of(historyWithGiveaway, userRoles)))
+                        .flatMap(tuple -> channel.createMessage("Loaded Roles").thenReturn(tuple))
+                        .flatMap(tuple -> checkRoles(tuple.getT1().history, franchiseConfig.getName(), tuple.getT2(), message).thenReturn(tuple))
+                        .flatMap(tuple -> processOUI(tuple.getT2(), franchiseConfig, channel, tuple.getT1().giveawayData, guild))
+                        .flatMap(tuple -> channel.createMessage("Importing Done").then())
                 ).onErrorResume(e -> {
-                    printException(e);
-                    return message.getChannel().flatMap(ch ->
-                            ch.createMessage("Failed to import data, please import manually")
-                    ).then(Mono.empty());
+                    // bubble up: let caller handle and log
+                    return Mono.error(e);
                 });
 
     }
 
 
-    private Mono<Void> processOUI(HashMap<Long, List<Id>> userRoles, FranchiseConfig franchiseConfig, MessageChannel channel, List<GiveawayData> giveawayData) {
+    private Mono<Void> processOUI(HashMap<Long, List<Id>> userRoles, FranchiseConfig franchiseConfig, MessageChannel channel, List<GiveawayData> giveawayData,
+                                  RestGuild guild) {
         if (!franchiseConfig.getName().equals("OUI")) {
             return Mono.empty();
         }
+//        RestGuild guild = client.getGuildById(Snowflake.of(guildId));
+
+        //should do this at some point
+        //Mono<Void> applyWarnings(...)
+        //Mono<Void> removeMercy(...)
+        //Mono<Void> applyGiveaway(...)
+        //Mono<Void> removeGiveaway(...)
+        //Mono<Void> checkZeroVote(...)
 
         // Step 1: Start import
         return channel.createMessage("Doing Warnings")
                 .then(Mono.defer(() -> {
                     if (!skipWarnings) {
-                        Warn warn = new Warn();
-                        warn.action(gateway, client);
-                        warn.doWarnings(5, 300, true, franchiseConfig, userRoles);
+                        // Warn.doWarnings may be blocking; run on boundedElastic
+                        return Mono.fromRunnable(() -> {
+                            Warn warn = new Warn();
+                            warn.action(gateway, client);
+                            warn.doWarnings(5, 300, true, franchiseConfig, userRoles);
+                        }).subscribeOn(Schedulers.boundedElastic());
                     }
                     return Mono.empty();
                 }))
@@ -215,7 +227,6 @@ public class Import2 extends Action {
                 .then(channel.createMessage("Removing Mercy"))
                 .thenMany(Flux.fromIterable(ExportUtils.loadWarningDataAfterImmunity()))
                 .flatMap(warningData -> {
-                    RestGuild guild = client.getGuildById(Snowflake.of(guildId));
                     return guild.removeMemberRole(
                                     Snowflake.of(warningData.getName()),
                                     Snowflake.of(franchiseConfig.getImmunity()),
@@ -226,7 +237,7 @@ public class Import2 extends Action {
                             })
                             .then(Mono.fromRunnable(() -> {
                                 warningData.setImmunityUntil(null);
-                                ExportUtils.updateWarningData(warningData);
+                                ExportUtils.updateWarningDataMercy(warningData.getName(), null);
                             }));
                 })
                 .then(channel.createMessage("Adding Giveaway"))
@@ -235,9 +246,7 @@ public class Import2 extends Action {
                 .thenMany(Flux.fromIterable(giveawayData))
                 .flatMap(member -> {
 
-                    if (member.qualifiesForGiveaway()) return Mono.empty();
-
-                    RestGuild guild = client.getGuildById(Snowflake.of(guildId));
+                    if (!member.qualifiesForGiveaway()) return Mono.empty();
 
                     Mono<Void> addRole = Mono.empty();
                     if (!hasRole(userRoles.get(member.getId()), franchiseConfig.getGiveawayRole())) {
@@ -261,7 +270,6 @@ public class Import2 extends Action {
                 // Step 4: Remove expired giveaways
                 .thenMany(Flux.fromIterable(ExportUtils.loadWarningDataAfterGiveaway()))
                 .flatMap(warningData -> {
-                    RestGuild guild = client.getGuildById(Snowflake.of(guildId));
                     List<Id> roles = userRoles.get(Long.parseLong(warningData.getName()));
 
                     Mono<Void> removeRole = Mono.empty();
@@ -278,7 +286,7 @@ public class Import2 extends Action {
 
                     return removeRole.then(Mono.fromRunnable(() -> {
                         warningData.setGiveawayUntil(null);
-                        ExportUtils.updateWarningData(warningData);
+                        ExportUtils.updateWarningData(warningData.getName(), null);
                     }));
                 })
                 .then(channel.createMessage("Doing vote check"))
@@ -286,7 +294,6 @@ public class Import2 extends Action {
                 // Step 5: Zero vote check
                 .thenMany(Flux.fromIterable(giveawayData))
                 .flatMap(member -> {
-                    RestGuild guild = client.getGuildById(Snowflake.of(guildId));
                     List<Id> roles = userRoles.get(member.getId());
 
                     if (member.getVotes() == 0 && !hasRole(roles, zeroVotes)) {
@@ -311,9 +318,9 @@ public class Import2 extends Action {
 
     private Mono<HashMap<Long, List<Id>>> loadRoles(
             HashMap<Long, List<ExportData>> history,
-            Snowflake guildId) {
+            RestGuild guild) {
 
-        RestGuild guild = client.getGuildById(guildId); // synchronous (OK)
+//        RestGuild guild = client.getGuildById(guildId); // synchronous (OK)
 
         return Flux.fromIterable(history.keySet())
                 .flatMap(id ->
@@ -329,7 +336,7 @@ public class Import2 extends Action {
     }
 
 
-    private EmbedWithGiveaway buildWeeklyEmbed(HashMap<Long, List<ExportData>> history, String franchiseName) {
+    public EmbedWithGiveaway buildWeeklyEmbed(HashMap<Long, List<ExportData>> history, String franchiseName) {
         logger.info("processed data");
         List<WeeklyBestData> work = new ArrayList<>();
         List<WeeklyBestData> tips = new ArrayList<>();
@@ -412,10 +419,18 @@ public class Import2 extends Action {
         return embedWithGiveaway;
     }
 
-    private class EmbedWithGiveaway {
+    public class EmbedWithGiveaway {
 
         List<GiveawayData> giveawayData = new ArrayList<>();
         EmbedCreateSpec embed;
+
+        public List<GiveawayData> getGiveawayData() {
+            return giveawayData;
+        }
+
+        public EmbedCreateSpec getEmbed() {
+            return embed;
+        }
     }
 
     private class HistoryWithGiveaway {

@@ -29,6 +29,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.Timestamp;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -209,15 +210,10 @@ public class Import extends Action {
                     embed2.addField("Top Overtime", getBest(overtime, overtimeYesterday, false), true);
                     embed2.addField("Top Votes", getBest(votes, votesYesterday,false), false);
 
-
                     //load flex channel??
                     client.getChannelById(Snowflake.of(franchiseConfig.getFlex())).createMessage(embed.build().asRequest()).block();
 
                     channel.createMessage(embed.build()).block();
-
-//                    client.getChannelById(Snowflake.of(flex)).createMessage(embed2.build().asRequest()).block();
-//
-//                    channel.createMessage(embed2.build()).block();
 
                     HashMap<Long, List<Id>> userRoles = new HashMap<>();
                     logger.info("size = " + history.size());
@@ -234,17 +230,6 @@ public class Import extends Action {
                         }
                     }
                     logger.info("size = " + history.size());
-
-//                    history.forEach((id, dataList) -> {
-//                        logger.info("loading roles for id " + id);
-//                        try {
-//                            List<Id> roles = client.getGuildById(Snowflake.of(guildId)).getMember(Snowflake.of(id)).block().roles();
-//                            userRoles.put(id, roles);
-//                        } catch (ClientException e) {
-//                            //member left the server
-//                            logger.info("user left the server " + id);
-//                        }
-//                    });
 
                     channel.createMessage("Checking Roles").block();
 

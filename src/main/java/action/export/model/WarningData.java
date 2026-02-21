@@ -49,4 +49,14 @@ public class WarningData {
     public void setGiveawayUntil(Timestamp giveawayUntil) {
         this.giveawayUntil = giveawayUntil;
     }
+
+    @Override
+    public String toString() {
+        return "WarningData{" +
+                "name='" + name + '\'' +
+                ", immunityUntil=" + immunityUntil +
+                ", giveawayUntil=" + giveawayUntil +
+                ", lastWarning=" + lastWarning +
+                '}';
+    }
 }

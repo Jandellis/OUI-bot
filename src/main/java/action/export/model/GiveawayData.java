@@ -29,4 +29,19 @@ public class GiveawayData {
     public int getWork() {
         return work;
     }
+
+    public boolean qualifiesForGiveaway() {
+
+        int match = 0;
+        if (overtime >= 30) {
+            match++;
+        }
+        if (work >= 50) {
+            match++;
+        }
+        if (votes >= 7) {
+            match++;
+        }
+        return match >= 2;
+    }
 }
