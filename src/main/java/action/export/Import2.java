@@ -71,7 +71,11 @@ public class Import2 extends Action {
             author = message.getInteraction().get().getUser().getId().asString();
 
         } else {
-            author = message.getAuthor().get().getId().asString();
+            if (message.getAuthor().isPresent()) {
+                author = message.getAuthor().get().getId().asString();
+            } else {
+                return Mono.empty();
+            }
         }
         if (actionData == null || !hasPermission(message, true)) return Mono.empty();
 

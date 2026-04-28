@@ -5,15 +5,18 @@ public class ReminderSettings {
     String name;
 
     boolean tip;
-    boolean work ;
-    boolean grind ;
-    boolean overtime ;
-    boolean vote ;
-    boolean daily ;
-    boolean clean ;
-    boolean boost ;
+    boolean work;
+    boolean grind;
+    boolean overtime;
+    boolean vote;
+    boolean daily;
+    boolean clean;
+    boolean boost;
+    double workModifier;
+    double overtimeModifier;
+    double tipsModifier;
 
-    public ReminderSettings(String name, boolean tip, boolean work, boolean grind, boolean overtime, boolean vote, boolean daily, boolean clean, boolean boost) {
+    public ReminderSettings(String name, boolean tip, boolean work, boolean grind, boolean overtime, boolean vote, boolean daily, boolean clean, boolean boost, double workModifier, double overtimeModifier, double tipsModifier) {
         this.name = name;
         this.tip = tip;
         this.work = work;
@@ -23,6 +26,9 @@ public class ReminderSettings {
         this.daily = daily;
         this.clean = clean;
         this.boost = boost;
+        this.workModifier = workModifier;
+        this.overtimeModifier = overtimeModifier;
+        this.tipsModifier = tipsModifier;
     }
 
     public ReminderSettings(String name) {
@@ -35,6 +41,9 @@ public class ReminderSettings {
         this.daily = true;
         this.clean = true;
         this.boost = true;
+        this.workModifier = 1;
+        this.overtimeModifier = 1;
+        this.tipsModifier = 1;
     }
 
     public String getName() {
@@ -59,6 +68,14 @@ public class ReminderSettings {
 
     public void setWork(boolean work) {
         this.work = work;
+    }
+
+    public boolean isGrind() {
+        return grind;
+    }
+
+    public void setGrind(boolean grind) {
+        this.grind = grind;
     }
 
     public boolean isOvertime() {
@@ -101,11 +118,45 @@ public class ReminderSettings {
         this.boost = boost;
     }
 
-    public boolean isGrind() {
-        return grind;
+    public double getWorkModifier() {
+        return workModifier;
     }
 
-    public void setGrind(boolean grind) {
-        this.grind = grind;
+    public void setWorkModifier(double workModifier) {
+        this.workModifier = workModifier;
+    }
+
+    public double getOvertimeModifier() {
+        return overtimeModifier;
+    }
+
+    public void setOvertimeModifier(double overtimeModifier) {
+        this.overtimeModifier = overtimeModifier;
+    }
+
+    public double getTipsModifier() {
+        return tipsModifier;
+    }
+
+    public void setTipsModifier(double tipsModifier) {
+        this.tipsModifier = tipsModifier;
+    }
+
+    @Override
+    public String toString() {
+        return "ReminderSettings{" +
+                "name='" + name + '\'' +
+                ", tip=" + tip +
+                ", work=" + work +
+                ", grind=" + grind +
+                ", overtime=" + overtime +
+                ", vote=" + vote +
+                ", daily=" + daily +
+                ", clean=" + clean +
+                ", boost=" + boost +
+                ", workModifier=" + workModifier +
+                ", overtimeModifier=" + overtimeModifier +
+                ", tipsModifier=" + tipsModifier +
+                '}';
     }
 }

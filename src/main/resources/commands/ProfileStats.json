@@ -53,6 +53,10 @@
                     "value": "cantina"
                 },
                 {
+                    "name": "Resort",
+                    "value": "resort"
+                },
+                {
                     "name": "Hq",
                     "value": "hq"
                 },

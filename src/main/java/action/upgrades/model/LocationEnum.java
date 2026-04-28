@@ -22,6 +22,7 @@ public enum LocationEnum {
     city("city", 6, "\uD83C\uDF06"),
 
     cantina("cantina", 7, "\uD83C\uDF35"),
+    resort("resort", 8, "\uD83C\uDFD4\uFE0F"),
     hq("hq", 0, "\uD83C\uDFDB"),
     event("event", 0, "\uD83C\uDF9F"),
     franchise("franchise", 0, "\uD83C\uDFE2");

@@ -17,6 +17,7 @@ import com.gargoylesoftware.htmlunit.WebClient;
 import discord4j.common.util.Snowflake;
 import discord4j.core.object.entity.Message;
 import discord4j.core.spec.EmbedCreateSpec;
+import discord4j.core.spec.MessageCreateFields;
 import discord4j.core.spec.MessageCreateSpec;
 import discord4j.rest.util.Color;
 import org.json.simple.JSONObject;
@@ -168,7 +169,7 @@ public class PriceCheck extends Action {
         return !date.isBefore(startWindow) && !date.isAfter(endWindow);
     }
 
-    public void loadPrices() {
+    public boolean loadPrices() {
         try {
             //for a week before the start of the odd month until the end of the 2nd week, display ss
             hideSS = !isInOddMonthWindow2(LocalDateTime.now());
@@ -180,7 +181,7 @@ public class PriceCheck extends Action {
             webClient.getOptions().setCssEnabled(false);
             webClient.getOptions().setJavaScriptEnabled(false);
             webClient.addRequestHeader("token", "123");
-            String data = webClient.getPage("https://tacoshack.online/api/saucemarket").getWebResponse().getContentAsString();
+            String data = webClient.getPage("https://tacoshack.dev/api/saucemarket").getWebResponse().getContentAsString();
 
             logger.info(data);
 
@@ -193,6 +194,7 @@ public class PriceCheck extends Action {
             HashMap<Sauce, Integer> oldPrices = Utils.loadPrices();
 
             Boolean hasSS = false;
+            int samePriceCount = 0;
 
             for (Sauce sauce : Sauce.values()) {
                 if (sauce == Sauce.secret_sauce  ) {
@@ -227,6 +229,9 @@ public class PriceCheck extends Action {
                      price2 = oldPrices.get(sauce);
                 //Integer.parseInt(((JSONArray) ((JSONObject) ((JSONObject) obj).get(sauce.getName())).get("history")).get(0).toString());
 
+                if (price2 == price) {
+                    samePriceCount++;
+                }
 
                 logger.info(sauce + " at $" + price);
                 prices.put(sauce, price);
@@ -235,6 +240,10 @@ public class PriceCheck extends Action {
                 sauceObject.setMax(max);
                 sauceObject.setMin(min);
                 SauceObjectPrices.put(sauce, sauceObject);
+            }
+
+            if (samePriceCount > 4) {
+                return false;
             }
 
             if (!hasSS) {
@@ -424,7 +433,7 @@ public class PriceCheck extends Action {
                     InputStream inputStream = null;
                     inputStream = new BufferedInputStream(new FileInputStream(finalFilename +".png"));
                     MessageCreateSpec msg = MessageCreateSpec.builder()
-                            .addFile(finalFilename +".png", inputStream)
+                            .addFile(MessageCreateFields.File.of(finalFilename +".png", inputStream))
                             .build();
 
                     client.getChannelById(Snowflake.of(channel)).createMessage(msg.asRequest()).block();
@@ -443,7 +452,7 @@ public class PriceCheck extends Action {
                         InputStream inputStream = null;
                         inputStream = new BufferedInputStream(new FileInputStream("ss_chart.png"));
                         MessageCreateSpec msg = MessageCreateSpec.builder()
-                                .addFile("ss_chart.png", inputStream)
+                                .addFile(MessageCreateFields.File.of("ss_chart.png", inputStream))
                                 .build();
 
                         client.getChannelById(Snowflake.of(channel)).createMessage(msg.asRequest()).block();
@@ -459,6 +468,7 @@ public class PriceCheck extends Action {
         } catch (Throwable e) {
             e.printStackTrace();
         }
+        return true;
 
     }
 
@@ -676,6 +686,7 @@ public class PriceCheck extends Action {
 
     public void startUp() {
         LocalDateTime nextRunTime = LocalDateTime.now().minusMinutes(1);
+        boolean sucess = false;
 
         BufferedReader unlockReader = null;
         try {
@@ -688,20 +699,20 @@ public class PriceCheck extends Action {
             unlockReader.close();
             logger.info("checking if price check needs to be done");
             if (LocalDateTime.now().isAfter(nextRunTime)) {
-                loadPrices();
+                sucess = loadPrices();
             }
 
         } catch (IOException e) {
             e.printStackTrace();
         }
-        start();
+        start(sucess);
     }
 
 
     /**
      * Run task once a hour
      */
-    public void start() {
+    public void start(boolean success) {
 
         Runnable taskWrapper = new Runnable() {
 
@@ -710,12 +721,20 @@ public class PriceCheck extends Action {
                 logger.info("running price check");
 
                 Utils.deleteReminder(SystemReminderType.sauce);
-                loadPrices();
-                start();
+                boolean loadPricesSuccess = loadPrices();
+                start(loadPricesSuccess);
             }
 
         };
-        long delay = computeNextDelay();
+        long delay = 1;
+        // if was successful sleep for an hour
+        //otherwise try again in 1min
+
+        LocalDateTime now = LocalDateTime.now();
+        int min = now.getMinute();
+        if (success || min > 15) {
+            delay = computeNextDelay();
+        }
 
 
         LocalDateTime priceCheckTime = LocalDateTime.now().plusMinutes(delay);

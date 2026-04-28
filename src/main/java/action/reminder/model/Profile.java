@@ -20,6 +20,10 @@ public class Profile {
     Boolean dnd = false;
     String userName;
     Timestamp rushHourEnd;
+    Timestamp rushHourIgnore;
+    int workIncome;
+    int tipsIncome;
+    int overtimeIncome;
 
     public Profile(String name, String shackName, Status status) {
         this.name = name;
@@ -27,7 +31,25 @@ public class Profile {
         this.status = status;
     }
 
-    public Profile(String name, String shackName, Status status, Boolean enabled, String emote, String message, int depth, int upgrade, Time sleepStart, Time sleepEnd, Boolean dmReminder, Boolean ignoredHidden, Boolean dnd, String userName, Timestamp rushHourEnd) {
+    public Profile(String name,
+                   String shackName,
+                   Status status,
+                   Boolean enabled,
+                   String emote,
+                   String message,
+                   int depth,
+                   int upgrade,
+                   Time sleepStart,
+                   Time sleepEnd,
+                   Boolean dmReminder,
+                   Boolean ignoredHidden,
+                   Boolean dnd,
+                   String userName,
+                   Timestamp rushHourEnd,
+                   Timestamp rushHourIgnore,
+                   int workIncome,
+                   int tipsIncome,
+                   int overtimeIncome) {
         this.name = name;
         this.shackName = shackName;
         this.status = status;
@@ -45,6 +67,10 @@ public class Profile {
         this.ignoredHidden = ignoredHidden;
         this.dnd = dnd;
         this.rushHourEnd = rushHourEnd;
+        this.rushHourIgnore = rushHourIgnore;
+        this.workIncome = workIncome;
+        this.tipsIncome = tipsIncome;
+        this.overtimeIncome = overtimeIncome;
     }
 
     public String getName() {
@@ -117,5 +143,37 @@ public class Profile {
 
     public void setRushHourEnd(Timestamp rushHourEnd) {
         this.rushHourEnd = rushHourEnd;
+    }
+
+    public Timestamp getRushHourIgnore() {
+        return rushHourIgnore;
+    }
+
+    public void setRushHourIgnore(Timestamp rushHourIgnore) {
+        this.rushHourIgnore = rushHourIgnore;
+    }
+
+    public int getOvertimeIncome() {
+        return overtimeIncome;
+    }
+
+    public void setOvertimeIncome(int overtimeIncome) {
+        this.overtimeIncome = overtimeIncome;
+    }
+
+    public int getTipsIncome() {
+        return tipsIncome;
+    }
+
+    public void setTipsIncome(int tipsIncome) {
+        this.tipsIncome = tipsIncome;
+    }
+
+    public int getWorkIncome() {
+        return workIncome;
+    }
+
+    public void setWorkIncome(int workIncome) {
+        this.workIncome = workIncome;
     }
 }

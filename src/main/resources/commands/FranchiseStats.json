@@ -23,6 +23,10 @@
                     "value": "balance"
                 },
                 {
+                    "name": "Balance Weekly",
+                    "value": "balanceWeekly"
+                },
+                {
                     "name": "Sold",
                     "value": "sold"
                 }

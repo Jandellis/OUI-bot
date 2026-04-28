@@ -2,7 +2,7 @@ package action.reminder;
 
 import action.Action;
 import discord4j.core.object.entity.Message;
-import discord4j.core.object.reaction.ReactionEmoji;
+import discord4j.core.object.emoji.Emoji;
 import reactor.core.publisher.Mono;
 
 import java.util.Arrays;
@@ -48,9 +48,9 @@ public class React extends Action {
                             Long id = Long.parseLong(emote[2].replace(">", ""));
                             String name = emote[1];
                             boolean animated = true;
-                            message.addReaction(ReactionEmoji.of(id, name, animated)).block();
+                            message.addReaction(Emoji.of(id, name, animated)).block();
                         } else {
-                            message.addReaction(ReactionEmoji.unicode(action)).block();
+                            message.addReaction(Emoji.unicode(action)).block();
                         }
                         ReminderUtils.addReact(message.getAuthor().get().getId().asString(), action);
                     }

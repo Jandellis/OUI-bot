@@ -56,6 +56,7 @@ import discord4j.core.object.presence.ClientPresence;
 import discord4j.discordjson.json.ApplicationCommandOptionData;
 import discord4j.discordjson.json.ApplicationCommandRequest;
 
+import discord4j.gateway.intent.IntentSet;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.reactivestreams.Publisher;
@@ -139,7 +140,9 @@ public class Bot {
         while (true) {
             try {
 
-                Mono<Void> login = client.withGateway((GatewayDiscordClient gateway) -> {
+                Mono<Void> login = client.gateway()
+                        .setEnabledIntents(IntentSet.all())
+                        .withGateway((GatewayDiscordClient gateway) -> {
                     // ReadyEvent example
                     Mono<Void> printOnLogin = gateway.on(ReadyEvent.class, event ->
                                     Mono.fromRunnable(() -> {

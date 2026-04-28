@@ -61,6 +61,13 @@ public enum ReminderType {
     disco("Disco Night"),
     jukebox("Jukebox"),
 
+    //Resort
+    powder("Powder Day"),
+    holiday("Holiday Break"),
+    partnership("Resort Partnership"),
+    weekend("Weekend Rush"),
+    games("Winter Games"),
+
     //event
     flyers("Flyers", false),
     twirler("Sign Twirler", false),

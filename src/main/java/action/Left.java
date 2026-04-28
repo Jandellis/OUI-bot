@@ -3,7 +3,7 @@ package action;
 import action.export.ExportUtils;
 import discord4j.common.util.Snowflake;
 import discord4j.core.object.entity.Message;
-import discord4j.core.object.reaction.ReactionEmoji;
+import discord4j.core.object.emoji.Emoji;
 import discord4j.discordjson.json.MemberData;
 import discord4j.rest.http.client.ClientException;
 import reactor.core.publisher.Mono;
@@ -63,7 +63,7 @@ public class Left extends Action {
                         logger.info("user left the server " + memberId);
                     }
 
-                    message.addReaction(ReactionEmoji.unicode("\uD83D\uDD2B")).block();
+                    message.addReaction(Emoji.unicode("\uD83D\uDD2B")).block();
 
                     ExportUtils.removeMember("oui");
                     return Mono.empty();
@@ -95,7 +95,7 @@ public class Left extends Action {
                         logger.info("user left the server " + memberId);
                     }
 
-                    message.addReaction(ReactionEmoji.unicode("\uD83D\uDD2B")).block();
+                    message.addReaction(Emoji.unicode("\uD83D\uDD2B")).block();
 
                     return Mono.empty();
                 }

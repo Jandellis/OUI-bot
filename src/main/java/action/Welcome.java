@@ -4,7 +4,7 @@ import action.export.ExportUtils;
 import action.export.model.WarningData;
 import discord4j.common.util.Snowflake;
 import discord4j.core.object.entity.Message;
-import discord4j.core.object.reaction.ReactionEmoji;
+import discord4j.core.object.emoji.Emoji;
 import discord4j.rest.http.client.ClientException;
 import reactor.core.publisher.Mono;
 
@@ -87,7 +87,7 @@ public class Welcome extends Action {
 //                        return Mono.empty();
 //                    }).block();
 //
-//                    message.addReaction(ReactionEmoji.unicode("\uD83D\uDC4D")).block();
+//                    message.addReaction(Emoji.unicode("\uD83D\uDC4D")).block();
                 }
             }
 
@@ -286,6 +286,6 @@ public class Welcome extends Action {
             return Mono.empty();
         }).block();
 
-        message.addReaction(ReactionEmoji.unicode("\uD83D\uDC4D")).block();
+        message.addReaction(Emoji.unicode("\uD83D\uDC4D")).block();
     }
 }

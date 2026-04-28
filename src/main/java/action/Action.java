@@ -6,6 +6,8 @@ import action.reminder.ReminderUtils;
 import action.reminder.model.Profile;
 import action.upgrades.model.LocationEnum;
 import bot.Config;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import discord4j.common.util.Snowflake;
 import discord4j.core.DiscordClient;
 import discord4j.core.GatewayDiscordClient;
@@ -14,12 +16,14 @@ import discord4j.core.event.domain.message.ReactionAddEvent;
 import discord4j.core.object.Embed;
 import discord4j.core.object.entity.Member;
 import discord4j.core.object.entity.Message;
-import discord4j.core.object.reaction.ReactionEmoji;
+import discord4j.core.object.emoji.Emoji;
 import discord4j.core.spec.GuildMemberEditSpec;
 import discord4j.discordjson.Id;
+import discord4j.discordjson.json.ComponentData;
 import discord4j.discordjson.json.EmbedData;
 import discord4j.discordjson.json.MemberData;
 import discord4j.discordjson.json.MessageData;
+import discord4j.discordjson.possible.Possible;
 import discord4j.rest.http.client.ClientException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -301,6 +305,7 @@ public abstract class Action {
 
     protected Long getBalance(EmbedData embedData) {
         if (embedData != null && embedData.footer().toOptional().isPresent()) {
+            logger.info("Checking balance - footer " + embedData.footer().get().text());
             String balance = embedData.footer().get().text();
             if (balance.contains("\n")){
                 String[] footer = balance.split("\n");
@@ -398,12 +403,66 @@ public abstract class Action {
 //                        "To stop seeing this message increase your history limit with `cyrm history <limit>`, or stop clicking on other peoples buttons!\n" +
 //                        "The higher the history, the more message I will go back and check who was the owner. For me to read this message your history would need to be more than " + count).block();
                 if (profile.getEnabled()) {
-                    original.addReaction(ReactionEmoji.unicode("\uD83D\uDEAB")).block();
+                    original.addReaction(Emoji.unicode("\uD83D\uDEAB")).block();
                 }
                 return "";
             }
         }
     }
+
+//    public String getContainerUser(Message message) {
+//
+//        Possible<List<ComponentData>> possibleComponents = message.getData().components();
+//
+//        if (possibleComponents.isAbsent() || possibleComponents.get().isEmpty()) {
+//            return null;
+//        }
+//
+//        List<ComponentData> components = possibleComponents.get();
+//
+//        for (ComponentData container : components) {
+//
+//            // container level (rows)
+//            Possible<List<ComponentData>> inner = container.components();
+//
+//            if (inner.isAbsent()) continue;
+//
+//            for (ComponentData item : inner.get()) {
+//
+//                // type 10 = text block
+//                if (item.type() == 10 && item.content().isPresent()) {
+//
+//                    String text = item.content().get();
+//
+//                    if (text.contains(" | ")) {
+//                        String id = text.split("\\s*\\|\\s*")[0];
+//                        logger.info("found id of {}", id);
+//                        return id;
+//                    }
+//                }
+//            }
+//        }
+//
+//        return null;
+//    }
+public String getContainerUser(Message message) {
+    Possible<List<ComponentData>> possible = message.getData().components();
+    if (possible.isAbsent()) return null;
+
+    for (ComponentData top : possible.get()) {
+        if (top.components().isAbsent()) continue;
+        for (ComponentData item : top.components().get()) {
+            if (item.type() != 10 || item.content().isAbsent()) continue;
+            String text = item.content().get();
+            if (text.contains(" | ")) {
+                String id = text.split("\\s*\\|\\s*")[0].trim();
+                logger.info("found id of '{}' length {}", id, id.length());
+                return id;
+            }
+        }
+    }
+    return null;
+}
 
 
     protected void checkMessageAgain(Message message) {
@@ -531,9 +590,9 @@ public abstract class Action {
 //            Long id = Long.parseLong(emote[2].replace(">", ""));
 //            String name = emote[1];
 //            boolean animated = true;
-//            message.addReaction(ReactionEmoji.of(id, name, true)).block();
+//            message.addReaction(Emoji.of(id, name, true)).block();
 //        } else {
-//            message.addReaction(ReactionEmoji.unicode(react)).block();
+//            message.addReaction(Emoji.unicode(react)).block();
 //        }
 //    }
 
@@ -547,9 +606,9 @@ public abstract class Action {
             String name = emote[1];
             boolean animated = react.startsWith("<a:");
 
-            message.addReaction(ReactionEmoji.custom(Snowflake.of(id), name, animated)).block();
+            message.addReaction(Emoji.custom(Snowflake.of(id), name, animated)).block();
         } else {
-            message.addReaction(ReactionEmoji.unicode(react)).block();
+            message.addReaction(Emoji.unicode(react)).block();
         }
     }
 }

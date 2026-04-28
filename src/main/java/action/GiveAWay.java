@@ -16,7 +16,7 @@ import discord4j.common.util.Snowflake;
 import discord4j.core.event.domain.message.ReactionAddEvent;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.User;
-import discord4j.core.object.reaction.ReactionEmoji;
+import discord4j.core.object.emoji.Emoji;
 import discord4j.core.spec.EmbedCreateFields;
 import discord4j.core.spec.EmbedCreateSpec;
 import discord4j.discordjson.Id;
@@ -176,7 +176,7 @@ public class GiveAWay extends Action {
         MessageData msg = client.getChannelById(Snowflake.of(giveawayChannel)).createMessage(embed.build().asRequest()).block();
 
         Message message = gateway.getMessageById(Snowflake.of(giveawayChannel), Snowflake.of(msg.id().toString())).block();
-        message.addReaction(ReactionEmoji.unicode(react)).block();
+        message.addReaction(Emoji.unicode(react)).block();
 
 
 
@@ -228,7 +228,7 @@ public class GiveAWay extends Action {
 //
 //            List<String> enteredList = new ArrayList<>();
 //
-//            List<User> users = message.getReactors(ReactionEmoji.unicode(react)).collectList().block();
+//            List<User> users = message.getReactors(Emoji.unicode(react)).collectList().block();
 //
 //            users.forEach(user -> {
 //                try {
@@ -284,7 +284,7 @@ public class GiveAWay extends Action {
     public String doRoll(String messageId) {
         Message message = gateway.getMessageById(Snowflake.of(giveawayChannel), Snowflake.of(messageId)).block();
         List<String> enteredList = new ArrayList<>();
-        List<User> users = message.getReactors(ReactionEmoji.unicode(react)).collectList().block();
+        List<User> users = message.getReactors(Emoji.unicode(react)).collectList().block();
         StringBuilder audit = new StringBuilder();
 
         EmbedCreateSpec.Builder auditEmbed = EmbedCreateSpec.builder();

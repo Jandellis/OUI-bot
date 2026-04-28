@@ -105,7 +105,7 @@ public class Hit extends Action {
                             logger.info("checking donation levels " + kickMember.getId());
 
                             // remove members who have donated a lot
-                            if (exclude!= null && exclude.equals("exclude")) {
+                            if (exclude== null || !exclude.equals("include")) {
                                 memberData.roles().forEach(id -> {
                                     if (
                                             // platinum

@@ -18,7 +18,7 @@ import discord4j.core.object.PermissionOverwrite;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.User;
 import discord4j.core.object.entity.channel.TopLevelGuildChannel;
-import discord4j.core.object.reaction.ReactionEmoji;
+import discord4j.core.object.emoji.Emoji;
 import discord4j.core.spec.EmbedCreateSpec;
 import discord4j.discordjson.Id;
 import discord4j.discordjson.json.EmbedData;
@@ -68,6 +68,7 @@ public class RushHour extends Action implements EmbedAction {
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
     String react;
+    String reactIngore;
     Long recruiter;
     boolean openGiveaway;
 
@@ -80,6 +81,7 @@ public class RushHour extends Action implements EmbedAction {
         react = "\uD83C\uDF89";
 
         react = "<:rh:1431319493136879717>";
+        reactIngore = "❌";
 //        react = "<a:pocketWave:1016913321213050892>";
         recruiter = Long.parseLong(config.get("recruiter"));
         chefRole = Long.parseLong(config.get("chefRole"));
@@ -124,21 +126,7 @@ public class RushHour extends Action implements EmbedAction {
     protected Mono<Object> doReactionEvent(ReactionAddEvent reactionAddEvent) {
 
         try {
-            boolean reaction = false;
-
-            if (reactionAddEvent.getEmoji().asUnicodeEmoji().isPresent()){
-                if (reactionAddEvent.getEmoji().asUnicodeEmoji().get().getRaw().equals(react)) {
-                    reaction = true;
-                }
-            }
-
-
-            if (reactionAddEvent.getEmoji().asCustomEmoji().isPresent()){
-                if (reactionAddEvent.getEmoji().asCustomEmoji().get().asFormat().equals(react)) {
-                    reaction = true;
-                }
-            }
-            if (reaction) {
+            if (hasReaction(reactionAddEvent, react)) {
                 Message message = reactionAddEvent.getMessage().block();
                 if (message.getAuthor().isPresent()
                         && message.getAuthor().get().getId().asLong() == 962878786066595911L
@@ -148,11 +136,39 @@ public class RushHour extends Action implements EmbedAction {
                     ReminderUtils.addRushHour(reactionAddEvent.getUserId().asString(), Timestamp.from(rushHourEnd));
                 }
             }
+            if (hasReaction(reactionAddEvent, reactIngore)) {
+                Message message = reactionAddEvent.getMessage().block();
+                if (message.getAuthor().isPresent()
+                        && message.getAuthor().get().getId().asLong() == 962878786066595911L
+                        && message.getContent().contains("Rush hour event now")) {
+
+                    Instant rushHourEnd = message.getTimestamp().plus(60, ChronoUnit.MINUTES);
+                    ReminderUtils.ignoreRushHour(reactionAddEvent.getUserId().asString(), Timestamp.from(rushHourEnd));
+                }
+            }
         } catch (Exception e) {
             printException(e);
         }
 
         return Mono.empty();
+    }
+
+    private boolean hasReaction(ReactionAddEvent reactionAddEvent, String emote) {
+        boolean reaction = false;
+
+        if (reactionAddEvent.getEmoji().asUnicodeEmoji().isPresent()){
+            if (reactionAddEvent.getEmoji().asUnicodeEmoji().get().getRaw().equals(emote)) {
+                reaction = true;
+            }
+        }
+
+
+        if (reactionAddEvent.getEmoji().asCustomEmoji().isPresent()){
+            if (reactionAddEvent.getEmoji().asCustomEmoji().get().asFormat().equals(emote)) {
+                reaction = true;
+            }
+        }
+        return reaction;
     }
 
     private void createRushHour(Message message) {
@@ -204,9 +220,10 @@ public class RushHour extends Action implements EmbedAction {
              * 60 min after starts, say thanks for joining, next one will start in 27 hours
              */
 
-            Message pingMsg = channel.createMessage("Rush hour event now, " + ping + "react with " + react + " to get updated reminders for the next 60 minutes").block();
-//            pingMsg.addReaction(ReactionEmoji.unicode(react)).block();
+            Message pingMsg = channel.createMessage("Rush hour event now, " + ping + "react with " + react + " to get updated reminders for the next 60 minutes" + "\n" + "or with " + reactIngore + " to ignore this event").block();
+//            pingMsg.addReaction(Emoji.unicode(react)).block();
             react(pingMsg, react);
+            react(pingMsg, reactIngore);
             return Mono.empty();
         }).block();
     }

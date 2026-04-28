@@ -4,7 +4,7 @@ import action.Action;
 import action.export.model.MemberDonations;
 import discord4j.common.util.Snowflake;
 import discord4j.core.object.entity.Message;
-import discord4j.core.object.reaction.ReactionEmoji;
+import discord4j.core.object.emoji.Emoji;
 import discord4j.discordjson.Id;
 import discord4j.discordjson.json.MemberData;
 import discord4j.rest.http.client.ClientException;
@@ -79,7 +79,7 @@ public class Donate extends Action {
                     //lower warning level
                     //if still more than 5mill, check again. maybe have some kind of while loop or something??
 
-                    message.addReaction(ReactionEmoji.unicode("\uD83D\uDCB0")).block();
+                    message.addReaction(Emoji.unicode("\uD83D\uDCB0")).block();
                     return Mono.empty();
                 }
             }

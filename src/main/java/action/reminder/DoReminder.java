@@ -149,9 +149,7 @@ public class DoReminder extends Action {
 //            return;
 //        }
 
-        Profile profile = ReminderUtils.loadProfileById(reminder.getName());
-        if (!profile.getEnabled())
-            return;
+
 
         String msg = defaultReact + " Boo {ping} go do {cmd}!";
         boolean groupReminder = false;
@@ -173,6 +171,13 @@ public class DoReminder extends Action {
                 || reminder.getType() == eventClean
         ) {
             groupReminder = true;
+        }
+
+        Profile profile = ReminderUtils.loadProfileById(reminder.getName());
+        if (!profile.getEnabled() && !groupReminder) {
+            logger.info("Profile {} is not enabled", profile.getName());
+            ReminderUtils.deleteReminder(reminder);
+            return;
         }
 
         //if shas sleep, check in sleep time
@@ -234,7 +239,7 @@ public class DoReminder extends Action {
 
         ReminderSettings reminderSettings = ReminderUtils.loadReminderSettings(profile.getName());
         if (reminderSettings == null) {
-            reminderSettings = new ReminderSettings(profile.getName(), true, true, false, true, true, true, true, true);
+            reminderSettings = new ReminderSettings(profile.getName(), true, true, false, true, true, true, true, true, 1, 1, 1);
         }
 
 

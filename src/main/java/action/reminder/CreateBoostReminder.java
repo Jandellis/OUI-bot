@@ -8,7 +8,7 @@ import action.reminder.model.Reminder;
 import action.upgrades.model.LocationEnum;
 import discord4j.common.util.Snowflake;
 import discord4j.core.object.entity.Message;
-import discord4j.core.object.reaction.ReactionEmoji;
+import discord4j.core.object.emoji.Emoji;
 import discord4j.discordjson.json.EmbedData;
 import discord4j.discordjson.json.MessageData;
 import discord4j.rest.entity.RestChannel;
@@ -104,6 +104,13 @@ public class CreateBoostReminder extends Action implements EmbedAction {
         boosts.put("Disco Night",new Boost("Disco Night", 24, LocationEnum.cantina, 4));
         boosts.put("Jukebox",new Boost("Jukebox", 4, LocationEnum.cantina, 5));
 
+        //resort
+        boosts.put("Powder Day", new Boost("Powder Day", 8, LocationEnum.resort, 1));
+        boosts.put("Holiday Break",new Boost("Holiday Break", 6, LocationEnum.resort, 2));
+        boosts.put("Resort Partnership", new Boost("Resort Partnership", 4, LocationEnum.resort, 3));
+        boosts.put("Weekend Rush",new Boost("Weekend Rush", 24, LocationEnum.resort, 4));
+        boosts.put("Winter Games",new Boost("Winter Games", 4, LocationEnum.resort, 5));
+
 
         //Event
         boosts.put("Flyers", new Boost("Flyers", 1, LocationEnum.event, 1));
@@ -112,6 +119,7 @@ public class CreateBoostReminder extends Action implements EmbedAction {
         boosts.put("Music",new Boost("Music", 4, LocationEnum.event, 4));
         boosts.put("Festival",new Boost("Festival", 6, LocationEnum.event, 5));
 
+        //franchise
         boosts.put ("Loyalty Rewards", new Boost("Rewards", 12, LocationEnum.franchise, 1));
         boosts.put ("Seasonal Menu", new Boost("Menu", 18, LocationEnum.franchise, 2));
         boosts.put ("Training Refresher", new Boost("Training", 12, LocationEnum.franchise, 3));
@@ -197,35 +205,37 @@ public class CreateBoostReminder extends Action implements EmbedAction {
 //                            } else {
 
                             LocationEnum location = getLocation(embed);
-                            boolean franchise = false;
+                            boolean groupBoost = false;
+                            boolean boughtBoost = false;
 
                             // if location is amusement part and boost = Parade
 //                            if (desc.contains("Parade") && location == LocationEnum.amusement) {
 //                                createReminder(boosts.get("Parade"), message, profile);
 //                            } else {
 
+                            if (location == LocationEnum.event) {
+                                groupBoost = true;
+                            }
                                 for (Boost boost : boosts.values()) {
-                                    switch (boost.getLocation()) {
-                                        case event:
-                                        case franchise:
-                                            franchise = true;
 
-                                    }
 
 
                                     if (boost.getLocation() == location) {
                                         if (desc.contains(boost.getName())) {
                                             logger.info(location.getName() + " -- creating reminder for " + boost.getName());
                                             createReminder(boost, message, profile);
+                                            boughtBoost = true;
                                         }
                                     }
-//                                    if (boost.getLocation() == LocationEnum.franchise) {
-//                                        if (desc.contains(boost.getName())) {
-//                                            logger.info("creating reminder for " + boost.getName());
-//                                            createReminder(boost, message, profile);
-//                                            franchise = true;
-//                                        }
-//                                    }
+                                    //cant tell if locaiton is franchise of normal shack, so just check to see if it matches
+                                    if (boost.getLocation() == LocationEnum.franchise) {
+                                        // Customer Service Training was getting mixed up with Training, so ignore it
+                                        if (desc.contains(boost.getName()) && !desc.contains("Customer Service Training")) {
+                                            logger.info("creating reminder for " + boost.getName());
+                                            createReminder(boost, message, profile);
+                                            groupBoost = true;
+                                        }
+                                    }
 //                                    if (boost.getLocation() == LocationEnum.event) {
 //                                        if (desc.contains(boost.getName())) {
 //                                            logger.info("creating reminder for " + boost.getName());
@@ -235,11 +245,12 @@ public class CreateBoostReminder extends Action implements EmbedAction {
 //                                    }
                                 }
 //                            }
-                            if (!franchise) {
+                            // only save balance if its not a franchise
+                            if (!groupBoost && boughtBoost) {
+                                logger.info("checking balance");
                                 // look at the footer to see the balance and save that
                                 Long balance = getBalance(embed);
-                                // only save balance if its not a franchise
-                                if (balance != null && !franchise) {
+                                if (balance != null) {
                                     ProfileStats profileStats = new ProfileStats(userId.get());
                                     profileStats.setImportTime(Timestamp.from(Instant.now()));
                                     profileStats.setLocation(location);

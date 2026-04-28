@@ -9,7 +9,7 @@ import action.reminder.model.Reminder;
 import bot.Clean;
 import discord4j.common.util.Snowflake;
 import discord4j.core.object.entity.Message;
-import discord4j.core.object.reaction.ReactionEmoji;
+import discord4j.core.object.emoji.Emoji;
 import discord4j.discordjson.json.EmbedData;
 import discord4j.discordjson.json.MessageData;
 import reactor.core.publisher.Mono;
@@ -88,7 +88,7 @@ public class GiveawayAdd extends Action implements EmbedAction {
                         }
                         logger.info("Added to gift");
                         logger.info(embed);
-                        message.addReaction(ReactionEmoji.unicode("\uD83D\uDCB0")).block();
+                        message.addReaction(Emoji.unicode("\uD83D\uDCB0")).block();
 //                        doReminderCheck(message, embed);
 
                     }
@@ -145,9 +145,9 @@ public class GiveawayAdd extends Action implements EmbedAction {
 //            Long id = Long.parseLong(emote[2].replace(">", ""));
 //            String name = emote[1];
 //            boolean animated = true;
-//            message.addReaction(ReactionEmoji.of(id, name, true)).block();
+//            message.addReaction(Emoji.of(id, name, true)).block();
 //        } else {
-//            message.addReaction(ReactionEmoji.unicode(react)).block();
+//            message.addReaction(Emoji.unicode(react)).block();
 //        }
 //    }
 

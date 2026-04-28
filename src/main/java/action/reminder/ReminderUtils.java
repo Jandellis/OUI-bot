@@ -418,6 +418,30 @@ public class ReminderUtils {
             databaseUtils.printException(ex);
         }
     }
+    public static void ignoreRushHour(String name, Timestamp rushHourEnd) {
+        try {
+            Connection con = databaseUtils.getConnection();
+            Statement st = con.createStatement();
+
+            PreparedStatement pst = con.prepareStatement("SELECT id FROM profile  WHERE name = '" + name + "'");
+            ResultSet rs = pst.executeQuery();
+            int id = -1;
+            while (rs.next()) {
+                id = rs.getInt(1);
+
+
+                String sql = "UPDATE profile SET rush_hour_ignore = ? WHERE id = " + id;
+                PreparedStatement p = con.prepareStatement(sql);
+                p.setTimestamp(1, rushHourEnd);
+                p.execute();
+
+            }
+            st.executeBatch();
+            con.close();
+        } catch (SQLException ex) {
+            databaseUtils.printException(ex);
+        }
+    }
 
     public static void deleteReact(String name) {
         try {
@@ -471,7 +495,7 @@ public class ReminderUtils {
             Connection con = databaseUtils.getConnection();
             Statement st = con.createStatement();
 
-            PreparedStatement pst = con.prepareStatement("SELECT name, shack_name, status, enabled, react, message, depth, upgrade, sleep_Start, sleep_End, dm_reminder, ignored_hidden, dnd, username, rush_hour_end " +
+            PreparedStatement pst = con.prepareStatement("SELECT name, shack_name, status, enabled, react, message, depth, upgrade, sleep_Start, sleep_End, dm_reminder, ignored_hidden, dnd, username, rush_hour_end, rush_hour_ignore, work_income, tips_income, overtime_income " +
                     "FROM profile  WHERE shack_name = ?");
             pst.setString(1, shack);
             ResultSet rs = pst.executeQuery();
@@ -490,7 +514,11 @@ public class ReminderUtils {
                         rs.getBoolean(12),
                         rs.getBoolean(13),
                         rs.getString(14),
-                        rs.getTimestamp(15));
+                        rs.getTimestamp(15),
+                        rs.getTimestamp(16),
+                        rs.getInt(17),
+                        rs.getInt(18),
+                        rs.getInt(19));
 
             }
             st.executeBatch();
@@ -522,7 +550,7 @@ public class ReminderUtils {
     public static Profile loadProfileById(String id) {
         Profile profile = null;
         try (Connection con = databaseUtils.getConnection();
-             PreparedStatement pst = con.prepareStatement("SELECT name, shack_name, status, enabled, react, message, depth, upgrade, sleep_Start, sleep_End, dm_reminder, ignored_hidden, dnd, username, rush_hour_end " +
+             PreparedStatement pst = con.prepareStatement("SELECT name, shack_name, status, enabled, react, message, depth, upgrade, sleep_Start, sleep_End, dm_reminder, ignored_hidden, dnd, username, rush_hour_end, rush_hour_ignore, work_income, tips_income, overtime_income   " +
                      "FROM profile  WHERE name = '" + id + "'");
              ResultSet rs = pst.executeQuery()) {
 
@@ -541,7 +569,11 @@ public class ReminderUtils {
                         rs.getBoolean(12),
                         rs.getBoolean(13),
                         rs.getString(14),
-                        rs.getTimestamp(15));
+                        rs.getTimestamp(15),
+                        rs.getTimestamp(16),
+                        rs.getInt(17),
+                        rs.getInt(18),
+                        rs.getInt(19));
             }
 
         } catch (SQLException ex) {
@@ -557,7 +589,7 @@ public class ReminderUtils {
             Connection con = databaseUtils.getConnection();
             Statement st = con.createStatement();
 
-            PreparedStatement pst = con.prepareStatement("SELECT name, shack_name, status, enabled, react, message, depth, upgrade, sleep_Start, sleep_End, dm_reminder, ignored_hidden, dnd, username, rush_hour_end " +
+            PreparedStatement pst = con.prepareStatement("SELECT name, shack_name, status, enabled, react, message, depth, upgrade, sleep_Start, sleep_End, dm_reminder, ignored_hidden, dnd, username, rush_hour_end, rush_hour_ignore, work_income, tips_income, overtime_income   " +
                     "FROM profile  WHERE username = ?");
             pst.setString(1, username);
             ResultSet rs = pst.executeQuery();
@@ -576,7 +608,11 @@ public class ReminderUtils {
                         rs.getBoolean(12),
                         rs.getBoolean(13),
                         rs.getString(14),
-                        rs.getTimestamp(15));
+                        rs.getTimestamp(15),
+                        rs.getTimestamp(16),
+                        rs.getInt(17),
+                        rs.getInt(18),
+                        rs.getInt(19));
 
             }
             st.executeBatch();
@@ -586,6 +622,58 @@ public class ReminderUtils {
         return profile;
     }
 
+    public static boolean updatesWorkIncome(String id, int income) {
+        try {
+            Connection con = databaseUtils.getConnection();
+            PreparedStatement pst = con.prepareStatement("UPDATE profile SET work_income = ? WHERE name = ?");
+            pst.setInt(1, income);
+            pst.setString(2, id);
+            int rs = pst.executeUpdate();
+            if (rs == 1) {
+                con.close();
+                return true;
+            }
+        } catch (SQLException ex) {
+            databaseUtils.printException(ex);
+        }
+        return false;
+    }
+
+
+    public static boolean updatesTipsIncome(String id, int income) {
+        try {
+            Connection con = databaseUtils.getConnection();
+            PreparedStatement pst = con.prepareStatement("UPDATE profile SET tips_income = ? WHERE name = ?");
+            pst.setInt(1, income);
+            pst.setString(2, id);
+            int rs = pst.executeUpdate();
+            if (rs == 1) {
+                con.close();
+                return true;
+            }
+        } catch (SQLException ex) {
+            databaseUtils.printException(ex);
+        }
+        return false;
+    }
+
+
+    public static boolean updatesOvertimeIncome(String id, int income) {
+        try {
+            Connection con = databaseUtils.getConnection();
+            PreparedStatement pst = con.prepareStatement("UPDATE profile SET overtime_income = ? WHERE name = ?");
+            pst.setInt(1, income);
+            pst.setString(2, id);
+            int rs = pst.executeUpdate();
+            if (rs == 1) {
+                con.close();
+                return true;
+            }
+        } catch (SQLException ex) {
+            databaseUtils.printException(ex);
+        }
+        return false;
+    }
 
     public static boolean updateStatsWork(String id) {
         try {
@@ -1232,7 +1320,7 @@ public class ReminderUtils {
             Connection con = databaseUtils.getConnection();
             Statement st = con.createStatement();
 
-            PreparedStatement pst = con.prepareStatement("SELECT name, tip, work, grind, overtime, vote, daily, clean, boost FROM reminder_settings " +
+            PreparedStatement pst = con.prepareStatement("SELECT name, tip, work, grind, overtime, vote, daily, clean, boost, work_modifier, overtime_modifier, tips_modifier FROM reminder_settings " +
                     " WHERE name = ?");
             pst.setString(1, name);
             ResultSet rs = pst.executeQuery();
@@ -1247,7 +1335,10 @@ public class ReminderUtils {
                         rs.getBoolean(6),
                         rs.getBoolean(7),
                         rs.getBoolean(8),
-                        rs.getBoolean(9));
+                        rs.getBoolean(9),
+                        rs.getDouble(10),
+                        rs.getDouble(11),
+                        rs.getDouble(12));
                 return reminderSettings;
             }
             con.close();
@@ -1271,7 +1362,7 @@ public class ReminderUtils {
             while (rs.next()) {
                 id = rs.getInt(1);
                 String sql = "UPDATE reminder_settings SET " +
-                        "tip = ?, work = ?, grind = ?, overtime = ?, vote = ?, daily = ?, clean = ?, boost = ? WHERE id = ?";
+                        "tip = ?, work = ?, grind = ?, overtime = ?, vote = ?, daily = ?, clean = ?, boost = ?, work_modifier = ?, overtime_modifier = ?, tips_modifier = ? WHERE id = ?";
                 PreparedStatement p = con.prepareStatement(sql);
                 p.setBoolean(1, reminderSettings.isTip());
                 p.setBoolean(2, reminderSettings.isWork());
@@ -1281,12 +1372,15 @@ public class ReminderUtils {
                 p.setBoolean(6, reminderSettings.isDaily());
                 p.setBoolean(7, reminderSettings.isClean());
                 p.setBoolean(8, reminderSettings.isBoost());
-                p.setInt(9, id);
+                p.setDouble(9, reminderSettings.getWorkModifier());
+                p.setDouble(10, reminderSettings.getOvertimeModifier());
+                p.setDouble(11, reminderSettings.getTipsModifier());
+                p.setInt(12, id);
                 p.executeUpdate();
             }
             if (id == -1) {
-                String sql = "insert into reminder_settings (name, tip, work, grind, overtime, vote, daily, clean, boost) " +
-                        "VALUES (?,?,?,?,?,?,?,?,?)";
+                String sql = "insert into reminder_settings (name, tip, work, grind, overtime, vote, daily, clean, boost, work_modifier, overtime_modifier, tips_modifier) " +
+                        "VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
                 PreparedStatement p = con.prepareStatement(sql);
                 p.setString(1, reminderSettings.getName());
                 p.setBoolean(2, reminderSettings.isTip());
@@ -1297,6 +1391,9 @@ public class ReminderUtils {
                 p.setBoolean(7, reminderSettings.isDaily());
                 p.setBoolean(8, reminderSettings.isClean());
                 p.setBoolean(9, reminderSettings.isBoost());
+                p.setDouble(10, reminderSettings.getWorkModifier());
+                p.setDouble(11, reminderSettings.getOvertimeModifier());
+                p.setDouble(12, reminderSettings.getTipsModifier());
                 p.execute();
                 newProfile = true;
             }

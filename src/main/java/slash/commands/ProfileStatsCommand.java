@@ -85,6 +85,7 @@ public class ProfileStatsCommand extends SlashCommand {
                             SelectMenu.Option.of("Amusement", "amusement"),
                             SelectMenu.Option.of("City", "city"),
                             SelectMenu.Option.of("Cantina", "cantina"),
+                            SelectMenu.Option.of("Resort", "resort"),
                             SelectMenu.Option.of("Hq", "hq")
                     ).withMinValues(1) // Minimum selection
                     .withMaxValues(8); // Maximum selection

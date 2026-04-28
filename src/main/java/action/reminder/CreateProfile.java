@@ -8,7 +8,7 @@ import action.upgrades.model.LocationEnum;
 import discord4j.common.util.Snowflake;
 import discord4j.core.event.domain.message.ReactionAddEvent;
 import discord4j.core.object.entity.Message;
-import discord4j.core.object.reaction.ReactionEmoji;
+import discord4j.core.object.emoji.Emoji;
 import discord4j.discordjson.json.EmbedData;
 import discord4j.discordjson.json.EmbedFieldData;
 import discord4j.discordjson.json.MemberData;
@@ -181,8 +181,8 @@ public class CreateProfile extends Action implements EmbedAction {
 
                             Profile profile = ReminderUtils.loadProfileById(id);
                             if (profile.getEnabled()) {
-                                message.addReaction(ReactionEmoji.unicode("\uD83D\uDC4B")).block();
-                                message.addReaction(ReactionEmoji.unicode(reloadEmote)).block();
+                                message.addReaction(Emoji.unicode("\uD83D\uDC4B")).block();
+                                message.addReaction(Emoji.unicode(reloadEmote)).block();
                             }
                             if (newProfile) {
                                 message.getChannel().block().createMessage("Your profile has been created. Would you like to turn on reminders? Type `cyrm on` \r\nFor more details, type `cyhelp`").block();
@@ -218,7 +218,7 @@ public class CreateProfile extends Action implements EmbedAction {
                         }
                         Profile profile = ReminderUtils.loadProfileById(id);
                         if (profile.getEnabled())
-                            message.addReaction(ReactionEmoji.unicode("\uD83D\uDC4B")).block();
+                            message.addReaction(Emoji.unicode("\uD83D\uDC4B")).block();
 
 
                     }

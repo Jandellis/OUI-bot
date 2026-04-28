@@ -92,10 +92,10 @@ public class FranchiseStatsCommand extends SlashCommand {
 //        reset.add(Timestamp.valueOf("2025-11-21 02:01:34"));
         List<FranchiseStats> adjusted = new ArrayList<>();
         List<FranchiseStats> weeklyGrowthStats = new ArrayList<>();
+        List<FranchiseStats> adjustedWeeklyGrowthStats = new ArrayList<>();
 
         if (name.equalsIgnoreCase("OUI")) {
             List<DonationLog> donations = ExportUtils.getDonationLog(days.intValue());
-
 
 
             long cumulativeDonations = 0;
@@ -155,10 +155,36 @@ public class FranchiseStatsCommand extends SlashCommand {
                 // update previous balance
                 prevBalance = currentBalance;
             }
+            Map<String, WeeklyStat> weeklyAdjusted = new TreeMap<>();
             Map<String, WeeklyStat> weekly = new TreeMap<>();
             WeekFields wf = WeekFields.ISO;
 
             for (FranchiseStats stat : adjusted) {
+
+                LocalDate date = stat.getTime().toInstant()
+                        .atZone(ZoneId.systemDefault())
+                        .toLocalDate();
+
+                int year = date.get(wf.weekBasedYear());
+                int week = date.get(wf.weekOfWeekBasedYear());
+
+                String key = year + "-" + week;
+
+                WeeklyStat existing = weeklyAdjusted.get(key);
+
+                if (existing == null || stat.getTime().after(existing.endOfWeekTimestamp)) {
+
+                    weeklyAdjusted.put(key, new WeeklyStat(
+                            year,
+                            week,
+                            stat.getBalance(),      // adjusted balance
+                            stat.getTime()          // last timestamp of the week
+                    ));
+                }
+            }
+
+
+            for (FranchiseStats stat : data) {
 
                 LocalDate date = stat.getTime().toInstant()
                         .atZone(ZoneId.systemDefault())
@@ -182,6 +208,26 @@ public class FranchiseStatsCommand extends SlashCommand {
                 }
             }
 
+            WeeklyStat previousAdjusted = null;
+
+            for (WeeklyStat current : weeklyAdjusted.values()) {
+                if (previousAdjusted != null) {
+
+                    long growth = current.endOfWeekBalance - previousAdjusted.endOfWeekBalance;
+
+                    // Growth stored as "balance" so it plots in your existing chart
+                    adjustedWeeklyGrowthStats.add(new FranchiseStats(
+                            name,
+                            0L,
+                            0L,
+                            growth,
+                            current.endOfWeekTimestamp
+                    ));
+                }
+                previousAdjusted = current;
+            }
+
+
             WeeklyStat previous = null;
 
             for (WeeklyStat current : weekly.values()) {
@@ -203,6 +249,8 @@ public class FranchiseStatsCommand extends SlashCommand {
 
 
 
+
+
         }
 
         //load data after the date
@@ -213,8 +261,12 @@ public class FranchiseStatsCommand extends SlashCommand {
 
         //2025-08-22 08:39:15
         //if avg > 1 load data for days + avg
+        if (type.equalsIgnoreCase("balanceWeekly")) {
+            data = weeklyGrowthStats;
+            adjusted = adjustedWeeklyGrowthStats;
+        }
 
-        XYChart chart = readData(data, name, type, compressGraph, adjusted, weeklyGrowthStats);
+        XYChart chart = readData(data, name, type, compressGraph, adjusted);
 //        logger.info("got chart data");
         String chartName = "./franchise_stats" + name;
         BitmapEncoder.saveBitmap(chart, chartName, BitmapEncoder.BitmapFormat.PNG);
@@ -222,7 +274,7 @@ public class FranchiseStatsCommand extends SlashCommand {
     }
 
 
-    private XYChart readData(List<FranchiseStats> data, String name, String type, Boolean compressGraph, List<FranchiseStats> adjusted, List<FranchiseStats> weekly) {
+    private XYChart readData(List<FranchiseStats> data, String name, String type, Boolean compressGraph, List<FranchiseStats> adjusted) {
         // Create Chart
 //        logger.info("getting builder");
         String title = "Balance for " + name;
@@ -314,29 +366,29 @@ public class FranchiseStatsCommand extends SlashCommand {
 //            dataset.addSeries(series);
         chart.addSeries("adjusted", xData2, yData2);
 
-
-        List<Timestamp> xData3 = new ArrayList<>();
-        List<Long> yData3 = new ArrayList<>();
-//            xData.add(0);
-//            yData.add(price);
-        for (FranchiseStats dataPoint : weekly) {
-//            for (int i = 0; i < history.size(); i++) {
-            Long value = dataPoint.getBalance();
-            if (type.equalsIgnoreCase("income")) {
-                value = dataPoint.getIncome();
-            }
-            if (type.equalsIgnoreCase("sold")) {
-                value = dataPoint.getSold();
-            }
-            Timestamp position = dataPoint.getTime();
-//                series.add(position, value);
-            if (value > 0) {
-                xData3.add(position);
-                yData3.add(value);
-            }
-        }
-//            dataset.addSeries(series);
-        chart.addSeries("weekly", xData3, yData3);
+//
+//        List<Timestamp> xData3 = new ArrayList<>();
+//        List<Long> yData3 = new ArrayList<>();
+////            xData.add(0);
+////            yData.add(price);
+//        for (FranchiseStats dataPoint : weekly) {
+////            for (int i = 0; i < history.size(); i++) {
+//            Long value = dataPoint.getBalance();
+//            if (type.equalsIgnoreCase("income")) {
+//                value = dataPoint.getIncome();
+//            }
+//            if (type.equalsIgnoreCase("sold")) {
+//                value = dataPoint.getSold();
+//            }
+//            Timestamp position = dataPoint.getTime();
+////                series.add(position, value);
+//            if (value > 0) {
+//                xData3.add(position);
+//                yData3.add(value);
+//            }
+//        }
+////            dataset.addSeries(series);
+//            chart.addSeries("weekly", xData3, yData3);
 
 //        }
 

@@ -19,6 +19,7 @@ import discord4j.common.util.Snowflake;
 import discord4j.core.object.entity.Guild;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.Role;
+import discord4j.core.spec.MessageCreateFields;
 import discord4j.core.spec.MessageCreateSpec;
 import discord4j.rest.util.Color;
 import reactor.core.publisher.Mono;
@@ -147,7 +148,7 @@ public class Colour extends Action {
                             throw new RuntimeException(e2);
                         }
                         MessageCreateSpec msg = MessageCreateSpec.builder()
-                                .addFile("color_chart.png", inputStream)
+                                .addFile(MessageCreateFields.File.of("color_chart.png", inputStream))
                                 .build();
 
                         client.getChannelById(Snowflake.of(fittingRoom)).createMessage(msg.asRequest()).block();
@@ -177,7 +178,7 @@ public class Colour extends Action {
                         throw new RuntimeException(e);
                     }
                     MessageCreateSpec msg = MessageCreateSpec.builder()
-                            .addFile("color_chart.png", inputStream)
+                            .addFile(MessageCreateFields.File.of("color_chart.png", inputStream))
                             .build();
 
                     client.getChannelById(Snowflake.of(fittingRoom)).createMessage(msg.asRequest()).block();

@@ -11,7 +11,7 @@ import action.upgrades.model.Upgrade;
 import action.upgrades.model.UserUpgrades;
 import discord4j.core.event.domain.message.ReactionAddEvent;
 import discord4j.core.object.entity.Message;
-import discord4j.core.object.reaction.ReactionEmoji;
+import discord4j.core.object.emoji.Emoji;
 import discord4j.core.spec.EmbedCreateSpec;
 import discord4j.discordjson.json.EmbedData;
 import discord4j.rest.util.Color;
@@ -41,6 +41,7 @@ public class BuyUpgrade extends Action implements EmbedAction {
     Location beach = new Location(LocationEnum.beach);
     Location cantina = new Location(LocationEnum.cantina);
     Location amusement = new Location(LocationEnum.amusement);
+    Location resort = new Location(LocationEnum.resort);
     Location hq = new Location(LocationEnum.hq);
     Location event = new Location(LocationEnum.event);
     List<Location> locations = new ArrayList<>();
@@ -325,6 +326,42 @@ public class BuyUpgrade extends Action implements EmbedAction {
         locations.add(cantina);
 
 
+        //ad
+        resort.addUpgrade("newspaper", "Newspaper Ad", 10, 350, 50);
+        resort.addUpgrade("radio", "Radio Ad", 20, 650, 45);
+        resort.addUpgrade("email", "Email Campaign", 30, 1000, 45);
+        resort.addUpgrade("internet", "Internet Ad", 50, 2000, 50);
+        resort.addUpgrade("tv", "TV Commercial", 160, 5500, 35);
+        resort.addUpgrade("signage", "Trail Signage", 250, 40000, 20);
+        //up
+        resort.addUpgrade("paint", "New Paint", 10, 250, 50);
+        resort.addUpgrade("furniture", "New Furniture", 20, 600, 45);
+        resort.addUpgrade("bathrooms", "Nicer Bathrooms", 25, 800, 45);
+        resort.addUpgrade("heating", "Heating", 35, 1000, 45);
+        resort.addUpgrade("appliances", "Better Appliances", 90, 1200, 30);
+        resort.addUpgrade("tipjar", "Cooler Tip Jar", 40, 500, 35);
+        //hire
+        resort.addUpgrade("seasonal", "Seasonal Worker", 10, 250, 55, true);
+        resort.addUpgrade("barista", "Barista", 10, 250, 55, true);
+        resort.addUpgrade("bartender", "Resort Bartender", 20, 600, 60, true);
+        resort.addUpgrade("guide", "Trail Guide", 35, 1000, 60, true);
+        resort.addUpgrade("instructor", "Ski Instructor", 40, 1200, 55, true);
+        resort.addUpgrade("lead", "Kitchen Lead", 65, 2000, 50, true);
+        resort.addUpgrade("manager", "Resort Manager", 150, 5000, 55, true);
+        //deco
+        resort.addUpgrade("mats", "Snow Mats", 5, 200, 70);
+        resort.addUpgrade("walls", "Brick Walls", 15, 550, 60);
+        resort.addUpgrade("billiards", "Billiards", 55, 2800, 55);
+        resort.addUpgrade("patio", "Covered Patio", 200, 60000, 35);
+        resort.addUpgrade("fireplace", "Fireplace", 750, 2000000, 15);
+        //lodge
+        resort.addUpgrade("rack", "Ski Rack", 50, 10000, 30, false, true);
+        resort.addUpgrade("antlers", "Deer Antlers", 120, 15000, 25, false, true);
+        resort.addUpgrade("heaters", "Outdoor Heaters", 300, 60000, 20, false, true);
+        resort.addUpgrade("pickup", "Pickup Window", 500, 300000, 15, false, true);
+        resort.addUpgrade("lift", "Ski Lift", 1500, 12000000, 5, false, true);//48000000
+
+        locations.add(resort);
 
         //Upgrades
         hq.addUpgrade("Customer Service Department", "Customer Service Department", 180, 750000, 20);
@@ -441,6 +478,9 @@ public class BuyUpgrade extends Action implements EmbedAction {
                                 case cantina:
                                     commands = commands + "</stage:1276293791728406771>";
                                     break;
+                                case resort:
+                                    commands = commands + "</lodge:1494069856939544607>";
+                                    break;
                                 case hq:
                                     commands = "</hq upgrades:1018564197602295859>, </hq hire:1018564197602295859> ";
                                     break;
@@ -474,7 +514,7 @@ public class BuyUpgrade extends Action implements EmbedAction {
                         });
 
                         boolean cheapSort = message.getContent().toLowerCase().contains("cheap");
-                        boolean groupSort = message.getContent().toLowerCase().contains("grouped");
+                        boolean groupSort = message.getContent().toLowerCase().contains("grouped") || message.getContent().toLowerCase().endsWith("g") ;
                         String[] split = message.getContent().split(" ");
                         int startPage = -1;
                         int endPage = -1;
@@ -609,6 +649,9 @@ public class BuyUpgrade extends Action implements EmbedAction {
 
                             //sorted by price first, then alphabetically
                             if (groupSort) {
+//                                logger.info("____________________");
+//                                logger.info(sb.toString());
+
                                 title = " - Grouped";
                                 String[] lines = sb.toString().split("\n");
                                 List<String> sorted = new ArrayList();
@@ -632,8 +675,12 @@ public class BuyUpgrade extends Action implements EmbedAction {
 //                                Pattern linePattern = Pattern.compile(
 //                                        "^\\d+\\s*-\\s*(:\\w+:\\s*`[^`]+`)\\s*-\\s*\\*\\*\\$(\\d+)\\*\\*\\s*\\*\\((.*?)\\)\\*$"
 //                                );
+//                                Pattern linePattern = Pattern.compile(
+//                                        "^\\s*([\\w:.-]+\\s*`([^`]+)`)\\s*-\\s*\\*\\*\\$([0-9]{1,3}(?:,[0-9]{3})*)\\*\\*\\s*\\*\\((.*?)\\)\\*\\s*$"
+//                                );
+
                                 Pattern linePattern = Pattern.compile(
-                                        "^\\s*([\\w:.-]+\\s*`([^`]+)`)\\s*-\\s*\\*\\*\\$([0-9]{1,3}(?:,[0-9]{3})*)\\*\\*\\s*\\*\\((.*?)\\)\\*\\s*$"
+                                        "^\\s*([\\w:.\\s-]+`([^`]+)`)\\s*-\\s*\\*\\*\\$([0-9]{1,3}(?:,[0-9]{3})*)\\*\\*[\\s-]*\\*\\((.*?)\\)\\*\\s*$"
                                 );
                                 title += " (x"+sorted.size()+")";
 
@@ -717,6 +764,9 @@ public class BuyUpgrade extends Action implements EmbedAction {
                                     break;
                                 case cantina:
                                     commands = commands + "</stage:1276293791728406771>";
+                                    break;
+                                case resort:
+                                    commands = commands + "</lodge:1494069856939544607>";
                                     break;
                                 case hq:
                                     commands = "</hq upgrades:1018564197602295859>, </hq hire:1018564197602295859> ";
@@ -969,9 +1019,9 @@ public class BuyUpgrade extends Action implements EmbedAction {
 //            Long id = Long.parseLong(emote[2].replace(">", ""));
 //            String name = emote[1];
 //            boolean animated = true;
-//            message.addReaction(ReactionEmoji.of(id, name, true)).block();
+//            message.addReaction(Emoji.of(id, name, true)).block();
 //        } else {
-//            message.addReaction(ReactionEmoji.unicode(react)).block();
+//            message.addReaction(Emoji.unicode(react)).block();
 //        }
 //    }
 
@@ -991,6 +1041,9 @@ public class BuyUpgrade extends Action implements EmbedAction {
         }
         if (name.contains("Karaoke Stage")) {
             name = "cantina";
+        }
+        if (name.contains("Ski Lodge")) {
+            name = "resort";
         }
         if (name.contains("Amusement")) {
             name = "amusement";

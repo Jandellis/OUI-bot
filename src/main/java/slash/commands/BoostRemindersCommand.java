@@ -67,7 +67,7 @@ public class BoostRemindersCommand extends SlashCommand {
         String messageEnable = "";
         String messageDisable = "";
         if (all != null) {
-            reminderSettings = new ReminderSettings(name, all, all, all, all, all, all, all, all);
+            reminderSettings = new ReminderSettings(name, all, all, all, all, all, all, all, all, 1, 1, 1);
             ReminderUtils.updateReminderSettings(reminderSettings);
             if (all) {
                 messageEnable = "\n :small_orange_diamond: all";
