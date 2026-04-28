@@ -9,6 +9,7 @@ import action.sm.Utils;
 import action.sm.model.SystemReminder;
 import action.sm.model.SystemReminderType;
 import discord4j.common.util.Snowflake;
+import discord4j.core.event.domain.message.ReactionAddEvent;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.emoji.Emoji;
 import discord4j.discordjson.json.ComponentData;
@@ -38,6 +39,7 @@ public class CreateReminder extends Action implements EmbedAction {
     ScheduledExecutorService executorService = Executors.newScheduledThreadPool(5);
     Long recruiter;
     List<String> patreonServers;
+    String reloadEmote = "\uD83D\uDD04";
 
     public CreateReminder() {
         watchChannels = Arrays.asList(config.get("watchChannels").split(","));
@@ -61,21 +63,28 @@ public class CreateReminder extends Action implements EmbedAction {
                         Profile profile = null;
                         String userId = getContainerUser(message);
                         profile = ReminderUtils.loadProfileByUserName(userId);
-                        Map<String, Double> cooldowns = getCooldownMultipliers(message);
-                        double tips = cooldowns.getOrDefault("Tips Cooldown", 1.0);
-                        double work = cooldowns.getOrDefault("Work Cooldown", 1.0);
-                        double overtime = cooldowns.getOrDefault("Overtime Cooldown", 1.0);
+                        Contract contract = getCooldownMultipliers(message);
+                        logger.info(contract.toString());
+
+//                        double tips = cooldowns.getOrDefault("Tips Cooldown", 1.0);
+//                        double work = cooldowns.getOrDefault("Work Cooldown", 1.0);
+//                        double overtime = cooldowns.getOrDefault("Overtime Cooldown", 1.0);
+//                        double tipsBuff = cooldowns.getOrDefault("Tips Payout ", 1.0);
+//                        double workBuff = cooldowns.getOrDefault("Work Payout ", 1.0);
+//                        double overtimeBuff = cooldowns.getOrDefault("Overtime Payout ", 1.0);
+//                        double progress = cooldowns.getOrDefault("progress", 0.0);
+//                        double total = cooldowns.getOrDefault("progress", 0.0);
 
 
                         StringBuilder sb = new StringBuilder("Updated cooldowns modifiers:");
 //                            if (tips != 1.0){
-                            sb.append("\n- Tips Cooldown: ").append(tips);
+                            sb.append("\n- Tips Cooldown: ").append(contract.getTipsCoolDown());
 //                            }
 //                            if (work != 1.0){
-                            sb.append("\n- Work Cooldown: ").append(work);
+                            sb.append("\n- Work Cooldown: ").append(contract.getWorkCoolDown());
 //                            }
 //                            if (overtime != 1.0){
-                            sb.append("\n- Overtime Cooldown: ").append(overtime);
+                            sb.append("\n- Overtime Cooldown: ").append(contract.getOvertimeCoolDown());
 //                            }
 
                         ReminderSettings reminderSettings = ReminderUtils.loadReminderSettings(profile.getName());
@@ -83,16 +92,114 @@ public class CreateReminder extends Action implements EmbedAction {
                             reminderSettings = new ReminderSettings(profile.getName(), true, true, false, true, true, true, true, true, 1, 1, 1);
                         }
                         boolean shouldShowMessage = false;
-                        if (reminderSettings.getOvertimeModifier() != overtime
-                                || reminderSettings.getTipsModifier() != tips
-                                || reminderSettings.getWorkModifier() != work) {
+                        if (reminderSettings.getOvertimeModifier() != contract.getOvertimeCoolDown()
+                                || reminderSettings.getTipsModifier() != contract.getTipsCoolDown()
+                                || reminderSettings.getWorkModifier() != contract.getWorkCoolDown()) {
                             shouldShowMessage = true;
                         }
 
-                        reminderSettings.setTipsModifier(tips);
-                        reminderSettings.setWorkModifier(work);
-                        reminderSettings.setOvertimeModifier(overtime);
+                        reminderSettings.setTipsModifier(contract.getTipsCoolDown());
+                        reminderSettings.setWorkModifier(contract.getWorkCoolDown());
+                        reminderSettings.setOvertimeModifier(contract.getOvertimeCoolDown());
                         logger.info("setting reminder settings {}", reminderSettings);
+
+
+
+
+                        int sleepWork = 0;
+                        sleepWork = profile.getStatus().getWork();
+                        int sleepTips = 0;
+                        sleepTips = profile.getStatus().getTips();
+                        AtomicBoolean isPatreonServer = new AtomicBoolean(false);
+                        if (message.getGuildId().isPresent()) {
+                            patreonServers.forEach(server -> {
+                                if (message.getGuildId().get().asString().equals(server)) {
+                                    isPatreonServer.set(true);
+                                }
+                            });
+                        }
+
+                        if (!isPatreonServer.get()) {
+                            sleepWork = sleepWork + 1;
+                            sleepTips = sleepTips + 1;
+                        }
+
+                        int sleepOverTime = 0;
+                        sleepOverTime = profile.getStatus().getOt();
+                        boolean work = false;
+                        boolean overtime = false;
+                        boolean tips = false;
+                        if (contract.getName().contains("Overtime")) {
+                            overtime = true;
+                        }
+                        if (contract.getName().contains("Work") || contract.getName().contains("Shift")) {
+                            work = true;
+                        }
+                        if (contract.getName().contains("Tips")) {
+                            tips = true;
+                        }
+                        if (contract.getName().contains("Double Time")) {
+                            work = true;
+                            overtime = true;
+                        }
+                        if (contract.getName().contains("Corporate Restructuring")) {
+                            work = true;
+                            overtime = true;
+                            tips = true;
+                        }
+
+                        if (contract.getName().contains("Corporate Restructuring") || contract.getName().contains("VIP")) {
+
+                            if (profile.getOvertimeIncome() > 1 && profile.getWorkIncome() > 1 && profile.getTipsIncome() > 1) {
+                                int sleep = minutesToCompleteEarningsGoal(profile,
+                                        (contract.getTotal() - contract.getProgress()),
+                                        (int) (sleepWork * contract.getTipsCoolDown()),
+                                        (int) (sleepOverTime * contract.getOvertimeCoolDown()),
+                                        (int) (sleepTips * contract.getTipsCoolDown()),
+                                        work,
+                                        overtime,
+                                        tips,
+                                        contract.getWorkBuff(),
+                                        contract.getOvertimeBuff(),
+                                        contract.getTipsBuff());
+                                logger.info("time left is {} min", sleep);
+                                String timeStr;
+                                if (sleep >= 60) {
+                                    int hours = sleep / 60;
+                                    int mins = sleep % 60;
+                                    timeStr = hours + "h " + mins + "m";
+                                } else {
+                                    timeStr = sleep + "m";
+                                }
+
+//                            String printMessage = contract.getName() + " - It will take you " + timeStr + " to earn " + (contract.getTotal()- contract.getProgress());
+                                String printMessage = contract.getName() + " - It will take you " + timeStr + " to earn $" + String.format("%,d", (contract.getTotal() - contract.getProgress()));
+
+                                message.getChannel().flatMap(channel -> {
+                                    return channel.createMessage(printMessage);
+                                }).block();
+                            }
+                        } else {
+
+                            if (work) {
+                                int sleep = 0;
+                                sleep = profile.getStatus().getWork();
+                                printSimpleContract(contract, profile, message, sleep, "work", true).block();
+                            }
+                            if (tips) {
+                                int sleep = 0;
+                                sleep = profile.getStatus().getTips();
+                                printSimpleContract(contract, profile, message, sleep, "tips", true).block();
+                            }
+                            if (overtime) {
+                                int sleep = 0;
+                                sleep = profile.getStatus().getOt();
+                                printSimpleContract(contract, profile, message, sleep, "overtime", true).block();
+                            }
+
+                        }
+
+
 
                         ReminderUtils.updateReminderSettings(reminderSettings);
                         react(message, profile);
@@ -104,6 +211,8 @@ public class CreateReminder extends Action implements EmbedAction {
 
                     }
                     if (contractTypeCheck(message, "Catering Contracts")){
+//                        logger.info("2message is {}", message);
+
                         Profile profile = null;
                         String userId = getContainerUser(message);
                         profile = ReminderUtils.loadProfileByUserName(userId);
@@ -115,16 +224,40 @@ public class CreateReminder extends Action implements EmbedAction {
                             if (contract.getName().endsWith("Overtime Specialist")){
                                 overtimeContracts(contract, profile, message).block();
                             }
-                            if (contract.getName().endsWith("Shift  Specialist")){
+                            if (contract.getName().endsWith("Shift Specialist")){
                                 workContracts(contract, profile, message).block();
                             }
-                            if (contract.getName().endsWith("Double Time  Specialist")){
-                                //need to update this one once i see the % increase
-//                                doubleTimeContracts(contract, profile, message).block();
+                            if (contract.getName().endsWith("Double Time Specialist")){
+                                doubleTimeContracts(contract, profile, message).block();
+                            }
+                            if (contract.getName().endsWith("Corporate Restructuring")){
+                                restructuringContract(contract, profile, message).block();
+                            }
+                            if (contract.getName().endsWith("VIP Catering")){
+                                if (contract.getObjective().endsWith("work")) {
+                                    workVIPContracts(contract, profile, message).block();
+                                }
+                                if (contract.getObjective().endsWith("overtime")) {
+                                    overtimeVIPContracts(contract, profile, message).block();
+                                }
+                                if (contract.getObjective().endsWith("tips")) {
+                                    tipsVIPContracts(contract, profile, message).block();
+                                }
                             }
                         }
+                        react(message, profile);
+//                        react(message, reloadEmote);
 
                     }
+//                    if (contractTypeCheck(message, "Double Time Specialist")) {
+//
+//                        Profile profile = null;
+//                        String userId = getContainerUser(message);
+//                        profile = ReminderUtils.loadProfileByUserName(userId);
+//                        react(message, profile);
+//                        react(message, reloadEmote);
+//                        logger.info("message is {}", message);
+//                    }
 
 
 
@@ -155,6 +288,37 @@ public class CreateReminder extends Action implements EmbedAction {
 //            } else {
 //                logger.info(message.getAuthor().get().getId().asString() + " is not a recruiter");
 //            }
+        }
+
+        return Mono.empty();
+    }
+
+
+    @Override
+    protected Mono<Object> doReactionEvent(ReactionAddEvent reactionAddEvent) {
+
+        try {
+
+            if (reactionAddEvent.getEmoji().asUnicodeEmoji().isPresent())
+                if (reactionAddEvent.getEmoji().asUnicodeEmoji().get().getRaw().equals(reloadEmote)) {
+                    //got reaction
+                    Message message = reactionAddEvent.getMessage().block();
+                    EmbedData embedData = null;
+                    if (message.getEmbeds().size()> 0) {
+                        embedData = message.getEmbeds().get(0).getData();
+                    }
+
+                    String messageAuthorId = getId(message, embedData);
+                    if (messageAuthorId.equals(reactionAddEvent.getUserId().asString())) {
+                        //user is the same as who wrote the did the message
+                        //remove all reactions
+                        message.removeAllReactions().block();
+                        doAction(message);
+
+                    }
+                }
+        } catch (Exception e) {
+            printException(e);
         }
 
         return Mono.empty();
@@ -840,37 +1004,114 @@ public class CreateReminder extends Action implements EmbedAction {
     // message.data.interaction_value.user.id_value
     // if this is not a person, for vote look at the vote streak count
 
+//    public Map<String, Double> getCooldownMultipliers(Message message) {
+//        Map<String, Double> result = new HashMap<>();
+//        Possible<List<ComponentData>> possible = message.getData().components();
+//        if (possible.isAbsent()) return result;
+//
+//        Pattern effectPattern = Pattern.compile("\\*\\*([+-]\\d+)%\\*\\*\\s+(.*)");
+//        Pattern progressPattern = Pattern.compile("\\*\\*Progress:\\*\\*\\s*(?:Earn\\s+)?`\\$?([\\d,]+)/\\$?([\\d,]+)`");
+//
+//        for (ComponentData top : possible.get()) {
+//            if (top.components().isAbsent()) continue;
+//            for (ComponentData item : top.components().get()) {
+//                if (item.type() != 10 || item.content().isAbsent()) continue;
+//                String text = item.content().get();
+//
+//                // parse progress/total
+//                Matcher progressMatcher = progressPattern.matcher(text);
+//                if (progressMatcher.find()) {
+//                    long progress = Long.parseLong(progressMatcher.group(1).replace(",", ""));
+//                    long total = Long.parseLong(progressMatcher.group(2).replace(",", ""));
+//                    result.put("progress", (double) progress);
+//                    result.put("total", (double) total);
+//                }
+//
+//                // parse active effects
+//                if (!text.contains("Active Effects")) continue;
+//                for (String line : text.split("\n")) {
+//                    Matcher m = effectPattern.matcher(line.trim());
+//                    boolean found = m.find();
+//                    if (!found) continue;
+//
+//                    int percent = Integer.parseInt(m.group(1));
+//                    String type = m.group(2).trim();
+//                    double multiplier = 1 + (percent / 100.0);
+//                    logger.info("adding '{}' multiplier: {}", type, multiplier);
+//                    result.put(type, multiplier);
+//                }
+//            }
+//        }
+//        return result;
+//    }
 
-    public Map<String, Double> getCooldownMultipliers(Message message) {
-        Map<String, Double> cooldowns = new HashMap<>();
+    public Contract getCooldownMultipliers(Message message) {
         Possible<List<ComponentData>> possible = message.getData().components();
-        if (possible.isAbsent()) return cooldowns;
+        if (possible.isAbsent()) return null;
 
-        Pattern pattern = Pattern.compile("\\*\\*([+-]\\d+)%\\*\\*\\s+(.*)");
+        Pattern effectPattern = Pattern.compile("\\*\\*([+-]\\d+)%\\*\\*\\s+(.*)");
+        Pattern progressPattern = Pattern.compile("\\*\\*Progress:\\*\\*\\s*(?:\\w+\\s+)?`\\$?([\\d,]+)/\\$?([\\d,]+)`");
+        Pattern namePattern = Pattern.compile("^#{1,3}\\s+\\S+\\s+(.+)$");
+
+        Contract contract = null;
 
         for (ComponentData top : possible.get()) {
             if (top.components().isAbsent()) continue;
             for (ComponentData item : top.components().get()) {
                 if (item.type() != 10 || item.content().isAbsent()) continue;
                 String text = item.content().get();
-                if (!text.contains("Active Effects")) continue;
 
+                // parse contract name
+                Matcher nameMatcher = namePattern.matcher(text.trim());
+                if (nameMatcher.find() && !text.contains("Active Contract")) {
+                    if (contract == null) {
+                        contract = new Contract(nameMatcher.group(1).trim(), null, null);
+                    }
+                }
+
+                // parse progress/total
+                Matcher progressMatcher = progressPattern.matcher(text);
+                if (progressMatcher.find() && contract != null) {
+                    contract.setProgress((int) Long.parseLong(progressMatcher.group(1).replace(",", "")));
+                    contract.setTotal((int) Long.parseLong(progressMatcher.group(2).replace(",", "")));
+
+                    // grab rewards line
+                    for (String line : text.split("\n")) {
+                        if (line.contains("Rewards:")) {
+                            contract.setRewards(line.replaceAll(".*\\*\\*Rewards:\\*\\*\\s*", "").trim());
+                        }
+                        if (line.contains("Objective:") || line.contains("Progress:")) {
+                            contract.setObjective(line.replaceAll(".*\\*\\*(Objective|Progress):\\*\\*\\s*", "").trim());
+                        }
+                    }
+                }
+
+                // parse active effects
+                if (!text.contains("Active Effects")) continue;
                 for (String line : text.split("\n")) {
-                    logger.info("effects are {}", line);
-                    Matcher m = pattern.matcher(line.trim());
+                    Matcher m = effectPattern.matcher(line.trim());
                     boolean found = m.find();
-                    logger.info("trying to match '{}' result: {}", line.trim(), found);
                     if (!found) continue;
 
                     int percent = Integer.parseInt(m.group(1));
-                    String type = m.group(2).trim();
                     double multiplier = 1 + (percent / 100.0);
-                    logger.info("adding '{}' multiplier: {}", type, multiplier);
-                    cooldowns.put(type, multiplier);
+                    String type = m.group(2).trim();
+
+                    if (contract == null) continue;
+
+                    switch (type) {
+                        case "Work Payout":     contract.setWorkBuff(multiplier); break;
+                        case "Work Cooldown":   contract.setWorkCoolDown(multiplier); break;
+                        case "Tips Payout":     contract.setTipsBuff(multiplier); break;
+                        case "Tips Cooldown":   contract.setTipsCoolDown(multiplier); break;
+                        case "Overtime Payout": contract.setOvertimeBuff(multiplier); break;
+                        case "Overtime Cooldown": contract.setOvertimeCoolDown(multiplier); break;
+                        default: logger.info("unknown effect type: {}", type); break;
+                    }
                 }
             }
         }
-        return cooldowns;
+        return contract;
     }
 
     public List<Contract> getContracts(Message message) {
@@ -931,29 +1172,107 @@ public class CreateReminder extends Action implements EmbedAction {
         return contracts;
     }
 
+    public Mono<Object> tipsVIPContracts(Contract contract, Profile profile, Message message) {
+        return VIPContracts(contract, profile, message, "tips");
+    }
+
+    public Mono<Object> workVIPContracts(Contract contract, Profile profile, Message message) {
+        return VIPContracts(contract, profile, message, "work");
+    }
+
+    public Mono<Object> overtimeVIPContracts(Contract contract, Profile profile, Message message) {
+
+        return VIPContracts(contract, profile, message, "overtime");
+    }
+    public Mono<Object> restructuringContract(Contract contract, Profile profile, Message message) {
+
+        return VIPContracts(contract, profile, message, "work, tips and overtime");
+    }
+
+    public Mono<Object> VIPContracts(Contract contract, Profile profile, Message message, String type) {
+
+        String obj = contract.getObjective().split("`")[1];
+        int value = Integer.parseInt(obj.replace(",", "").replace("$", ""));
+
+        int sleepWork = 0;
+        sleepWork = profile.getStatus().getWork();
+        int sleepTips = 0;
+        sleepTips = profile.getStatus().getTips();
+        AtomicBoolean isPatreonServer = new AtomicBoolean(false);
+        if (message.getGuildId().isPresent()) {
+            patreonServers.forEach(server -> {
+                if (message.getGuildId().get().asString().equals(server)) {
+                    isPatreonServer.set(true);
+                }
+            });
+        }
+
+        if (!isPatreonServer.get()) {
+            sleepWork = sleepWork + 1;
+            sleepTips = sleepTips + 1;
+        }
+
+        int sleepOverTime = 0;
+        sleepOverTime = profile.getStatus().getOt();
+        boolean work = false;
+        boolean overtime = false;
+        boolean tips = false;
+        if (type.equals("overtime")) {
+            overtime = true;
+        }
+        if (type.equals("work")) {
+            work = true;
+        }
+        if (type.equals("tips")) {
+            tips = true;
+        }
+        if (type.equals("work, tips and overtime")) {
+            tips = true;
+            work = true;
+            overtime = true;
+        }
+        if (profile.getOvertimeIncome() < 1 && profile.getWorkIncome() < 1 && profile.getTipsIncome() < 1) {
+            return Mono.empty();
+        }
+
+        int sleep = minutesToCompleteEarningsGoal(profile, value, sleepWork, sleepOverTime, sleepTips, work, overtime, tips, 1, 1,1);
+        String timeStr;
+        if (sleep >= 60) {
+            int hours = sleep / 60;
+            int mins = sleep % 60;
+            timeStr = hours + "h " + mins + "m";
+        } else {
+            timeStr = sleep + "m";
+        }
+        String printMessage = contract.getName() + " - **With out the buffs**, it will take you " + timeStr + " to earn " + obj + " with "+ type;
+        return message.getChannel().flatMap(channel -> {
+            return channel.createMessage(printMessage);
+        });
+    }
+
     public Mono<Object> tipsContracts(Contract contract, Profile profile, Message message) {
         int sleep = 0;
         sleep = profile.getStatus().getTips();
-        return printSimpleContract(contract, profile, message, sleep, "tips");
+        return printSimpleContract(contract, profile, message, sleep, "tips", false);
     }
 
     public Mono<Object> workContracts(Contract contract, Profile profile, Message message) {
         int sleep = 0;
         sleep = profile.getStatus().getWork();
-        return printSimpleContract(contract, profile, message, sleep, "work");
+        return printSimpleContract(contract, profile, message, sleep, "work", false);
     }
 
     public Mono<Object> overtimeContracts(Contract contract, Profile profile, Message message) {
         int sleep = 0;
         sleep = profile.getStatus().getOt();
-        return printSimpleContract(contract, profile, message, sleep, "overtime");
+        return printSimpleContract(contract, profile, message, sleep, "overtime", false);
     }
 
     public Mono<Object> doubleTimeContracts(Contract contract, Profile profile, Message message) {
 
 
         String obj = contract.getObjective().split("`")[1];
-        int value = Integer.parseInt(obj.replace(",", "").replace("\\$", ""));
+        int value = Integer.parseInt(obj.replace(",", "").replace("$", ""));
 
         int sleepWork = 0;
         sleepWork = profile.getStatus().getWork();
@@ -973,7 +1292,11 @@ public class CreateReminder extends Action implements EmbedAction {
         int sleepOverTime = 0;
         sleepOverTime = profile.getStatus().getOt();
 
-        int sleep = minutesToCompleteEarningsGoal(profile, value, sleepWork, sleepOverTime);
+        if (profile.getOvertimeIncome() < 1 && profile.getWorkIncome() < 1 && profile.getTipsIncome() < 1) {
+            return Mono.empty();
+        }
+
+        int sleep = minutesToCompleteEarningsGoal(profile, value, sleepWork, sleepOverTime, profile.getStatus().getTips(), true, true, false, 1, 1, 1);
         String timeStr;
         if (sleep >= 60) {
             int hours = sleep / 60;
@@ -982,44 +1305,59 @@ public class CreateReminder extends Action implements EmbedAction {
         } else {
             timeStr = sleep + "m";
         }
-        String printMessage = "It will take you " + timeStr + " to earn " + value + " with overtime and work";
+        String printMessage = contract.getName() + " - **With out the buffs**, it will take you " + timeStr + " to earn " + obj + " with overtime and work";
         return message.getChannel().flatMap(channel -> {
             return channel.createMessage(printMessage);
         });
     }
 
-    public int minutesToCompleteEarningsGoal(Profile profile, long goal, int sleepWork, int sleepOvertime) {
+    public int minutesToCompleteEarningsGoal(Profile profile, long goal, int sleepWork, int sleepOvertime, int sleepTips, boolean includeWork, boolean includeOvertime, boolean includeTips, double workBuff, double overtimeBuff, double tipBuff) {
+        logger.info("minutesToCompleteEarningsGoal - goal: {}, sleepWork: {}, sleepOvertime: {}, sleepTips: {}, includeWork: {}, includeOvertime: {}, includeTips: {}, workBuff: {}, overtimeBuff: {}, tipBuff: {}",
+                goal, sleepWork, sleepOvertime, sleepTips, includeWork, includeOvertime, includeTips, workBuff, overtimeBuff, tipBuff);
+
+
         long totalEarned = 0;
         int totalMinutes = 0;
 
         int workCooldown = 0;
         int overtimeCooldown = 0;
+        int tipsCooldown = 0;
 
         while (totalEarned < goal) {
             // advance time by 1 minute
             totalMinutes++;
             if (workCooldown > 0) workCooldown--;
             if (overtimeCooldown > 0) overtimeCooldown--;
+            if (tipsCooldown > 0) tipsCooldown--;
 
             // do work if available
-            if (workCooldown == 0) {
-                totalEarned += profile.getWorkIncome();
+            if (workCooldown == 0 && includeWork) {
+                totalEarned += (long) (profile.getWorkIncome()* workBuff);
                 workCooldown = sleepWork;
             }
 
             // do overtime if available
-            if (overtimeCooldown == 0) {
-                totalEarned += profile.getOvertimeIncome();
+            if (overtimeCooldown == 0 && includeOvertime) {
+                totalEarned += (long) (profile.getOvertimeIncome()*  overtimeBuff);
                 overtimeCooldown = sleepOvertime;
+            }
+            if (tipsCooldown == 0 && includeTips) {
+                totalEarned += (long) (profile.getTipsIncome()*  tipBuff);
+                tipsCooldown = sleepTips;
             }
         }
 
         return totalMinutes;
     }
 
-    public Mono<Object>  printSimpleContract(Contract contract, Profile profile, Message message, int sleep, String type){
+    public Mono<Object>  printSimpleContract(Contract contract, Profile profile, Message message, int sleep, String type, boolean remianing){
 
-        String obj = contract.getObjective().split("`")[1];
+        String obj = "";
+        if (remianing) {
+            obj = (contract.getTotal() - contract.getProgress()) + "";
+        } else {
+            obj = contract.getObjective().split("`")[1];
+        }
         int value = Integer.parseInt(obj.replace(",", ""));
 
 
@@ -1044,7 +1382,7 @@ public class CreateReminder extends Action implements EmbedAction {
         } else {
             timeStr = sleep + "m";
         }
-        String printMessage = "It will take you " + timeStr + " to complete " + value + " " + type;
+        String printMessage = contract.getName() + " - It will take you " + timeStr + " to complete " + value + " " + type;
         return message.getChannel().flatMap(channel -> {
             return channel.createMessage(printMessage);
         });
