@@ -22,6 +22,7 @@ import action.Welcome;
 import action.export.Donate;
 import action.export.Import;
 import action.export.Import2;
+import action.reminder.Contracts;
 import action.reminder.CreateBoostReminder;
 import action.reminder.CreateProfile;
 import action.reminder.CreateReminder;
@@ -47,6 +48,7 @@ import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import discord4j.core.event.domain.interaction.SelectMenuInteractionEvent;
 import discord4j.core.event.domain.lifecycle.ReadyEvent;
 import discord4j.core.event.domain.message.MessageCreateEvent;
+import discord4j.core.event.domain.message.MessageUpdateEvent;
 import discord4j.core.event.domain.message.ReactionAddEvent;
 import discord4j.core.object.command.ApplicationCommandOption;
 import discord4j.core.object.entity.Message;
@@ -304,7 +306,11 @@ public class Bot {
                             .then(gateway.onDisconnect()).subscribe();
 //                            .block(); // We use .block() as there is not another non-daemon thread and the jvm would close otherwise.
 
-
+                            gateway.on(MessageUpdateEvent.class, event -> Mono.fromRunnable(() -> {
+                                logger.info("MessageUpdateEvent fired for message: {} in channel: {}",
+                                        event.getMessageId().asString(),
+                                        event.getChannelId().asString());
+                            })).subscribe();
                     DatabaseUtils databaseUtils = DatabaseUtils.getInstance();
                     databaseUtils.setGateway(gateway);
 
@@ -335,6 +341,8 @@ public class Bot {
 //                            .and(new CreateProfile().action(gateway, client))
                             .and(new CreateProfile().reaction(gateway, client))
                             .and(new CreateReminder().action(gateway, client))
+                            .and(new Contracts().action(gateway, client))
+                            .and(new Contracts().updateMessage(gateway, client))
                             .and(new EmbedMessage(gateway, client).action(gateway, client))
                             .and(new EnableProfile().action(gateway, client))
                             .and(new React().action(gateway, client))

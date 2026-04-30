@@ -12,6 +12,7 @@ import discord4j.common.util.Snowflake;
 import discord4j.core.DiscordClient;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.event.domain.message.MessageCreateEvent;
+import discord4j.core.event.domain.message.MessageUpdateEvent;
 import discord4j.core.event.domain.message.ReactionAddEvent;
 import discord4j.core.object.Embed;
 import discord4j.core.object.entity.Member;
@@ -72,6 +73,13 @@ public abstract class Action {
         return gateway.on(ReactionAddEvent.class, reactionAddEvent -> doReactionEvent(reactionAddEvent)).then();
     }
 
+    public Mono<Void> updateMessage(GatewayDiscordClient gateway, DiscordClient client) {
+        this.client = client;
+        this.gateway = gateway;
+        guildId = config.get("guildId");
+        return gateway.on(MessageUpdateEvent.class, messageUpdateEvent -> doUpdateEvent(messageUpdateEvent)).then();
+    }
+
     /**
      * Change to return true, if true it means that action processed the message and to stop all others from processing it.
      * Move gateway and client to constructor
@@ -82,6 +90,10 @@ public abstract class Action {
     protected abstract Mono<Object> doAction(Message message);
 
     protected Mono<Object> doReactionEvent(ReactionAddEvent reactionAddEvent) {
+        return Mono.empty();
+    }
+
+    protected Mono<Object> doUpdateEvent(MessageUpdateEvent reactionAddEvent) {
         return Mono.empty();
     }
 

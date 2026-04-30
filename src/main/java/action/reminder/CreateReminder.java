@@ -2,6 +2,7 @@ package action.reminder;
 
 import action.Action;
 import action.export.ExportUtils;
+import action.reminder.model.Contract;
 import action.reminder.model.Profile;
 import action.reminder.model.Reminder;
 import action.reminder.model.ReminderSettings;
@@ -10,9 +11,9 @@ import action.sm.model.SystemReminder;
 import action.sm.model.SystemReminderType;
 import discord4j.common.util.Snowflake;
 import discord4j.core.event.domain.message.ReactionAddEvent;
-import discord4j.core.object.Embed;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.emoji.Emoji;
+import discord4j.core.retriever.EntityRetrievalStrategy;
 import discord4j.discordjson.json.ComponentData;
 import discord4j.discordjson.json.EmbedData;
 import discord4j.discordjson.json.MessageData;
@@ -59,226 +60,226 @@ public class CreateReminder extends Action implements EmbedAction {
                     logger.info("empty embeds, skipping");
 
 
-
-                    if (contractTypeCheck(message, "Active Contract")) {
-                        Profile profile = null;
-                        String userId = getContainerUser(message);
-                        profile = ReminderUtils.loadProfileByUserName(userId);
-                        Contract contract = getCooldownMultipliers(message);
-                        if (contract == null){
-                            return Mono.empty();
-                        }
-                        logger.info(contract.toString());
-
-//                        double tips = cooldowns.getOrDefault("Tips Cooldown", 1.0);
-//                        double work = cooldowns.getOrDefault("Work Cooldown", 1.0);
-//                        double overtime = cooldowns.getOrDefault("Overtime Cooldown", 1.0);
-//                        double tipsBuff = cooldowns.getOrDefault("Tips Payout ", 1.0);
-//                        double workBuff = cooldowns.getOrDefault("Work Payout ", 1.0);
-//                        double overtimeBuff = cooldowns.getOrDefault("Overtime Payout ", 1.0);
-//                        double progress = cooldowns.getOrDefault("progress", 0.0);
-//                        double total = cooldowns.getOrDefault("progress", 0.0);
-
-
-                        StringBuilder sb = new StringBuilder("Updated cooldowns modifiers:");
-//                            if (tips != 1.0){
-                            sb.append("\n- Tips Cooldown: ").append(contract.getTipsCoolDown());
+//
+//                    if (contractTypeCheck(message, "Active Contract")) {
+//                        Profile profile = null;
+//                        String userId = getContainerUser(message);
+//                        profile = ReminderUtils.loadProfileByUserName(userId);
+//                        Contract contract = getCooldownMultipliers(message);
+//                        if (contract == null){
+//                            return Mono.empty();
+//                        }
+//                        logger.info(contract.toString());
+//
+////                        double tips = cooldowns.getOrDefault("Tips Cooldown", 1.0);
+////                        double work = cooldowns.getOrDefault("Work Cooldown", 1.0);
+////                        double overtime = cooldowns.getOrDefault("Overtime Cooldown", 1.0);
+////                        double tipsBuff = cooldowns.getOrDefault("Tips Payout ", 1.0);
+////                        double workBuff = cooldowns.getOrDefault("Work Payout ", 1.0);
+////                        double overtimeBuff = cooldowns.getOrDefault("Overtime Payout ", 1.0);
+////                        double progress = cooldowns.getOrDefault("progress", 0.0);
+////                        double total = cooldowns.getOrDefault("progress", 0.0);
+//
+////
+////                        StringBuilder sb = new StringBuilder("Updated cooldowns modifiers:");
+//////                            if (tips != 1.0){
+////                            sb.append("\n- Tips Cooldown: ").append(contract.getTipsCoolDown());
+//////                            }
+//////                            if (work != 1.0){
+////                            sb.append("\n- Work Cooldown: ").append(contract.getWorkCoolDown());
+//////                            }
+//////                            if (overtime != 1.0){
+////                            sb.append("\n- Overtime Cooldown: ").append(contract.getOvertimeCoolDown());
+//////                            }
+//
+////                        ReminderSettings reminderSettings = ReminderUtils.loadReminderSettings(profile.getName());
+////                        if (reminderSettings == null) {
+////                            reminderSettings = new ReminderSettings(profile.getName(), true, true, false, true, true, true, true, true, 1, 1, 1);
+////                        }
+////                        boolean shouldShowMessage = false;
+////                        if (reminderSettings.getOvertimeModifier() != contract.getOvertimeCoolDown()
+////                                || reminderSettings.getTipsModifier() != contract.getTipsCoolDown()
+////                                || reminderSettings.getWorkModifier() != contract.getWorkCoolDown()) {
+////                            shouldShowMessage = true;
+////                        }
+////
+////                        reminderSettings.setTipsModifier(contract.getTipsCoolDown());
+////                        reminderSettings.setWorkModifier(contract.getWorkCoolDown());
+////                        reminderSettings.setOvertimeModifier(contract.getOvertimeCoolDown());
+////                        logger.info("setting reminder settings {}", reminderSettings);
+//
+//
+//
+//
+//                        int sleepWork = 0;
+//                        sleepWork = profile.getStatus().getWork();
+//                        int sleepTips = 0;
+//                        sleepTips = profile.getStatus().getTips();
+//                        AtomicBoolean isPatreonServer = new AtomicBoolean(false);
+//                        if (message.getGuildId().isPresent()) {
+//                            patreonServers.forEach(server -> {
+//                                if (message.getGuildId().get().asString().equals(server)) {
+//                                    isPatreonServer.set(true);
+//                                }
+//                            });
+//                        }
+//
+//                        if (!isPatreonServer.get()) {
+//                            sleepWork = sleepWork + 1;
+//                            sleepTips = sleepTips + 1;
+//                        }
+//
+//                        int sleepOverTime = 0;
+//                        sleepOverTime = profile.getStatus().getOt();
+//                        boolean work = false;
+//                        boolean overtime = false;
+//                        boolean tips = false;
+//                        if (contract.getName().contains("Overtime")) {
+//                            overtime = true;
+//                        }
+//                        if (contract.getName().contains("Work") || contract.getName().contains("Shift")) {
+//                            work = true;
+//                        }
+//                        if (contract.getName().contains("Tips") || contract.getName().contains("Service")) {
+//                            tips = true;
+//                        }
+//                        if (contract.getName().contains("Double Time")) {
+//                            work = true;
+//                            overtime = true;
+//                        }
+//                        if (contract.getName().contains("Corporate Restructuring")) {
+//                            work = true;
+//                            overtime = true;
+//                            tips = true;
+//                        }
+//                        if (contract.getObjective().contains("from work")) {
+//                            work = true;
+//                        }
+//                        if (contract.getObjective().contains("from tips")) {
+//                            tips = true;
+//                        }
+//                        if (contract.getObjective().contains("from overtime")) {
+//                            overtime = true;
+//                        }
+//                        if (contract.getObjective().contains("from work and overtime")) {
+//                            overtime = true;
+//                            work = true;
+//                        }
+//
+//                        if (contract.getName().contains("Corporate Restructuring") || contract.getName().contains("VIP") || contract.getName().contains("Double Time")) {
+//
+//                            if (profile.getOvertimeIncome() > 1 && profile.getWorkIncome() > 1 && profile.getTipsIncome() > 1) {
+//                                int sleep = minutesToCompleteEarningsGoal(profile,
+//                                        (contract.getTotal() - contract.getProgress()),
+//                                        (int) (sleepWork * contract.getTipsCoolDown()),
+//                                        (int) (sleepOverTime * contract.getOvertimeCoolDown()),
+//                                        (int) (sleepTips * contract.getTipsCoolDown()),
+//                                        work,
+//                                        overtime,
+//                                        tips,
+//                                        contract.getWorkBuff(),
+//                                        contract.getOvertimeBuff(),
+//                                        contract.getTipsBuff());
+//                                logger.info("time left is {} min", sleep);
+//                                String timeStr;
+//                                if (sleep >= 60) {
+//                                    int hours = sleep / 60;
+//                                    int mins = sleep % 60;
+//                                    timeStr = hours + "h " + mins + "m";
+//                                } else {
+//                                    timeStr = sleep + "m";
+//                                }
+//
+////                            String printMessage = contract.getName() + " - It will take you " + timeStr + " to earn " + (contract.getTotal()- contract.getProgress());
+//                                String printMessage = contract.getName() + " - It will take you " + timeStr + " to earn $" + String.format("%,d", (contract.getTotal() - contract.getProgress()));
+//
+//                                message.getChannel().flatMap(channel -> {
+//                                    return channel.createMessage(printMessage);
+//                                }).block();
 //                            }
-//                            if (work != 1.0){
-                            sb.append("\n- Work Cooldown: ").append(contract.getWorkCoolDown());
+//                        } else {
+//
+//                            if (work) {
+//                                int sleep = 0;
+//                                sleep = profile.getStatus().getWork();
+//                                printSimpleContract(contract, profile, message, sleep, "work", true).block();
 //                            }
-//                            if (overtime != 1.0){
-                            sb.append("\n- Overtime Cooldown: ").append(contract.getOvertimeCoolDown());
+//                            if (tips) {
+//                                int sleep = 0;
+//                                sleep = profile.getStatus().getTips();
+//                                printSimpleContract(contract, profile, message, sleep, "tips", true).block();
 //                            }
-
-                        ReminderSettings reminderSettings = ReminderUtils.loadReminderSettings(profile.getName());
-                        if (reminderSettings == null) {
-                            reminderSettings = new ReminderSettings(profile.getName(), true, true, false, true, true, true, true, true, 1, 1, 1);
-                        }
-                        boolean shouldShowMessage = false;
-                        if (reminderSettings.getOvertimeModifier() != contract.getOvertimeCoolDown()
-                                || reminderSettings.getTipsModifier() != contract.getTipsCoolDown()
-                                || reminderSettings.getWorkModifier() != contract.getWorkCoolDown()) {
-                            shouldShowMessage = true;
-                        }
-
-                        reminderSettings.setTipsModifier(contract.getTipsCoolDown());
-                        reminderSettings.setWorkModifier(contract.getWorkCoolDown());
-                        reminderSettings.setOvertimeModifier(contract.getOvertimeCoolDown());
-                        logger.info("setting reminder settings {}", reminderSettings);
-
-
-
-
-                        int sleepWork = 0;
-                        sleepWork = profile.getStatus().getWork();
-                        int sleepTips = 0;
-                        sleepTips = profile.getStatus().getTips();
-                        AtomicBoolean isPatreonServer = new AtomicBoolean(false);
-                        if (message.getGuildId().isPresent()) {
-                            patreonServers.forEach(server -> {
-                                if (message.getGuildId().get().asString().equals(server)) {
-                                    isPatreonServer.set(true);
-                                }
-                            });
-                        }
-
-                        if (!isPatreonServer.get()) {
-                            sleepWork = sleepWork + 1;
-                            sleepTips = sleepTips + 1;
-                        }
-
-                        int sleepOverTime = 0;
-                        sleepOverTime = profile.getStatus().getOt();
-                        boolean work = false;
-                        boolean overtime = false;
-                        boolean tips = false;
-                        if (contract.getName().contains("Overtime")) {
-                            overtime = true;
-                        }
-                        if (contract.getName().contains("Work") || contract.getName().contains("Shift")) {
-                            work = true;
-                        }
-                        if (contract.getName().contains("Tips")) {
-                            tips = true;
-                        }
-                        if (contract.getName().contains("Double Time")) {
-                            work = true;
-                            overtime = true;
-                        }
-                        if (contract.getName().contains("Corporate Restructuring")) {
-                            work = true;
-                            overtime = true;
-                            tips = true;
-                        }
-                        if (contract.getObjective().contains("from work")) {
-                            work = true;
-                        }
-                        if (contract.getObjective().contains("from tips")) {
-                            tips = true;
-                        }
-                        if (contract.getObjective().contains("from overtime")) {
-                            overtime = true;
-                        }
-                        if (contract.getObjective().contains("from work and overtime")) {
-                            overtime = true;
-                            work = true;
-                        }
-
-                        if (contract.getName().contains("Corporate Restructuring") || contract.getName().contains("VIP") || contract.getName().contains("Double Time")) {
-
-                            if (profile.getOvertimeIncome() > 1 && profile.getWorkIncome() > 1 && profile.getTipsIncome() > 1) {
-                                int sleep = minutesToCompleteEarningsGoal(profile,
-                                        (contract.getTotal() - contract.getProgress()),
-                                        (int) (sleepWork * contract.getTipsCoolDown()),
-                                        (int) (sleepOverTime * contract.getOvertimeCoolDown()),
-                                        (int) (sleepTips * contract.getTipsCoolDown()),
-                                        work,
-                                        overtime,
-                                        tips,
-                                        contract.getWorkBuff(),
-                                        contract.getOvertimeBuff(),
-                                        contract.getTipsBuff());
-                                logger.info("time left is {} min", sleep);
-                                String timeStr;
-                                if (sleep >= 60) {
-                                    int hours = sleep / 60;
-                                    int mins = sleep % 60;
-                                    timeStr = hours + "h " + mins + "m";
-                                } else {
-                                    timeStr = sleep + "m";
-                                }
-
-//                            String printMessage = contract.getName() + " - It will take you " + timeStr + " to earn " + (contract.getTotal()- contract.getProgress());
-                                String printMessage = contract.getName() + " - It will take you " + timeStr + " to earn $" + String.format("%,d", (contract.getTotal() - contract.getProgress()));
-
-                                message.getChannel().flatMap(channel -> {
-                                    return channel.createMessage(printMessage);
-                                }).block();
-                            }
-                        } else {
-
-                            if (work) {
-                                int sleep = 0;
-                                sleep = profile.getStatus().getWork();
-                                printSimpleContract(contract, profile, message, sleep, "work", true).block();
-                            }
-                            if (tips) {
-                                int sleep = 0;
-                                sleep = profile.getStatus().getTips();
-                                printSimpleContract(contract, profile, message, sleep, "tips", true).block();
-                            }
-                            if (overtime) {
-                                int sleep = 0;
-                                sleep = profile.getStatus().getOt();
-                                printSimpleContract(contract, profile, message, sleep, "overtime", true).block();
-                            }
-
-                        }
-
-
-
-                        ReminderUtils.updateReminderSettings(reminderSettings);
-                        react(message, profile);
-                        if (shouldShowMessage) {
-                            return message.getChannel().flatMap(channel -> {
-                                return channel.createMessage(sb.toString());
-                            });
-                        }
-
-                    }
-                    if (contractTypeCheck(message, "Catering Contracts")){
-//                        logger.info("2message is {}", message);
-
-                        Profile profile = null;
-                        String userId = getContainerUser(message);
-                        profile = ReminderUtils.loadProfileByUserName(userId);
-                        List<Contract> contracts = getContracts(message);
-                        for (Contract contract : contracts) {
-                            if (contract.getName().endsWith("Service Specialist")){
-                                tipsContracts(contract, profile, message).block();
-                            }
-                            if (contract.getName().endsWith("Overtime Specialist")){
-                                overtimeContracts(contract, profile, message).block();
-                            }
-                            if (contract.getName().endsWith("Shift Specialist")){
-                                workContracts(contract, profile, message).block();
-                            }
-                            if (contract.getName().endsWith("Double Time Specialist")){
-                                doubleTimeContracts(contract, profile, message).block();
-                            }
-                            if (contract.getName().endsWith("Corporate Restructuring")){
-                                restructuringContract(contract, profile, message).block();
-                            }
-                            if (contract.getName().endsWith("VIP Catering")){
-                                if (contract.getObjective().endsWith("work")) {
-                                    workVIPContracts(contract, profile, message).block();
-                                }
-                                if (contract.getObjective().endsWith("overtime")) {
-                                    overtimeVIPContracts(contract, profile, message).block();
-                                }
-                                if (contract.getObjective().endsWith("tips")) {
-                                    tipsVIPContracts(contract, profile, message).block();
-                                }
-                            }
-                        }
-                        react(message, profile);
-//                        react(message, reloadEmote);
-
-                    }
-//                    if (contractTypeCheck(message, "Double Time Specialist")) {
+//                            if (overtime) {
+//                                int sleep = 0;
+//                                sleep = profile.getStatus().getOt();
+//                                printSimpleContract(contract, profile, message, sleep, "overtime", true).block();
+//                            }
+//
+//                        }
+//
+//
+//
+////                        ReminderUtils.updateReminderSettings(reminderSettings);
+//                        react(message, profile);
+////                        if (shouldShowMessage) {
+////                            return message.getChannel().flatMap(channel -> {
+////                                return channel.createMessage(sb.toString());
+////                            });
+////                        }
+//
+//                    }
+//                    if (contractTypeCheck(message, "Catering Contracts")){
+////                        logger.info("2message is {}", message);
 //
 //                        Profile profile = null;
 //                        String userId = getContainerUser(message);
 //                        profile = ReminderUtils.loadProfileByUserName(userId);
+//                        List<Contract> contracts = getContracts(message);
+//                        for (Contract contract : contracts) {
+//                            if (contract.getName().endsWith("Service Specialist")){
+//                                tipsContracts(contract, profile, message).block();
+//                            }
+//                            if (contract.getName().endsWith("Overtime Specialist")){
+//                                overtimeContracts(contract, profile, message).block();
+//                            }
+//                            if (contract.getName().endsWith("Shift Specialist")){
+//                                workContracts(contract, profile, message).block();
+//                            }
+//                            if (contract.getName().endsWith("Double Time Specialist")){
+//                                doubleTimeContracts(contract, profile, message).block();
+//                            }
+//                            if (contract.getName().endsWith("Corporate Restructuring")){
+//                                restructuringContract(contract, profile, message).block();
+//                            }
+//                            if (contract.getName().contains("VIP")){
+//                                if (contract.getObjective().endsWith("work")) {
+//                                    workVIPContracts(contract, profile, message).block();
+//                                }
+//                                if (contract.getObjective().endsWith("overtime")) {
+//                                    overtimeVIPContracts(contract, profile, message).block();
+//                                }
+//                                if (contract.getObjective().endsWith("tips")) {
+//                                    tipsVIPContracts(contract, profile, message).block();
+//                                }
+//                            }
+//                        }
 //                        react(message, profile);
-//                        react(message, reloadEmote);
-//                        logger.info("message is {}", message);
+////                        react(message, reloadEmote);
+//
 //                    }
-
-
-
-//                        handleEmbedAction(message, checkEmbeds(message));
+////                    if (contractTypeCheck(message, "Double Time Specialist")) {
+////
+////                        Profile profile = null;
+////                        String userId = getContainerUser(message);
+////                        profile = ReminderUtils.loadProfileByUserName(userId);
+////                        react(message, profile);
+////                        react(message, reloadEmote);
+////                        logger.info("message is {}", message);
+////                    }
+//
+//
+//
+////                        handleEmbedAction(message, checkEmbeds(message));
                     return Mono.empty();
                 } else {
 
@@ -319,13 +320,20 @@ public class CreateReminder extends Action implements EmbedAction {
             if (reactionAddEvent.getEmoji().asUnicodeEmoji().isPresent())
                 if (reactionAddEvent.getEmoji().asUnicodeEmoji().get().getRaw().equals(reloadEmote)) {
                     //got reaction
-                    Message message = reactionAddEvent.getMessage().block();
+//                    Message message = reactionAddEvent.getMessage().block();
+
+                    Message message = reactionAddEvent.getClient()
+                            .withRetrievalStrategy(EntityRetrievalStrategy.REST)
+                            .getMessageById(reactionAddEvent.getChannelId(), reactionAddEvent.getMessageId())
+                            .block();
                     EmbedData embedData = null;
                     if (message.getEmbeds().size()> 0) {
                         embedData = message.getEmbeds().get(0).getData();
                     }
 
-                    String messageAuthorId = getId(message, embedData);
+                    // need to update this to getContainerUser
+//                    String messageAuthorId = getId(message, embedData);
+                    String messageAuthorId = getContainerUser(message);
                     if (messageAuthorId.equals(reactionAddEvent.getUserId().asString())) {
                         //user is the same as who wrote the did the message
                         //remove all reactions
@@ -652,7 +660,7 @@ public class CreateReminder extends Action implements EmbedAction {
         Pattern pattern = Pattern.compile("\\*\\*([+-]\\d+)%\\*\\*\\s+\\w+\\s+Cooldown");
 
             for (String line : desc.split("\n")) {
-                logger.info("checking cooldown line: '{}'", line.trim());
+//                logger.info("checking cooldown line: '{}'", line.trim());
                 Matcher m = pattern.matcher(line.trim());
                 if (m.find()) {
                     logger.info("found cooldown: {}", m.group(1));
@@ -661,6 +669,14 @@ public class CreateReminder extends Action implements EmbedAction {
             }
         return 1;
     }
+
+    //create new command
+    // pass in work,tips,ot modifiers
+    //take your flex numbers and work out how many work/tips/ot you do in a week
+    // work out the baseline value
+    // work out the modified value
+
+
 
     private void checkRushHour(Message message, Profile profile) {
         logger.info("Checking rush hour");
