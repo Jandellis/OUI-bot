@@ -2,6 +2,7 @@ package action.reminder;
 
 import action.giveaway.model.GiveawayLog;
 import action.giveaway.model.GiveawayWinner;
+import action.reminder.model.ContractMessage;
 import action.reminder.model.ReminderSettings;
 import action.reminder.model.FlexStats;
 import action.reminder.model.Profile;
@@ -1339,6 +1340,7 @@ public class ReminderUtils {
                         rs.getDouble(10),
                         rs.getDouble(11),
                         rs.getDouble(12));
+                con.close();
                 return reminderSettings;
             }
             con.close();
@@ -1353,7 +1355,6 @@ public class ReminderUtils {
         Boolean newProfile = false;
         try {
             Connection con = databaseUtils.getConnection();
-            Statement st = con.createStatement();
 
             PreparedStatement pst = con.prepareStatement("SELECT id FROM reminder_settings  WHERE name = ?");
             pst.setString(1, reminderSettings.getName());
@@ -1397,7 +1398,6 @@ public class ReminderUtils {
                 p.execute();
                 newProfile = true;
             }
-            st.executeBatch();
             con.close();
         } catch (SQLException ex) {
             databaseUtils.printException(ex);
@@ -1412,7 +1412,6 @@ public class ReminderUtils {
         Boolean newProfile = false;
         try {
             Connection con = databaseUtils.getConnection();
-            Statement st = con.createStatement();
 
             PreparedStatement pst = con.prepareStatement("SELECT id FROM team_event  WHERE id1 = ?");
             pst.setString(1, teamEvent.getId1());
@@ -1443,7 +1442,6 @@ public class ReminderUtils {
                 p.execute();
                 newProfile = true;
             }
-            st.executeBatch();
             con.close();
         } catch (SQLException ex) {
             databaseUtils.printException(ex);
@@ -1456,7 +1454,6 @@ public class ReminderUtils {
         Boolean newProfile = false;
         try {
             Connection con = databaseUtils.getConnection();
-            Statement st = con.createStatement();
 
             PreparedStatement pst = con.prepareStatement("SELECT reminder, id1, id2, id3, id4 " +
                     "FROM team_event  WHERE id1 = ? or id2 = ? or id3 = ? or id4 = ?");
@@ -1471,9 +1468,9 @@ public class ReminderUtils {
                         rs.getString(3),
                         rs.getString(4),
                         rs.getString(5));
+                con.close();
                 return teamEvent;
             }
-            st.executeBatch();
             con.close();
         } catch (SQLException ex) {
             databaseUtils.printException(ex);
@@ -1481,4 +1478,46 @@ public class ReminderUtils {
         return null;
     }
 
+
+
+
+
+    public static void createContractMessage(String taco, String cylon) {
+        try {
+            Connection con = databaseUtils.getConnection();
+                String sql = "insert into contract_msg (taco_id, cylon_id) " +
+                        "VALUES (?,?)";
+                PreparedStatement p = con.prepareStatement(sql);
+                p.setString(1, taco);
+                p.setString(2, cylon);
+                p.execute();
+            con.close();
+        } catch (SQLException ex) {
+            databaseUtils.printException(ex);
+        }
+    }
+
+
+    public static ContractMessage loadContractMessage(String tacoId) {
+        try {
+            Connection con = databaseUtils.getConnection();
+
+            PreparedStatement pst = con.prepareStatement("SELECT taco_id, cylon_id " +
+                    "FROM contract_msg  WHERE taco_id = ? ");
+            pst.setString(1, tacoId);
+            ResultSet rs = pst.executeQuery();
+            while (rs.next()) {
+                ContractMessage contractMessage = new ContractMessage();
+                contractMessage.setTacoId(rs.getString(1));
+                contractMessage.setCylonId(rs.getString(2));
+
+                con.close();
+                return contractMessage;
+            }
+            con.close();
+        } catch (SQLException ex) {
+            databaseUtils.printException(ex);
+        }
+        return null;
+    }
 }

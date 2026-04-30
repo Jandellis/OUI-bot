@@ -394,3 +394,23 @@ CREATE TABLE IF NOT EXISTS guesses (
 );
 
 ALTER TABLE donation_log MODIFY amount BIGINT;
+
+alter table profile add rush_hour_ignore timestamp;
+
+alter table reminder_settings add work_modifier double;
+alter table reminder_settings alter column work_modifier set default 1;
+alter table reminder_settings add tips_modifier double;
+alter table reminder_settings alter column tips_modifier set default 1;
+alter table reminder_settings add overtime_modifier double;
+alter table reminder_settings alter column overtime_modifier set default 1;
+
+alter table profile add work_income int;
+alter table profile add overtime_income int;
+alter table profile add tips_income int;
+
+
+CREATE TABLE IF NOT EXISTS contract_msg (
+    id serial PRIMARY KEY,
+    taco_id VARCHAR(25),
+    cylon_id VARCHAR(25)
+    );
