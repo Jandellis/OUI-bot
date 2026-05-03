@@ -389,6 +389,7 @@ public class PriceCheck extends Action {
                         upGifs.add("https://tenor.com/view/john-john-crypto-john-the-coin-memecoin-red-candle-gif-3746997840446702790");
                         upGifs.add("https://tenor.com/view/climb-on-gif-27651199");
                         upGifs.add("https://tenor.com/view/the-price-just-went-up-dwayne-johnson-frank-jungle-cruise-price-increase-gif-16356043");
+                        upGifs.add("https://media.tenor.com/SM7bIpcBdFMAAAPo/up-bye.mp4");
                         Random rand = new Random();
                         int randomNumber = rand.nextInt(upGifs.size());
                         client.getChannelById(Snowflake.of("840395542394568707")).createMessage(upGifs.get(randomNumber)).block();
@@ -401,6 +402,8 @@ public class PriceCheck extends Action {
                         downGifs.add("https://tenor.com/view/fall-falling-gif-19993116");
                         downGifs.add("https://tenor.com/view/coles-coles-down-down-down-down-down-prices-are-down-gif-14532115");
                         downGifs.add("https://tenor.com/view/panda-gif-9601528");
+                        downGifs.add("https://media.tenor.com/a3I6P_OzfbwAAAPo/forestquaglia-bye.mp4");
+                        downGifs.add("https://media.tenor.com/eC3qjYLekjQAAAPo/tryan-trying.mp4");
                         Random rand = new Random();
                         int randomNumber = rand.nextInt(downGifs.size());
                         client.getChannelById(Snowflake.of("840395542394568707")).createMessage(downGifs.get(randomNumber)).block();

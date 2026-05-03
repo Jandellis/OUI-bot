@@ -658,16 +658,17 @@ public class CreateReminder extends Action implements EmbedAction {
 
     public double getEmbedCooldown(String desc) {
         Pattern pattern = Pattern.compile("\\*\\*([+-]\\d+)%\\*\\*\\s+\\w+\\s+Cooldown");
+        double cooldown = 0;
 
             for (String line : desc.split("\n")) {
 //                logger.info("checking cooldown line: '{}'", line.trim());
                 Matcher m = pattern.matcher(line.trim());
                 if (m.find()) {
                     logger.info("found cooldown: {}", m.group(1));
-                    return 1 + (Integer.parseInt(m.group(1)) / 100.0);
+                    cooldown += (Integer.parseInt(m.group(1)) / 100.0);
                 }
             }
-        return 1;
+        return 1 + cooldown;
     }
 
     //create new command
