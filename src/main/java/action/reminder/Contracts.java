@@ -62,6 +62,8 @@ public class Contracts extends Action  {
                         List<FlexStats> flexStats = ReminderUtils.loadFlexStats(0,7 , id);
 
                         Contract contract = getContract(message);
+                        parseParticipantsAndRewards(message, contract);
+
                         if (contract == null){
                             return Mono.empty();
                         }
@@ -109,16 +111,11 @@ public class Contracts extends Action  {
 
                             if (profile.getOvertimeIncome() > 1 && profile.getWorkIncome() > 1 && profile.getTipsIncome() > 1) {
                                 ContractEstimate sleep = minutesToCompleteEarningsGoal(profile,
-                                        (contract.getTotal() - contract.getProgress()),
-                                        reminderTimes.getWork() * contract.getTipsCoolDown(),
-                                        reminderTimes.getOvertime() * contract.getOvertimeCoolDown(),
-                                        reminderTimes.getTips() * contract.getTipsCoolDown(),
+                                        contract,
+                                        reminderTimes,
                                         work,
                                         overtime,
                                         tips,
-                                        contract.getWorkBuff(),
-                                        contract.getOvertimeBuff(),
-                                        contract.getTipsBuff(),
                                         true
                                 );
                                 logger.info("time left is {} min", sleep);
@@ -163,7 +160,6 @@ public class Contracts extends Action  {
                                 embed.addField("⭐ " +contract.getName(), grindXContract(contract, profile, message, sleep, ContractActionType.overtime, true, flexStats), false);
                             }
                         }
-                        parseParticipantsAndRewards(message, contract);
                         String rewards = getParticipantRewards(contract);
                         if (!rewards.isEmpty()){
                             embed.addField("Rewards", rewards, false);
@@ -557,6 +553,7 @@ public class Contracts extends Action  {
                     String objective = null;
                     String rewards = null;
                     int rep = 0;
+                    int total = 0;
 
                     logger.info("parsing section text: {}", text.substring(0, Math.min(50, text.length())));
 
@@ -574,8 +571,10 @@ public class Contracts extends Action  {
                             Matcher m = objectivePattern.matcher(line);
                             if (m.find()) {
                                 objective = m.group(1).trim();
+                                total = Integer.parseInt(objective.split("`")[1].replace(",", "").replace("$", ""));
                             }
                         }
+
                         if (rewards == null) {
                             Matcher m = rewardsPattern.matcher(line);
                             if (m.find()) {
@@ -593,7 +592,7 @@ public class Contracts extends Action  {
 
                     if (name != null && objective != null) {
                         logger.info("found contract: '{}' -> '{}', {}, {}", name, objective, rewards, rep);
-                        contracts.add(new Contract(name, objective, rewards, rep));
+                        contracts.add(new Contract(name, objective, rewards, rep, total));
                     }
                 }
             }
@@ -656,41 +655,48 @@ public class Contracts extends Action  {
             return "";
         }
 
-        ContractEstimate sleep = minutesToCompleteEarningsGoal(profile, value, reminderTimes.getWork(), reminderTimes.getOvertime(), reminderTimes.getTips(), work, overtime, tips, contract.getWorkBuff(), contract.getOvertimeBuff(),contract.getTipsBuff(), false);
+        ContractEstimate sleep = minutesToCompleteEarningsGoal(profile, contract, reminderTimes, work, overtime, tips, false);
 
         int flex = 0;
         int length = 0;
-        switch (type) {
-            case work:
-                flex = yourGrind(flexStats, contract, type, sleep.getWork());
-                break;
-            case overtime:
-                flex = yourGrind(flexStats, contract, type, sleep.getOvertime());
-                break;
-            case tips:
-                flex = yourGrind(flexStats, contract, type, sleep.getTips());
-                break;
-            case all:
-                // work out how many work/ot/tips they normlly do in a week
-                // then work out how long between work/ot/tips
-                // pass that in as the reminder times into minutesToCompleteEarningsGoal
-//                ContractEstimate sleep = minutesToCompleteEarningsGoal(profile, value, reminderTimes.getWork(), reminderTimes.getOvertime(), reminderTimes.getTips(), work, overtime, tips, contract.getWorkBuff(), contract.getOvertimeBuff(),contract.getTipsBuff(), false);
-                flex = yourGrind(flexStats, contract, ContractActionType.work, sleep.getWork());
 
-                length = yourGrind(flexStats, contract, ContractActionType.tips, sleep.getTips());
-                if (length > flex)
-                    flex = length;
-                length = yourGrind(flexStats, contract, ContractActionType.overtime, sleep.getOvertime());
-                if (length > flex)
-                    flex = length;
-                break;
-            case overtimeWork:
-                flex = yourGrind(flexStats, contract, ContractActionType.work, sleep.getWork());
 
-                length = yourGrind(flexStats, contract, ContractActionType.overtime, sleep.getOvertime());
-                if (length > flex)
-                    flex = length;
-        }
+        ReminderTimes flexReminderTimes = yourGrindReminderEstimate(flexStats, reminderTimes);
+        ContractEstimate flexSleep = minutesToCompleteEarningsGoal(profile, contract, flexReminderTimes, work, overtime, tips, false);
+        flex = flexSleep.getMin();
+//        switch (type) {
+//            case work:
+//                flex = yourGrind(flexStats, contract, type, sleep.getWork());
+//                break;
+//            case overtime:
+//                flex = yourGrind(flexStats, contract, type, sleep.getOvertime());
+//                break;
+//            case tips:
+//                flex = yourGrind(flexStats, contract, type, sleep.getTips());
+//                break;
+//            case all:
+//                // work out how many work/ot/tips they normlly do in a week
+//                // then work out how long between work/ot/tips
+//                // pass that in as the reminder times into minutesToCompleteEarningsGoal
+////                flex = yourGrind(flexStats, contract, ContractActionType.work, sleep.getWork());
+////
+////                length = yourGrind(flexStats, contract, ContractActionType.tips, sleep.getTips());
+////                if (length > flex)
+////                    flex = length;
+////                length = yourGrind(flexStats, contract, ContractActionType.overtime, sleep.getOvertime());
+////                if (length > flex)
+////                    flex = length;
+////                break;
+//            case overtimeWork:
+//                ReminderTimes flexReminderTimes = yourGrindReminderEstimate(flexStats, reminderTimes);
+//                ContractEstimate sleep2 = minutesToCompleteEarningsGoal(profile, contract, flexReminderTimes, work, overtime, tips, false);
+//                flex = sleep2.getMin();
+////                flex = yourGrind(flexStats, contract, ContractActionType.work, sleep.getWork());
+////
+////                length = yourGrind(flexStats, contract, ContractActionType.overtime, sleep.getOvertime());
+////                if (length > flex)
+////                    flex = length;
+//        }
 
         String extra = "";
         switch (contract.getActionType()) {
@@ -721,13 +727,13 @@ public class Contracts extends Action  {
 
         builder.append("To earn `$" + String.format("%,d", value) + "` from " + type.getName() +extra+without+"\n");
         if (flex > 0) {
-            String timeStr2 = formatMin(flex);
+            String flexTime = formatMin(flex);
             double repPerHourFlex = (contract.getRep() / (flex / 60.0));;
             String repFlex = "";
             if (contract.getProgress() == 0 ){
                 repFlex = " (" + String.format("%.1f", repPerHourFlex) + " rep/hr)";
             }
-            builder.append(" - Grind estimate from your last week history **" + timeStr2 + "**"+repFlex+"\n");
+            builder.append(" - Grind estimate from your last week history **" + flexTime + "**"+repFlex+"\n");
         }
 
         double repPerHourDefault = sleep.getMin() > 0 ? (contract.getRep() / (sleep.getMin() / 60.0)) : 0;
@@ -759,20 +765,23 @@ public class Contracts extends Action  {
         return grindXContract(contract, profile, message, sleep, ContractActionType.overtime, false, flexStats);
     }
 
-    public ContractEstimate minutesToCompleteEarningsGoal(Profile profile, long goal, double sleepWork, double sleepOvertime, double sleepTips, boolean includeWork, boolean includeOvertime, boolean includeTips, double workBuff, double overtimeBuff, double tipBuff, boolean inProgress) {
-        logger.info("minutesToCompleteEarningsGoal - goal: {}, sleepWork: {}, sleepOvertime: {}, sleepTips: {}, includeWork: {}, includeOvertime: {}, includeTips: {}, workBuff: {}, overtimeBuff: {}, tipBuff: {}",
-                goal, sleepWork, sleepOvertime, sleepTips, includeWork, includeOvertime, includeTips, workBuff, overtimeBuff, tipBuff);
+    public ContractEstimate minutesToCompleteEarningsGoal(Profile profile, Contract contract, ReminderTimes reminderTimes, boolean includeWork, boolean includeOvertime, boolean includeTips, boolean inProgress) {
+        logger.info("minutesToCompleteEarningsGoal - contract: {}, reminderTimes: {}, includeWork: {}, includeOvertime: {}, includeTips: {}",
+                contract, reminderTimes, includeWork, includeOvertime, includeTips);
 
         List<Reminder> reminders = ReminderUtils.loadReminder(profile.getName());
         ContractEstimate contractEstimate = new ContractEstimate();
 
         int max = 60 * 24 * 7 * 2 * 60; // in seconds
+        double sleepWork = reminderTimes.getWork() * contract.getWorkCoolDown();
+        double sleepOvertime = reminderTimes.getOvertime() * contract.getOvertimeCoolDown();
+        double sleepTips = reminderTimes.getTips() * contract.getTipsCoolDown();
 
         if (!inProgress) {
             // income per minute for each activity
-            double workIncomePerMin = includeWork ? (profile.getWorkIncome() * workBuff) / sleepWork : 0;
-            double overtimeIncomePerMin = includeOvertime ? (profile.getOvertimeIncome() * overtimeBuff) / sleepOvertime : 0;
-            double tipsIncomePerMin = includeTips ? (profile.getTipsIncome() * tipBuff) / sleepTips : 0;
+            double workIncomePerMin = includeWork ? (profile.getWorkIncome() * contract.getWorkBuff()) / sleepWork : 0;
+            double overtimeIncomePerMin = includeOvertime ? (profile.getOvertimeIncome() * contract.getOvertimeBuff()) / sleepOvertime : 0;
+            double tipsIncomePerMin = includeTips ? (profile.getTipsIncome() * contract.getTipsBuff()) / sleepTips : 0;
 
             double totalIncomePerMin = workIncomePerMin + overtimeIncomePerMin + tipsIncomePerMin;
 
@@ -781,7 +790,7 @@ public class Contracts extends Action  {
                 return contractEstimate;
             }
 
-            int minutes = (int) Math.round(goal / totalIncomePerMin);
+            int minutes = (int) Math.round(contract.getTotal() / totalIncomePerMin);
 
             // estimate the counts
             contractEstimate.setWork((int) Math.round(minutes / sleepWork));
@@ -829,26 +838,26 @@ public class Contracts extends Action  {
             return contractEstimate;
         }
 
-        while (totalEarned < goal && totalSeconds < max) {
+        while (totalEarned < contract.getTotal() - contract.getProgress() && totalSeconds < max) {
             totalSeconds++;
             if (workCooldown > 0) workCooldown--;
             if (overtimeCooldown > 0) overtimeCooldown--;
             if (tipsCooldown > 0) tipsCooldown--;
 
             if (workCooldown <= 0 && includeWork) {
-                totalEarned += (long) (profile.getWorkIncome() * workBuff);
+                totalEarned += (long) (profile.getWorkIncome() * contract.getWorkBuff());
                 workCooldown = sleepWorkSec;
                 contractEstimate.addWork();
             }
 
             if (overtimeCooldown <= 0 && includeOvertime) {
-                totalEarned += (long) (profile.getOvertimeIncome() * overtimeBuff);
+                totalEarned += (long) (profile.getOvertimeIncome() * contract.getOvertimeBuff());
                 overtimeCooldown = sleepOvertimeSec;
                 contractEstimate.addOvertime();
             }
 
             if (tipsCooldown <= 0 && includeTips) {
-                totalEarned += (long) (profile.getTipsIncome() * tipBuff);
+                totalEarned += (long) (profile.getTipsIncome() * contract.getTipsBuff());
                 tipsCooldown = sleepTipsSec;
                 contractEstimate.addTips();
             }
@@ -881,7 +890,7 @@ public class Contracts extends Action  {
         if (!isPatreonServer.get() && type != ContractActionType.overtime) {
             sleep = sleep + 1;
         }
-        sleep = sleep * value;
+        sleep = sleep * value / contract.participantCount();
         String timeStr = formatMin(sleep);
         int flex = yourGrind(flexStats, contract, type, value);
         StringBuilder builder = new StringBuilder();
@@ -901,7 +910,11 @@ public class Contracts extends Action  {
         if (contract.getProgress() == 0 ){
             repDefault = " (" + String.format("%.1f", repPerHourDefault) + " rep/hr)";
         }
-        builder.append(" - Grind without missing cooldowns **" + timeStr + "**" + repDefault);
+        String people = "";
+        if (contract.participantCount() > 1 ){
+            people = " for "+ contract.participantCount() + " people";
+        }
+        builder.append(" - Grind without missing cooldowns"+people+" **" + timeStr + "**" + repDefault);
         return builder.toString();
     }
 
@@ -931,12 +944,6 @@ public class Contracts extends Action  {
                     break;
                 case tips:
                     flexValue = (int) ((flexStats.get(flexStats.size() - 1).getTips() - flexStats.get(0).getTips()) / contract.getTipsCoolDown() / 7);
-
-//                    logger.info("yourGrind - type: {}, rawDiff: {}, flexValue: {}, total: {}",
-//                            type,
-//                            flexStats.get(flexStats.size()-1).getTips() - flexStats.get(0).getTips(),
-//                            flexValue,
-//                            value);
                     break;
                 case overtime:
                     flexValue = (int) ((flexStats.get(flexStats.size() - 1).getOvertime() - flexStats.get(0).getOvertime()) / contract.getOvertimeCoolDown() / 7);
@@ -950,6 +957,20 @@ public class Contracts extends Action  {
             }
         }
         return -1;
+    }
+
+
+    ReminderTimes yourGrindReminderEstimate(List<FlexStats> flexStats, ReminderTimes reminderTimes) {
+        if (!flexStats.isEmpty()) {
+            int workCount = (int) ((flexStats.get(flexStats.size() - 1).getWork() - flexStats.get(0).getWork()));
+            int tipsCount = (int) ((flexStats.get(flexStats.size() - 1).getTips() - flexStats.get(0).getTips()));
+            int otCount   = (int) ((flexStats.get(flexStats.size() - 1).getOvertime() - flexStats.get(0).getOvertime()));
+
+            if (workCount > 0) reminderTimes.setWork((int) Math.round(10080.0 / workCount));
+            if (tipsCount > 0) reminderTimes.setTips((int) Math.round(10080.0 / tipsCount ));
+            if (otCount > 0)   reminderTimes.setOvertime((int) Math.round(10080.0 / otCount));
+        }
+        return reminderTimes;
     }
 
 

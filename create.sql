@@ -407,6 +407,8 @@ alter table reminder_settings alter column overtime_modifier set default 1;
 alter table profile add work_income int;
 alter table profile add overtime_income int;
 alter table profile add tips_income int;
+alter table profile add large_reminder boolean;
+alter table profile alter column large_reminder set default false;
 
 
 CREATE TABLE IF NOT EXISTS contract_msg (

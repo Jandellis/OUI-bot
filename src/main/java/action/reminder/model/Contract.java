@@ -25,11 +25,12 @@ public class Contract{
         this.objective = objective;
         this.rewards = rewards;
     }
-    public Contract(String name, String objective, String rewards, int rep) {
+    public Contract(String name, String objective, String rewards, int rep, int total) {
         this.name = name;
         this.objective = objective;
         this.rewards = rewards;
         this.rep = rep;
+        this.total = total;
     }
 
     public String getName() {
@@ -154,6 +155,13 @@ public class Contract{
         this.rewardList = rewardList;
     }
 
+    public int participantCount(){
+        if (participants.isEmpty()){
+            return 1;
+        }
+        return participants.size();
+    }
+
     @Override
     public String toString() {
         return "Contract{" +
@@ -169,6 +177,8 @@ public class Contract{
                 ", overtimeCoolDown=" + overtimeCoolDown +
                 ", progress=" + progress +
                 ", total=" + total +
+                ", participants=" + participants +
+                ", rewardList=" + rewardList +
                 '}';
     }
 }

@@ -924,24 +924,37 @@ public class CreateReminder extends Action implements EmbedAction {
                     daily = true;
                 }
             }
+            String large = "# ";
 
             StringBuilder missingReminders = new StringBuilder();
             if (!work) {
+                if (profile.isLargeReminder())
+                    missingReminders.append(large);
                 missingReminders.append("</work:1203826210250166292>\n");
             }
             if (!tips) {
+                if (profile.isLargeReminder())
+                    missingReminders.append(large);
                 missingReminders.append("</tips:1203826208383696957>\n");
             }
             if (!ot) {
+                if (profile.isLargeReminder())
+                    missingReminders.append(large);
                 missingReminders.append("</overtime:1203826204356911104>\n");
             }
             if (!vote) {
+                if (profile.isLargeReminder())
+                    missingReminders.append(large);
                 missingReminders.append("</vote link:1203826209532682312>\n");
             }
             if (!daily) {
+                if (profile.isLargeReminder())
+                    missingReminders.append(large);
                 missingReminders.append("</daily:1203826197352677416>\n");
             }
             if (!clean) {
+                if (profile.isLargeReminder())
+                    missingReminders.append(large);
                 missingReminders.append("</clean:1203826195511250967>\n");
             }
             if (missingReminders.toString().length() > 1) {

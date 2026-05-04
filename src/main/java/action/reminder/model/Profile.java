@@ -25,6 +25,8 @@ public class Profile {
     int tipsIncome;
     int overtimeIncome;
 
+    boolean largeReminder;
+
     public Profile(String name, String shackName, Status status) {
         this.name = name;
         this.shackName = shackName;
@@ -49,7 +51,8 @@ public class Profile {
                    Timestamp rushHourIgnore,
                    int workIncome,
                    int tipsIncome,
-                   int overtimeIncome) {
+                   int overtimeIncome,
+                   boolean largeReminder) {
         this.name = name;
         this.shackName = shackName;
         this.status = status;
@@ -71,6 +74,7 @@ public class Profile {
         this.workIncome = workIncome;
         this.tipsIncome = tipsIncome;
         this.overtimeIncome = overtimeIncome;
+        this.largeReminder = largeReminder;
     }
 
     public String getName() {
@@ -175,5 +179,13 @@ public class Profile {
 
     public void setWorkIncome(int workIncome) {
         this.workIncome = workIncome;
+    }
+
+    public boolean isLargeReminder() {
+        return largeReminder;
+    }
+
+    public void setLargeReminder(boolean largeReminder) {
+        this.largeReminder = largeReminder;
     }
 }

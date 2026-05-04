@@ -191,7 +191,7 @@ public class EnableProfile extends Action {
                         Boolean toggled = ReminderUtils.toggleDmReminders(message.getAuthor().get().getId().asString());
                         if (toggled) {
                             Profile profile = ReminderUtils.loadProfileById(message.getAuthor().get().getId().asString());
-                            message.getChannel().block().createMessage("DM reminders toggled, currently is " + (profile.getDmReminder() ? "enabled":"disabled")).block();
+                            message.getChannel().block().createMessage("DM reminders toggled, now is " + (profile.getDmReminder() ? "enabled":"disabled")).block();
                         }
                         return Mono.empty();
                     }
@@ -200,7 +200,7 @@ public class EnableProfile extends Action {
                         Boolean toggled = ReminderUtils.toggleIgnoredHidden(message.getAuthor().get().getId().asString());
                         if (toggled) {
                             Profile profile = ReminderUtils.loadProfileById(message.getAuthor().get().getId().asString());
-                            message.getChannel().block().createMessage("Ignored reminders toggled, currently is " + (profile.getIgnoredHidden() ? "hidden":"shown")).block();
+                            message.getChannel().block().createMessage("Ignored reminders toggled, now is " + (profile.getIgnoredHidden() ? "hidden":"shown")).block();
                         }
                         return Mono.empty();
                     }
@@ -209,7 +209,15 @@ public class EnableProfile extends Action {
                         Boolean toggled = ReminderUtils.toggleDnd(message.getAuthor().get().getId().asString());
                         if (toggled) {
                             Profile profile = ReminderUtils.loadProfileById(message.getAuthor().get().getId().asString());
-                            message.getChannel().block().createMessage("Ignored do not disturb toggled, currently is " + (profile.getDnd() ? "enabled":"disabled")).block();
+                            message.getChannel().block().createMessage("Ignored do not disturb toggled, now is " + (profile.getDnd() ? "enabled":"disabled")).block();
+                        }
+                        return Mono.empty();
+                    }
+                    if (action.equalsIgnoreCase("large")) {
+                        Boolean toggled = ReminderUtils.toggleLarge(message.getAuthor().get().getId().asString());
+                        if (toggled) {
+                            Profile profile = ReminderUtils.loadProfileById(message.getAuthor().get().getId().asString());
+                            message.getChannel().block().createMessage("Large reminders toggled, now is " + (profile.isLargeReminder() ? "large":"small")).block();
                         }
                         return Mono.empty();
                     }

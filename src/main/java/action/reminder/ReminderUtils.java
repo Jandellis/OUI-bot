@@ -497,7 +497,7 @@ public class ReminderUtils {
             Connection con = databaseUtils.getConnection();
             Statement st = con.createStatement();
 
-            PreparedStatement pst = con.prepareStatement("SELECT name, shack_name, status, enabled, react, message, depth, upgrade, sleep_Start, sleep_End, dm_reminder, ignored_hidden, dnd, username, rush_hour_end, rush_hour_ignore, work_income, tips_income, overtime_income " +
+            PreparedStatement pst = con.prepareStatement("SELECT name, shack_name, status, enabled, react, message, depth, upgrade, sleep_Start, sleep_End, dm_reminder, ignored_hidden, dnd, username, rush_hour_end, rush_hour_ignore, work_income, tips_income, overtime_income, large_reminder " +
                     "FROM profile  WHERE shack_name = ?");
             pst.setString(1, shack);
             ResultSet rs = pst.executeQuery();
@@ -520,7 +520,8 @@ public class ReminderUtils {
                         rs.getTimestamp(16),
                         rs.getInt(17),
                         rs.getInt(18),
-                        rs.getInt(19));
+                        rs.getInt(19),
+                        rs.getBoolean(20));
 
             }
             st.executeBatch();
@@ -552,7 +553,7 @@ public class ReminderUtils {
     public static Profile loadProfileById(String id) {
         Profile profile = null;
         try (Connection con = databaseUtils.getConnection();
-             PreparedStatement pst = con.prepareStatement("SELECT name, shack_name, status, enabled, react, message, depth, upgrade, sleep_Start, sleep_End, dm_reminder, ignored_hidden, dnd, username, rush_hour_end, rush_hour_ignore, work_income, tips_income, overtime_income   " +
+             PreparedStatement pst = con.prepareStatement("SELECT name, shack_name, status, enabled, react, message, depth, upgrade, sleep_Start, sleep_End, dm_reminder, ignored_hidden, dnd, username, rush_hour_end, rush_hour_ignore, work_income, tips_income, overtime_income, large_reminder   " +
                      "FROM profile  WHERE name = '" + id + "'");
              ResultSet rs = pst.executeQuery()) {
 
@@ -575,7 +576,8 @@ public class ReminderUtils {
                         rs.getTimestamp(16),
                         rs.getInt(17),
                         rs.getInt(18),
-                        rs.getInt(19));
+                        rs.getInt(19),
+                        rs.getBoolean(20));
             }
 
         } catch (SQLException ex) {
@@ -591,7 +593,7 @@ public class ReminderUtils {
             Connection con = databaseUtils.getConnection();
             Statement st = con.createStatement();
 
-            PreparedStatement pst = con.prepareStatement("SELECT name, shack_name, status, enabled, react, message, depth, upgrade, sleep_Start, sleep_End, dm_reminder, ignored_hidden, dnd, username, rush_hour_end, rush_hour_ignore, work_income, tips_income, overtime_income   " +
+            PreparedStatement pst = con.prepareStatement("SELECT name, shack_name, status, enabled, react, message, depth, upgrade, sleep_Start, sleep_End, dm_reminder, ignored_hidden, dnd, username, rush_hour_end, rush_hour_ignore, work_income, tips_income, overtime_income, large_reminder   " +
                     "FROM profile  WHERE username = ?");
             pst.setString(1, username);
             ResultSet rs = pst.executeQuery();
@@ -614,7 +616,8 @@ public class ReminderUtils {
                         rs.getTimestamp(16),
                         rs.getInt(17),
                         rs.getInt(18),
-                        rs.getInt(19));
+                        rs.getInt(19),
+                        rs.getBoolean(20));
 
             }
             st.executeBatch();
@@ -665,6 +668,23 @@ public class ReminderUtils {
             Connection con = databaseUtils.getConnection();
             PreparedStatement pst = con.prepareStatement("UPDATE profile SET overtime_income = ? WHERE name = ?");
             pst.setInt(1, income);
+            pst.setString(2, id);
+            int rs = pst.executeUpdate();
+            if (rs == 1) {
+                con.close();
+                return true;
+            }
+        } catch (SQLException ex) {
+            databaseUtils.printException(ex);
+        }
+        return false;
+    }
+
+    public static boolean updateLargeReminders(String id, boolean large) {
+        try {
+            Connection con = databaseUtils.getConnection();
+            PreparedStatement pst = con.prepareStatement("UPDATE profile SET large_reminder = ? WHERE name = ?");
+            pst.setBoolean(1, large);
             pst.setString(2, id);
             int rs = pst.executeUpdate();
             if (rs == 1) {
@@ -992,7 +1012,6 @@ public class ReminderUtils {
         boolean updated = false;
         try {
             Connection con = databaseUtils.getConnection();
-            Statement st = con.createStatement();
 
             PreparedStatement pst = con.prepareStatement("SELECT id FROM profile  WHERE name = '" + name + "'");
             ResultSet rs = pst.executeQuery();
@@ -1005,7 +1024,6 @@ public class ReminderUtils {
                 p.execute();
                 updated = true;
             }
-            st.executeBatch();
             con.close();
         } catch (SQLException ex) {
             databaseUtils.printException(ex);
@@ -1017,7 +1035,6 @@ public class ReminderUtils {
         boolean updated = false;
         try {
             Connection con = databaseUtils.getConnection();
-            Statement st = con.createStatement();
 
             PreparedStatement pst = con.prepareStatement("SELECT id FROM profile  WHERE name = '" + name + "'");
             ResultSet rs = pst.executeQuery();
@@ -1030,7 +1047,28 @@ public class ReminderUtils {
                 p.execute();
                 updated = true;
             }
-            st.executeBatch();
+            con.close();
+        } catch (SQLException ex) {
+            databaseUtils.printException(ex);
+        }
+        return updated;
+    }
+    public static boolean toggleLarge(String name) {
+        boolean updated = false;
+        try {
+            Connection con = databaseUtils.getConnection();
+
+            PreparedStatement pst = con.prepareStatement("SELECT id FROM profile  WHERE name = '" + name + "'");
+            ResultSet rs = pst.executeQuery();
+            int id = -1;
+            while (rs.next()) {
+                id = rs.getInt(1);
+                String sql = "UPDATE profile SET large_reminder = NOT large_reminder  WHERE id = ?";
+                PreparedStatement p = con.prepareStatement(sql);
+                p.setInt(1, id);
+                p.execute();
+                updated = true;
+            }
             con.close();
         } catch (SQLException ex) {
             databaseUtils.printException(ex);
