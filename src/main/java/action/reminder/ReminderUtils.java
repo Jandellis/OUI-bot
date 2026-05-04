@@ -2,6 +2,7 @@ package action.reminder;
 
 import action.giveaway.model.GiveawayLog;
 import action.giveaway.model.GiveawayWinner;
+import action.reminder.model.Contract;
 import action.reminder.model.ContractMessage;
 import action.reminder.model.ReminderSettings;
 import action.reminder.model.FlexStats;
@@ -1519,5 +1520,32 @@ public class ReminderUtils {
             databaseUtils.printException(ex);
         }
         return null;
+    }
+
+    public static void insertContract(Contract contract, boolean detailed) {
+        try (Connection con = databaseUtils.getConnection();
+             PreparedStatement p = con.prepareStatement(
+                     "INSERT INTO contract (name, rewards, total, rep, objective, objective_type, " +
+                             "work_cooldown, work_buff, tips_cooldown, tips_buff, ot_cooldown, ot_buff, detailed) " +
+                             "VALUES (?,?,?,?,?,?,?,?,?,?,?,?, ?)")) {
+
+            p.setString(1, contract.getName());
+            p.setString(2, contract.getRewards());
+            p.setInt(3, contract.getTotal());
+            p.setInt(4, contract.getRep());
+            p.setString(5, contract.getObjective());
+            p.setString(6, contract.getActionType().getName());
+            p.setDouble(7, contract.getWorkCoolDown());
+            p.setDouble(8, contract.getWorkBuff());
+            p.setDouble(9, contract.getTipsCoolDown());
+            p.setDouble(10, contract.getTipsBuff());
+            p.setDouble(11, contract.getOvertimeCoolDown());
+            p.setDouble(12, contract.getOvertimeBuff());
+            p.setBoolean(13, detailed);
+            p.execute();
+
+        } catch (SQLException ex) {
+            databaseUtils.printException(ex);
+        }
     }
 }

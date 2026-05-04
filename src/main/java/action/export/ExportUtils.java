@@ -560,6 +560,19 @@ public class ExportUtils {
         }
     }
 
+    public static void setMember(String name, int members) {
+        try {
+            Connection con = databaseUtils.getConnection();
+            PreparedStatement pst = con.prepareStatement("UPDATE franchise SET members = ? WHERE name = ?");
+            pst.setInt(1, members);
+            pst.setString(2, name);
+            int rs = pst.executeUpdate();
+            con.close();
+        } catch (SQLException ex) {
+            databaseUtils.printException(ex);
+        }
+    }
+
     public static int getMembers(String name) {
 
         try {

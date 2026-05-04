@@ -48,4 +48,14 @@ public class ContractEstimate {
     public void addTips(){
         tips++;
     }
+
+    @Override
+    public String toString() {
+        return "ContractEstimate{" +
+                "min=" + min +
+                ", work=" + work +
+                ", overtime=" + overtime +
+                ", tips=" + tips +
+                '}';
+    }
 }

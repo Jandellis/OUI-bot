@@ -5,10 +5,14 @@ public enum ContractType {
     VIP_SERVICE("VIP Service", ContractActionType.tips),
     VIP_CATERING("VIP Catering", ContractActionType.work),
     VIP_OVERTIME("VIP Overtime", ContractActionType.overtime),
+    VIP("VIP", null),
     SERVICE_SPECIALIST("Service Specialist", ContractActionType.tips),
     SHIFT_SPECIALIST("Shift Specialist", ContractActionType.work),
     OVERTIME_SPECIALIST("Overtime Specialist", ContractActionType.overtime),
+    SPECIALIST("Specialist", null),
     CORPORATE_RESTRUCTURING("Corporate Restructuring", ContractActionType.all),
+    CATERING_CONTRACTS("Catering Contracts", null),
+    ACTIVE_CONTRACT("Active Contract", null),
     UNKNOWN("Unknown", null);
 
     private final String name;
@@ -32,6 +36,9 @@ public enum ContractType {
             if (type.name.equals(name)) {
                 return type;
             }
+        }
+        if (name.contains(CORPORATE_RESTRUCTURING.getName())) {
+            return CORPORATE_RESTRUCTURING;
         }
         return UNKNOWN;
     }

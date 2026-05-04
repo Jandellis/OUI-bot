@@ -300,7 +300,7 @@ public class FranchiseStat extends Action implements EmbedAction {
         JSONParser jsonParser = new JSONParser();
 
         JSONObject obj = (JSONObject)jsonParser.parse(data);
-//        obj.get("memberCount");
+        int memberCount = ((Long) obj.get("memberCount")).intValue();
         Long balance = (Long) obj.get("balance");
         Long sold = (Long) obj.get("tacos");
         Long income = (Long) obj.get("income");
@@ -321,6 +321,8 @@ public class FranchiseStat extends Action implements EmbedAction {
                 income,
                 franchise
         );
+
+        ExportUtils.setMember(franchise, memberCount);
 
         FranchiseStats franchiseStats = new FranchiseStats(franchise, income, sold, balance, Timestamp.from(Instant.now()));
         ExportUtils.insertFranchiseStats(franchiseStats);

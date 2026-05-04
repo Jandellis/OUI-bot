@@ -1,9 +1,13 @@
 package action.reminder.model;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Contract{
      private String name;
      private String objective;
      private String rewards;
+     private int rep;
     private double workBuff = 1;
     private double workCoolDown = 1;
     private double tipsBuff = 1;
@@ -13,14 +17,33 @@ public class Contract{
     private int progress = 0;
     private int total = 1;
 
+    private List<String[]> participants = new ArrayList<>(); // [userId, count, percent]
+    private List<String> rewardList = new ArrayList<>();
+
     public Contract(String name, String objective, String rewards) {
         this.name = name;
         this.objective = objective;
         this.rewards = rewards;
     }
+    public Contract(String name, String objective, String rewards, int rep) {
+        this.name = name;
+        this.objective = objective;
+        this.rewards = rewards;
+        this.rep = rep;
+    }
 
     public String getName() {
         return name;
+    }
+
+    public boolean isContractType(ContractType type){
+        return name.contains(type.getName());
+
+    }
+
+    public ContractActionType getActionType() {
+        ContractType contractType = ContractType.fromName(name);
+        return contractType.getAction();
     }
 
     public void setName(String name) {
@@ -107,12 +130,37 @@ public class Contract{
         this.total = total;
     }
 
+    public int getRep() {
+        return rep;
+    }
+
+    public void setRep(int rep) {
+        this.rep = rep;
+    }
+
+    public List<String[]> getParticipants() {
+        return participants;
+    }
+
+    public void setParticipants(List<String[]> participants) {
+        this.participants = participants;
+    }
+
+    public List<String> getRewardList() {
+        return rewardList;
+    }
+
+    public void setRewardList(List<String> rewardList) {
+        this.rewardList = rewardList;
+    }
+
     @Override
     public String toString() {
         return "Contract{" +
                 "name='" + name + '\'' +
                 ", objective='" + objective + '\'' +
                 ", rewards='" + rewards + '\'' +
+                ", rep=" + rep +
                 ", workBuff=" + workBuff +
                 ", workCoolDown=" + workCoolDown +
                 ", tipsBuff=" + tipsBuff +

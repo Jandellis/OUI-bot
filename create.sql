@@ -414,3 +414,22 @@ CREATE TABLE IF NOT EXISTS contract_msg (
     taco_id VARCHAR(25),
     cylon_id VARCHAR(25)
     );
+
+CREATE TABLE IF NOT EXISTS contract (
+    id serial PRIMARY KEY,
+    name VARCHAR(150),
+    rewards VARCHAR(200),
+    total int,
+    rep int,
+    objective VARCHAR(100),
+    objective_type VARCHAR(100),
+    work_cooldown double,
+    work_buff double,
+    tips_cooldown double,
+    tips_buff double,
+    ot_cooldown double,
+    ot_buff double
+    );
+
+
+alter table contract add detailed boolean;
