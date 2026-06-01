@@ -61,18 +61,7 @@ public class CookOff extends Action {
                 //post to oui
                 client.getChannelById(Snowflake.of("1362036275821019196")).createMessage("<@&1362018134827208714>, Cookoff in "+cookOffType+" now at <#" + cookOffChannelLink + "> ").block();
                 //post to pond
-//                Random random = new Random();
-
-                // Generate a random integer: 0 or 1
-//                int value = random.nextInt(3);
-//                if (value == 0) {
-                    client.getChannelById(Snowflake.of("1447645140243054609")).createMessage("<@&1432622793622818816>, Cookoff in "+cookOffType+" now at <#" + cookOffChannelLink + "> ").block();
-//                } else {
-//                    logger.info("Sorry no cookoff today for pond!!");
-//                }
-
-
-//                client.getChannelById(Snowflake.of("1430864940754796554")).createMessage("<@&1432622793622818816>, Cookoff in "+cookOffType+" now at <#" + cookOffChannelLink + "> ").block();
+                client.getChannelById(Snowflake.of("1447645140243054609")).createMessage("<@&1432622793622818816>, Cookoff in "+cookOffType+" now at <#" + cookOffChannelLink + "> ").block(
             } catch (Throwable e) {
                 printException(e);
             }
