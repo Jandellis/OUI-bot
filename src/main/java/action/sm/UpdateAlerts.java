@@ -2,6 +2,8 @@ package action.sm;
 
 import action.Action;
 import action.reminder.EmbedAction;
+import action.reminder.ReminderUtils;
+import action.reminder.model.Profile;
 import bot.Sauce;
 import discord4j.common.util.Snowflake;
 import discord4j.core.object.Embed;
@@ -30,7 +32,7 @@ public class UpdateAlerts extends Action implements EmbedAction {
 
     String tacoBot = "490707751832649738";
     List<String> smChannelList;
-    ScheduledExecutorService executorService = Executors.newScheduledThreadPool(5);
+
 
     public UpdateAlerts() {
 //        param = "cySmDrop";
@@ -47,12 +49,12 @@ public class UpdateAlerts extends Action implements EmbedAction {
     public Mono<Object> doAction(Message message, boolean checkEmbeds) {
         AtomicBoolean watched = new AtomicBoolean(false);
         try {
-            smChannelList.forEach(channel -> {
-                if (message.getChannelId().asString().equals(channel)) {
-                    watched.set(true);
-                }
-            });
-            if (watched.get()) {
+//            smChannelList.forEach(channel -> {
+//                if (message.getChannelId().asString().equals(channel)) {
+//                    watched.set(true);
+//                }
+//            });
+//            if (watched.get()) {
                 if (message.getData().author().id().asString().equals(tacoBot)) {
 
 
@@ -66,7 +68,7 @@ public class UpdateAlerts extends Action implements EmbedAction {
                     handleEmbedAction(message, embedData);
 
                     }
-                }
+//                }
 //            }
         } catch (Exception e) {
             printException(e);
@@ -81,10 +83,20 @@ public class UpdateAlerts extends Action implements EmbedAction {
     public Mono<Object> handleEmbedAction(Message message, List<EmbedData> embedData) {
 
         try {
+            if (message.getChannelId().asLong() == 889662502324039690L){
+                logger.info("12345 - got message " + message.toString());
+            }
             for (EmbedData embed : embedData) {
+                if (message.getChannelId().asLong() == 889662502324039690L){
+                    logger.info("got message " + message.toString());
+                    logger.info("got embeed data " + embed.toString());
+                }
 
                 if (embed.author().toOptional().isPresent()) {
                     EmbedAuthorData authorData = embed.author().get();
+                    if (message.getChannelId().asLong() == 889662502324039690L){
+                        logger.info(authorData.name().get());
+                    }
 
                     if (authorData.name().get().startsWith("Your Sauces")) {
                         String id = null;
@@ -180,6 +192,74 @@ public class UpdateAlerts extends Action implements EmbedAction {
                             }
                             message.getChannel().block().createMessage(sb.toString()).block();
                         }
+                    }
+                    if (authorData.name().get().startsWith("Purchase Completed")) {
+                        try {
+
+                            logger.info("buying sauce");
+                            String id = null;
+                            if (authorData.iconUrl().isAbsent()) {
+                                //message.getChannel().block().createMessage("Sorry unable to update your sauces. If you add an avatar i will be able to update them").block();
+                            } else {
+                                id = authorData.iconUrl().get().replace("https://cdn.discordapp.com/avatars/", "").split("/")[0];
+                            }
+
+                            if (id == null) {
+                                id = getId(message, embed);
+                            }
+                            logger.info("found id " + id);
+                            String desc = embed.description().get();
+
+                            Sauce sauce = null;
+
+                            for (Sauce sauceValue : Sauce.values()) {
+                                String name = sauceValue.getName();
+                                if (name.equals("secret_sauce")) {
+                                    name = "secret";
+                                }
+                                if (desc.toLowerCase().contains(name)) {
+                                    sauce = sauceValue;
+                                }
+                            }
+                            logger.info("found sauce  " + sauce);
+
+                            Utils.addAlert(id, sauce, message.getChannelId().asLong() + "");
+                            logger.info("added alerts");
+
+                            Profile profile = ReminderUtils.loadProfileById(id);
+                            if (profile == null) {
+                                return Mono.empty();
+                            }
+                            react(message, profile);
+                        } catch (Exception e) {
+                            printException(e);
+                        }
+
+                    }
+                    if (authorData.name().get().startsWith("Sale Completed")) {
+                        try {
+                            String id = null;
+                            if (authorData.iconUrl().isAbsent()) {
+                                //message.getChannel().block().createMessage("Sorry unable to update your sauces. If you add an avatar i will be able to update them").block();
+                            } else {
+                                id = authorData.iconUrl().get().replace("https://cdn.discordapp.com/avatars/", "").split("/")[0];
+                            }
+
+                            if (id == null) {
+                                id = getId(message, embed);
+                            }
+
+                            Utils.addAlerts(id, new ArrayList<>(), message.getChannelId().asLong() + "");
+                            Profile profile = ReminderUtils.loadProfileById(id);
+                            if (profile == null) {
+                                return Mono.empty();
+                            }
+                            react(message, profile);
+                            message.getChannel().block().createMessage("Alerts cleared").block();
+                        } catch (Exception e) {
+                            printException(e);
+                        }
+
                     }
                 } else {
                     if (embed.description().toOptional().isPresent() && embed.description().get().contains("You do not own any sauces!")) {

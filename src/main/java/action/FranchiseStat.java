@@ -32,7 +32,9 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class FranchiseStat extends Action implements EmbedAction {
@@ -50,7 +52,21 @@ public class FranchiseStat extends Action implements EmbedAction {
     String tacoBot = "490707751832649738";
 
 
-    ScheduledExecutorService executorService = Executors.newScheduledThreadPool(2);
+//    ScheduledExecutorService executorService = Executors.newScheduledThreadPool(2);
+
+    private final ScheduledExecutorService executorService =
+            Executors.newScheduledThreadPool(2, new ThreadFactory() {
+
+                private final AtomicInteger threadNumber =
+                        new AtomicInteger(1);
+
+                @Override
+                public Thread newThread(Runnable r) {
+                    Thread thread = new Thread(r);
+                    thread.setName("FranchiseStats-" + threadNumber.getAndIncrement());
+                    return thread;
+                }
+            });
 
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
@@ -296,6 +312,7 @@ public class FranchiseStat extends Action implements EmbedAction {
         webClient.getOptions().setCssEnabled(false);
         webClient.getOptions().setJavaScriptEnabled(false);
         String data = webClient.getPage(url).getWebResponse().getContentAsString();
+        webClient.close();
         logger.info(data);
         JSONParser jsonParser = new JSONParser();
 
@@ -335,6 +352,7 @@ public class FranchiseStat extends Action implements EmbedAction {
         webClient.getOptions().setJavaScriptEnabled(false);
 //        webClient.addRequestHeader("token", "123");
         String data = webClient.getPage(url).getWebResponse().getContentAsString();
+        webClient.close();
 
         logger.info(data);
         JSONParser jsonParser = new JSONParser();

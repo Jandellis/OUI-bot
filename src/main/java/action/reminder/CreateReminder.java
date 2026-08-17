@@ -38,7 +38,6 @@ public class CreateReminder extends Action implements EmbedAction {
 
     String tacoBot = "490707751832649738";
     List<String> watchChannels;
-    ScheduledExecutorService executorService = Executors.newScheduledThreadPool(5);
     Long recruiter;
     List<String> patreonServers;
     String reloadEmote = "\uD83D\uDD04";
@@ -658,17 +657,18 @@ public class CreateReminder extends Action implements EmbedAction {
 
     public double getEmbedCooldown(String desc) {
         Pattern pattern = Pattern.compile("\\*\\*([+-]\\d+)%\\*\\*\\s+\\w+\\s+Cooldown");
-        double cooldown = 0;
+        double cooldown = 1.0;
 
             for (String line : desc.split("\n")) {
 //                logger.info("checking cooldown line: '{}'", line.trim());
                 Matcher m = pattern.matcher(line.trim());
                 if (m.find()) {
                     logger.info("found cooldown: {}", m.group(1));
-                    cooldown += (Integer.parseInt(m.group(1)) / 100.0);
+                    cooldown = (Integer.parseInt(m.group(1)) / 100.0) * cooldown + cooldown;
                 }
             }
-        return 1 + cooldown;
+        logger.info("Cooldown is : {}",cooldown);
+        return cooldown;
     }
 
     //create new command
@@ -806,12 +806,14 @@ public class CreateReminder extends Action implements EmbedAction {
         int sleep = 0;
         AtomicBoolean isPatreonServer = new AtomicBoolean(false);
         if (message.getGuildId().isPresent()) {
+            logger.info("has guild Id");
             patreonServers.forEach(server -> {
                 if (message.getGuildId().get().asString().equals(server)) {
                     isPatreonServer.set(true);
                 }
             });
         }
+        logger.info("has guild Id check is done");
         ReminderSettings reminderSettings = ReminderUtils.loadReminderSettings(profile.getName());
         if (reminderSettings == null) {
             reminderSettings = new ReminderSettings(profile.getName(), true, true, false, true, true, true, true, true, 1, 1, 1);
@@ -821,6 +823,7 @@ public class CreateReminder extends Action implements EmbedAction {
             case work:
                 sleep = profile.getStatus().getWork();
                 if (!isPatreonServer.get()) {
+                    logger.info("Work sleep, add 1 as not Patreon");
                     sleep = sleep + 1;
                 }
                 if (isRushHour(profile)) {
@@ -828,8 +831,10 @@ public class CreateReminder extends Action implements EmbedAction {
                 }
                 //convert to seconds
                 sleep = sleep * 60;
+                logger.info("Work sleep is : {}",sleep);
 //                sleep = (int) (sleep * reminderSettings.getWorkModifier());
                 sleep = (int) (sleep * getEmbedCooldown(desc));
+                logger.info("Work sleep with modifier applied is : {}",sleep);
                 //grind is double work 1min min warning
                 int grindSleep = 0;
                 grindSleep = sleep * 2 -1;
@@ -847,8 +852,10 @@ public class CreateReminder extends Action implements EmbedAction {
                     sleep = 2;
                 }
                 sleep = sleep * 60;
-//                sleep = (int) (sleep * reminderSettings.getTipsModifier());
+
+                logger.info("Tips sleep is : {}",sleep);
                 sleep = (int) (sleep * getEmbedCooldown(desc));
+                logger.info("Tips sleep with modifier applied is : {}",sleep);
                 break;
             case ot:
                 sleep = profile.getStatus().getOt();
@@ -984,17 +991,6 @@ public class CreateReminder extends Action implements EmbedAction {
 
 
         DoReminder doReminder = new DoReminder(gateway, client);
-//        if (reminder.getId() == -2) {
-//            logger.info("got double");
-//
-//
-//
-//            gateway.getUserById(Snowflake.of("292839877563908097")).block().getPrivateChannel().flatMap(channel -> {
-//                channel.createMessage("got double from channel "+ message.getRestChannel().getId().toString()).block();
-//                logger.info("sent DM");
-//                return Mono.empty();
-//            }).block();
-//        }
         doReminder.runReminder(reminder);
     }
 

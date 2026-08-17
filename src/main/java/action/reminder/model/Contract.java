@@ -14,6 +14,7 @@ public class Contract{
     private double tipsCoolDown = 1;
     private double overtimeBuff = 1;
     private double overtimeCoolDown = 1;
+    private double hourIncomeBuff =  1;
     private int progress = 0;
     private int total = 1;
 
@@ -159,7 +160,15 @@ public class Contract{
         if (participants.isEmpty()){
             return 1;
         }
-        return participants.size();
+        return participants.size() - 1;
+    }
+
+    public double getHourIncomeBuff() {
+        return hourIncomeBuff;
+    }
+
+    public void setHourIncomeBuff(double hourIncomeBuff) {
+        this.hourIncomeBuff = hourIncomeBuff;
     }
 
     @Override
@@ -175,6 +184,7 @@ public class Contract{
                 ", tipsCoolDown=" + tipsCoolDown +
                 ", overtimeBuff=" + overtimeBuff +
                 ", overtimeCoolDown=" + overtimeCoolDown +
+                ", hourIncomeBuff=" + hourIncomeBuff +
                 ", progress=" + progress +
                 ", total=" + total +
                 ", participants=" + participants +

@@ -10,6 +10,8 @@ import action.reminder.model.FlexStats;
 import action.reminder.model.Profile;
 import action.reminder.model.Reminder;
 import action.reminder.model.ReminderTimes;
+import action.reminder.model.Reward;
+import action.reminder.model.RewardType;
 import discord4j.common.util.Snowflake;
 import discord4j.core.event.domain.message.MessageUpdateEvent;
 import discord4j.core.object.entity.Message;
@@ -62,11 +64,11 @@ public class Contracts extends Action  {
                         List<FlexStats> flexStats = ReminderUtils.loadFlexStats(0,7 , id);
 
                         Contract contract = getContract(message);
-                        parseParticipantsAndRewards(message, contract);
 
                         if (contract == null){
                             return Mono.empty();
                         }
+                        parseParticipantsAndRewards(message, contract);
                         logger.info( "Active - " + contract.toString());
 
                         ReminderTimes reminderTimes = getReminderTimes(profile, message);
@@ -119,7 +121,7 @@ public class Contracts extends Action  {
                                         true
                                 );
                                 logger.info("time left is {} min", sleep);
-                                String timeStr = formatMin(sleep.getMin());
+                                String timeStr = formatMin(sleep.getMin()/contract.participantCount());
 
                                 String extra = "";
                                 switch (contract.getActionType()) {
@@ -139,8 +141,12 @@ public class Contracts extends Action  {
                                         extra = " (" + sleep.getOvertime() + " overtime, " + sleep.getWork() + " work)";
                                         break;
                                 }
+                                String people = " you ";
+                                if (contract.participantCount() > 1 ){
+                                    people = " for "+ contract.participantCount() + " people ";
+                                }
 
-                                String printMessage = "It will take you " + timeStr + " to earn $" + String.format("%,d", (contract.getTotal() - contract.getProgress())) + extra;
+                                String printMessage = "It will take" +people + timeStr + " to earn $" + String.format("%,d", (contract.getTotal() - contract.getProgress())) + extra;
                                 embed.addField("⭐ " +contract.getName(), printMessage, false);
                             }
                         } else {
@@ -290,10 +296,16 @@ public class Contracts extends Action  {
                     List<String> id = new ArrayList<>();
                     id.add(profile.getName());
                     List<FlexStats> flexStats = ReminderUtils.loadFlexStats(0,7 , id);
-                    long flex = getFlexValues(profile, contract, message, flexStats);
-                    long flexBaseline = getBaselineFlexValues(profile, message, flexStats);
-                    long defaultBaseline = getBaselineDefaultValues(profile, freshMessage);
-                    long defaultValue = getDefaultValues(profile, contract, freshMessage);
+
+                    long hourIncome = 0;
+                    if (contract.getHourIncomeBuff() > 0)
+                        hourIncome =  ReminderUtils.loadProfileIncome(profile.getName());
+
+                    long flex = getFlexValues(profile, contract, message, flexStats, hourIncome);
+                    long flexBaseline = getBaselineFlexValues(profile, message, flexStats, hourIncome);
+                    long defaultValue = getDefaultValues(profile, contract, freshMessage, hourIncome);
+                    long defaultBaseline = getBaselineDefaultValues(profile, freshMessage, hourIncome);
+
 
                     logger.info("flex={}, flexBaseline={}, defaultValue={}, defaultBaseline={}",
                             flex, flexBaseline, defaultValue, defaultBaseline);
@@ -314,17 +326,50 @@ public class Contracts extends Action  {
                     //for the money ones, count the tips/ot/work it took, then do the same as above and take the largest number
                     // need to update the methods below to also return the counts so i dont have to work that out twice
 
+
+
+                    /// need to get the time estimates out of this and go and fix up the money values
                     String estimate = getContractEstimate(contract, profile, freshMessage, flexStats);
                     if (!estimate.isEmpty()) {
                         embed.addField("Length", estimate, false);
                     }
 
                     String increaseMessage = String.format(
-                            " - Grind based on your history **%.1f%%** " +getEmote(flexPct)+"\n"+
-                            " - Grind without missing any cooldowns **%.1f%%** "+getEmote(defaultPct),
-                            defaultPct, flexPct
+                            " - Grind based on your history `$" + String.format("%,d", flex - flexBaseline) +"` or **%.1f%%** " +getEmote(flexPct)+"\n"+
+                            " - Grind without missing any cooldowns  `$" + String.format("%,d", defaultValue - defaultBaseline) +"` or **%.1f%%** "+getEmote(defaultPct),
+                            flexPct, defaultPct
                     );
                     embed.addField("Boost", increaseMessage, false);
+                    contract.getRewardList();
+
+                    List<Reward> rewardList = parseRewards(contract);
+                    StringBuilder rewards = new StringBuilder();
+                    for (Reward reward : rewardList) {
+                        rewards.append(" - ");
+                        rewards.append(reward.getType().getType());
+                        long total = 0;
+                        String aprox = " approx: ";
+                        switch (reward.getType()) {
+                            case CASH:
+                                total = reward.getAmount();
+                                aprox = "";
+                                break;
+                            case COUPON:
+                                total = reward.getAmount() * 75000;
+                                break;
+                            case LUNCH_RUSH:
+                                total = reward.getAmount() * ReminderUtils.loadProfileIncome(profile.getName()) * 18;
+                                break;
+                            case GOLDEN_TICKET:
+                                total = reward.getAmount() * 1250000;
+                                break;
+                        }
+
+                        rewards.append(aprox);
+                        rewards.append("$").append(String.format("%,d", total)).append("\n");
+                    }
+
+                    embed.addField("Rewards", rewards.toString(), false);
 
 
 
@@ -424,9 +469,9 @@ public class Contracts extends Action  {
     }
 
     private String getEmote(double change) {
-        String direction = "<a:up:1015020767244714004>";
+        String direction = "increase <a:up:1015020767244714004>";
         if (change < 0) {
-            direction = "<a:down:1015020716929851453>";
+            direction = "decrease <a:down:1015020716929851453>";
         }
         return direction;
     }
@@ -518,6 +563,7 @@ public class Contracts extends Action  {
                         case "Tips Cooldown":     contract.setTipsCoolDown(multiplier); break;
                         case "Overtime Payout":   contract.setOvertimeBuff(multiplier); break;
                         case "Overtime Cooldown": contract.setOvertimeCoolDown(multiplier); break;
+                        case "Hourly Income":     contract.setHourIncomeBuff(multiplier); break;
                         default: logger.info("unknown effect type: {}", type); break;
                     }
                 }
@@ -890,9 +936,17 @@ public class Contracts extends Action  {
         if (!isPatreonServer.get() && type != ContractActionType.overtime) {
             sleep = sleep + 1;
         }
+        // device by the number of people in the contract
         sleep = sleep * value / contract.participantCount();
         String timeStr = formatMin(sleep);
+        //in your grind work out the flex of all the people in it
+        // if its work, just add up all the total work of all the members and use that as the cooldown
+        //if one is missing use one of the other people for the missing person
         int flex = yourGrind(flexStats, contract, type, value);
+        ///for the Corporate Restructuring need to work out the income loss and that that into account for the income change
+
+
+
         StringBuilder builder = new StringBuilder();
         builder.append("To complete `" + value + "` " + type + "\n");
         double repPerHourDefault = sleep > 0 ? (contract.getRep() / (sleep / 60.0)) : 0;
@@ -1008,42 +1062,44 @@ public class Contracts extends Action  {
     }
 
 
-    public long getAmount(Profile profile, Contract contract, int workCount, int tipsCount, int overtimeCount) {
+    public long getAmount(Profile profile, Contract contract, int workCount, int tipsCount, int overtimeCount, int incomeCount, long hourIncome) {
+
         long total = 0;
         total = (long) (profile.getWorkIncome() * contract.getWorkBuff() * workCount);
         total = total + (long) (profile.getTipsIncome() * contract.getTipsBuff() * tipsCount);
         total = total + (long) (profile.getOvertimeIncome() * contract.getOvertimeBuff() * overtimeCount);
+        total = total + (long) (hourIncome * contract.getHourIncomeBuff() * incomeCount);
 
         return total;
     }
 
-    public long getBaselineDefaultValues(Profile profile, Message message) {
+    public long getBaselineDefaultValues(Profile profile, Message message, long hourIncome) {
         Contract contract = new Contract(null, null, null);
-        return getDefaultValues(profile, contract, message);
+        return getDefaultValues(profile, contract, message, hourIncome);
     }
-    public long getDefaultValues (Profile profile, Contract contract, Message message) {
+    public long getDefaultValues (Profile profile, Contract contract, Message message, long hourIncome) {
         ReminderTimes reminderTimes = getReminderTimes(profile, message);
         int work = (int) (1440.0 / (reminderTimes.getWork() * contract.getWorkCoolDown()));
         int tips = (int) (1440.0 / (reminderTimes.getTips() * contract.getTipsCoolDown()));
         int ot   = (int) (1440.0 / (reminderTimes.getOvertime() * contract.getOvertimeCoolDown()));
         logger.info("getDefaultValues - work={}, tips={}, ot={}", work, tips, ot);
-        return getAmount(profile, contract, work, tips, ot);
+        return getAmount(profile, contract, work, tips, ot, 24, hourIncome);
     }
 
-    public long getBaselineFlexValues(Profile profile, Message message, List<FlexStats> flexStats ) {
+    public long getBaselineFlexValues(Profile profile, Message message, List<FlexStats> flexStats, long hourIncome ) {
             Contract contract = new Contract(null, null, null);
-            return getFlexValues(profile, contract, message, flexStats);
+            return getFlexValues(profile, contract, message, flexStats, hourIncome);
     }
 
-    public long getFlexValues (Profile profile, Contract contract, Message message, List<FlexStats> flexStats ) {
+    public long getFlexValues (Profile profile, Contract contract, Message message, List<FlexStats> flexStats, long hourIncome ) {
         if (flexStats.isEmpty()) {
-            return getDefaultValues(profile, contract, message);
+            return getDefaultValues(profile, contract, message, hourIncome);
         }
         int work = (int) ((flexStats.get(flexStats.size()-1).getWork() - flexStats.get(0).getWork()) / contract.getWorkCoolDown() / 7);
         int tips = (int) ((flexStats.get(flexStats.size()-1).getTips() - flexStats.get(0).getTips()) / contract.getTipsCoolDown() / 7);
         int ot   = (int) ((flexStats.get(flexStats.size()-1).getOvertime() - flexStats.get(0).getOvertime()) / contract.getOvertimeCoolDown() / 7);
         logger.info("getFlexValues - work={}, tips={}, ot={}", work, tips, ot);
-        return getAmount(profile, contract, work, tips, ot);
+        return getAmount(profile, contract, work, tips, ot, 24, hourIncome);
     }
 
     private ReminderTimes getReminderTimes (Profile profile, Message message) {
@@ -1074,7 +1130,8 @@ public class Contracts extends Action  {
     }
 
     public void parseParticipantsAndRewards(Message message, Contract contract) {
-        Pattern participantPattern = Pattern.compile("<@(\\d+)>.*?`(\\d+)`.*?\\(`(\\d+)%`\\)");
+//        Pattern participantPattern = Pattern.compile("<@(\\d+)>.*?`(\\d+)`.*?\\(`(\\d+)%`\\)");
+        Pattern participantPattern = Pattern.compile("<@(\\d+)>.*?`\\$?([\\d,]+)`.*?\\(`(\\d+)%`\\)");
         Pattern rewardItemPattern = Pattern.compile("[🎫🎟️💰⏰🎖️]\\s*[^,\n]+");
         Pattern repPattern = Pattern.compile("\\+(\\d+)\\s+Rep(?:utation)?");
 
@@ -1089,24 +1146,31 @@ public class Contracts extends Action  {
             for (ComponentData item : top.components().get()) {
                 if (item.type() != 10 || item.content().isAbsent()) continue;
                 String text = item.content().get();
-
+                long runningTotal = 0;
                 // parse participants
                 if (text.contains("Participants")) {
                     for (String line : text.split("\n")) {
                         Matcher m = participantPattern.matcher(line);
                         if (m.find()) {
-                            participants.add(new String[]{m.group(1), m.group(2), m.group(3)});
-                            logger.info("participant: userId={}, count={}, percent={}%", m.group(1), m.group(2), m.group(3));
+                            long total = Long.parseLong(m.group(2).replace(",", ""));
+                            runningTotal += total;
+                            int pct = Math.toIntExact(total * 100 / contract.getTotal());
+                            participants.add(new String[]{m.group(1), total+"", pct + ""});
+                            logger.info("participant: userId={}, count={}, percent={}%, currentPercent={}%", m.group(1), m.group(2), m.group(3), pct);
                         }
                     }
+                    int pct = 100 - Math.toIntExact(runningTotal * 100 / contract.getTotal());
+                    participants.add(new String[]{"Unclaimed", runningTotal+"", pct + ""});
                 }
+
 
                 // parse rewards
                 if (text.contains("Rewards:")) {
                     for (String line : text.split("\n")) {
                         if (line.contains("Rewards:")) {
                             String rewardsPart = line.replaceAll(".*\\*\\*Rewards:\\*\\*\\s*", "").trim();
-                            for (String reward : rewardsPart.split(",\\s*")) {
+//                            for (String reward : rewardsPart.split(",\\s*")) {
+                            for (String reward : rewardsPart.split(",\\s*(?=[^\\d])")) {
                                 rewards.add(reward.trim());
                                 logger.info("reward: {}", reward.trim());
                             }
@@ -1131,9 +1195,9 @@ public class Contracts extends Action  {
         List<String[]> participants = contract.getParticipants();
         List<String> rewards = contract.getRewardList();
 
-        if (participants.isEmpty() || rewards.isEmpty() || participants.size() == 1) {
-            return "";
-        }
+//        if (participants.isEmpty() || rewards.isEmpty() || participants.size() == 1) {
+//            return "";
+//        }
 
         StringBuilder builder = new StringBuilder();
 
@@ -1141,31 +1205,84 @@ public class Contracts extends Action  {
         for (String[] participant : participants) {
             String userId = participant[0];
             int percent = Integer.parseInt(participant[2]);
+            if (userId.equals("Unclaimed")) {
 
-            builder.append("<@").append(userId).append("> (").append(percent).append("%):\n");
+                builder.append("**").append(userId).append("** (").append(percent).append("%):\n");
+            } else {
+
+                builder.append("<@").append(userId).append("> (").append(percent).append("%):\n");
+            }
+
 
             for (String reward : rewards) {
                 // try to extract quantity and item name
-                Matcher m = Pattern.compile("([^\\d]*)(\\d+)(.*)").matcher(reward.trim());
+//                Matcher m = Pattern.compile("([^\\d]*)(\\d+)(.*)").matcher(reward.trim());
+//                if (m.find()) {
+//                    String prefix = m.group(1).trim();
+//                    int quantity = Integer.parseInt(m.group(2));
+//                    String suffix = m.group(3).trim();
+//                    double split = quantity * (percent / 100.0);
+//                    builder.append(" - ").append(prefix).append(" ").append(String.format("%.1f", split)).append(" ").append(suffix).append("\n");
+//                } else {
+//                    builder.append(" - ").append(reward).append("\n");
+//                }
+
+                Matcher m = Pattern.compile("([^\\d$]*)(\\$?[\\d,]+)(.*)").matcher(reward.trim());
                 if (m.find()) {
                     String prefix = m.group(1).trim();
-                    int quantity = Integer.parseInt(m.group(2));
+                    boolean hasDollar = m.group(2).contains("$");
+                    int quantity = Integer.parseInt(m.group(2).replace("$", "").replace(",", ""));
                     String suffix = m.group(3).trim();
-                    int split = (int) Math.round(quantity * (percent / 100.0));
-//                    int split = (int) Math.floor(quantity * (percent / 100.0));
-                    builder.append(" - ").append(prefix).append(" ").append(split).append(" ").append(suffix).append("\n");
-                } else {
-                    builder.append(" - ").append(reward).append("\n");
+                    double split = quantity * (percent / 100.0);
+                    String formattedSplit = hasDollar
+                            ? "$" + String.format("%,.1f", split)
+                            : String.format("%.1f", split);
+                    builder.append(" - ").append(prefix).append(" ").append(formattedSplit).append(" ").append(suffix).append("\n");
                 }
             }
 
 //            int repSplit = (int) Math.floor(contract.getRep() * (percent / 100.0));
-            int repSplit = (int) Math.round(contract.getRep() * (percent / 100.0));
-            builder.append(" - ⭐ +").append(repSplit).append(" Reputation\n");
+            double repSplit = contract.getRep() * (percent / 100.0);
+            builder.append(" - ⭐ +").append(String.format("%.1f", repSplit)).append(" Reputation\n");
             builder.append("\n");
         }
 
         return builder.toString();
+    }
+
+    public List<Reward> parseRewards(Contract contract) {
+        List<Reward> rewardList = new ArrayList<>();
+
+        if (contract.getRewards() == null || contract.getRewards().isEmpty()) {
+            return rewardList;
+        }
+
+        for (String reward : contract.getRewards().split(",\\s*(?=[^\\d])")) {
+            reward = reward.trim();
+            if (reward.isEmpty()) continue;
+
+            Matcher m = Pattern.compile("([^\\d$]*)(\\$?[\\d,]+)(.*)").matcher(reward);
+            if (m.find()) {
+                int quantity = Integer.parseInt(m.group(2).replace("$", "").replace(",", ""));
+
+                RewardType rewardType;
+                if (m.group(2).contains("$") || reward.contains("$")) {
+                    rewardType = RewardType.CASH;
+                } else {
+                    String full = m.group(1) + m.group(3);
+                    rewardType = RewardType.fromString(full);
+                }
+
+                if (rewardType != null) {
+                    rewardList.add(new Reward(quantity, rewardType));
+                    logger.info("parsed reward: {} {}", quantity, rewardType);
+                } else {
+                    logger.info("unknown reward type for: {}", reward);
+                }
+            }
+        }
+
+        return rewardList;
     }
 }
 

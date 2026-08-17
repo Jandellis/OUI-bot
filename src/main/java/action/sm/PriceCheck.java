@@ -57,6 +57,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -78,8 +79,21 @@ public class PriceCheck extends Action {
     int tasksEndHour;
 
 
-    ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
+//    ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
 
+    private final ScheduledExecutorService executorService =
+            Executors.newScheduledThreadPool(1, new ThreadFactory() {
+
+                private final AtomicInteger threadNumber =
+                        new AtomicInteger(1);
+
+                @Override
+                public Thread newThread(Runnable r) {
+                    Thread thread = new Thread(r);
+                    thread.setName("PriceCheck-" + threadNumber.getAndIncrement());
+                    return thread;
+                }
+            });
     public PriceCheck() {
 
         smUpdate = config.get("smUpdate");
@@ -182,6 +196,7 @@ public class PriceCheck extends Action {
             webClient.getOptions().setJavaScriptEnabled(false);
             webClient.addRequestHeader("token", "123");
             String data = webClient.getPage("https://tacoshack.dev/api/saucemarket").getWebResponse().getContentAsString();
+            webClient.close();
 
             logger.info(data);
 
@@ -352,6 +367,8 @@ public class PriceCheck extends Action {
                                 client.getChannelById(Snowflake.of(channel)).createMessage(sb.toString()).block();
                             }
                         } catch (Exception e) {
+                            logger.info("Message was " + sb.toString());
+                            logger.info("Message size was " + sb.toString().length());
                             printException(e);
                         }
                     }
@@ -389,7 +406,7 @@ public class PriceCheck extends Action {
                         upGifs.add("https://tenor.com/view/john-john-crypto-john-the-coin-memecoin-red-candle-gif-3746997840446702790");
                         upGifs.add("https://tenor.com/view/climb-on-gif-27651199");
                         upGifs.add("https://tenor.com/view/the-price-just-went-up-dwayne-johnson-frank-jungle-cruise-price-increase-gif-16356043");
-                        upGifs.add("https://media.tenor.com/SM7bIpcBdFMAAAPo/up-bye");
+                        upGifs.add("https://tenor.com/view/up-bye-gif-18483444");
                         Random rand = new Random();
                         int randomNumber = rand.nextInt(upGifs.size());
                         client.getChannelById(Snowflake.of("840395542394568707")).createMessage(upGifs.get(randomNumber)).block();

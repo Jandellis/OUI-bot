@@ -42,6 +42,7 @@ public class BuyUpgrade extends Action implements EmbedAction {
     Location cantina = new Location(LocationEnum.cantina);
     Location amusement = new Location(LocationEnum.amusement);
     Location resort = new Location(LocationEnum.resort);
+    Location popup = new Location(LocationEnum.popup);
     Location hq = new Location(LocationEnum.hq);
     Location event = new Location(LocationEnum.event);
     List<Location> locations = new ArrayList<>();
@@ -359,9 +360,41 @@ public class BuyUpgrade extends Action implements EmbedAction {
         resort.addUpgrade("antlers", "Deer Antlers", 120, 15000, 25, false, true);
         resort.addUpgrade("heaters", "Outdoor Heaters", 300, 60000, 20, false, true);
         resort.addUpgrade("pickup", "Pickup Window", 500, 300000, 15, false, true);
-        resort.addUpgrade("lift", "Ski Lift", 1500, 12000000, 5, false, true);//48000000
+        resort.addUpgrade("lift", "Ski Lift", 1500, 12000000, 5, false, true);
 
         locations.add(resort);
+
+
+        //ad
+        popup.addUpgrade("radio", "Radio Jingle", 12, 700, 50);
+        popup.addUpgrade("poster", "Festival Poster", 24, 1800, 50);
+        popup.addUpgrade("plane", "Banner Plane", 45, 5200, 50);
+        popup.addUpgrade("paper", "Local Paper", 78, 14000, 50);
+        popup.addUpgrade("pa", "PA Announcement", 130, 38000, 50);
+        popup.addUpgrade("blimp", "Blimp", 220, 100000, 50);
+        //up
+        popup.addUpgrade("merch", "Merch Booth", 18, 900, 50);
+        popup.addUpgrade("benches", "Picnic Benches", 32, 2200, 50);
+        popup.addUpgrade("tent", "Shade Tent", 60, 6500, 50);
+        popup.addUpgrade("lighting", "Stage Lighting Rig", 105, 18000, 50);
+        popup.addUpgrade("grill", "Festival Grill", 150, 400, 50);
+        popup.addUpgrade("tipjar", "Festival Tip Jar", 120, 500, 50);
+        //hire
+        popup.addUpgrade("stagehand", "Stagehand", 12, 500, 50, true);
+        popup.addUpgrade("cook", "Grill Cook", 20, 1100, 50, true);
+        popup.addUpgrade("technician", "Sound Technician", 36, 2800, 50, true);
+        popup.addUpgrade("stage", "Stage Manager", 64, 7500, 50, true);
+        popup.addUpgrade("vendor", "Merch Vendor", 105, 19000, 50, true);
+        popup.addUpgrade("coordinator", "Festival Coordinator", 165, 48000, 50, true);
+        popup.addUpgrade("director", "Festival Director", 260, 120000, 50, true);
+        //deco
+        popup.addUpgrade("bunting", "Flag Bunting", 10, 800, 50);
+        popup.addUpgrade("banners", "Stage Banners", 25, 2400, 50);
+        popup.addUpgrade("neon", "Neon Signage", 48, 7000, 50);
+        popup.addUpgrade("firedancer", "Fire Dancer Show", 90, 22000, 50);
+        popup.addUpgrade("fireworks", "Main Stage Fireworks", 165, 65000, 50);
+
+        locations.add(popup);
 
         //Upgrades
         hq.addUpgrade("Customer Service Department", "Customer Service Department", 180, 750000, 20);
@@ -597,7 +630,7 @@ public class BuyUpgrade extends Action implements EmbedAction {
                                         boost = " more tips";
                                         fakeBoost = true;
                                     }
-                                    if (upgrade.getUpgrade().equals("appliances")) {
+                                    if (upgrade.getUpgrade().equals("appliances") || (upgrade.getUpgrade().equals("grill")  && location.getName().equals(LocationEnum.popup))) {
                                         boost = " more work";
                                         fakeBoost = true;
                                     }
@@ -827,6 +860,7 @@ public class BuyUpgrade extends Action implements EmbedAction {
                                 totalCost.addAndGet(location.getCost(upgrade.getName(), i + 1));
                                 int boost = upgrade.getBoost();
                                 if (upgrade.getName().equals("appliances") ||
+                                        (upgrade.getName().equals("grill") && location.getName().equals(LocationEnum.popup)) ||
                                     upgrade.getName().equals("tipjar") ||
                                     upgrade.getName().equals("Customer Service Department") ||
                                     upgrade.getName().equals("Food Services Department") ||
@@ -1047,6 +1081,9 @@ public class BuyUpgrade extends Action implements EmbedAction {
         }
         if (name.contains("Amusement")) {
             name = "amusement";
+        }
+        if (name.contains("Music Festival") || footer.contains("Music Festival Shack")) {
+            name = "popup";
         }
         if (name.contains("Team")) {
             name = "event";

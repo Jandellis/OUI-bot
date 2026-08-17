@@ -44,6 +44,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -63,8 +64,22 @@ public class RushHour extends Action implements EmbedAction {
     String giveawayRole;
     long chefRole;
 
-    ScheduledExecutorService executorService = Executors.newScheduledThreadPool(2);
+//    ScheduledExecutorService executorService = Executors.newScheduledThreadPool(2);
 
+
+    private final ScheduledExecutorService executorService =
+            Executors.newScheduledThreadPool(2, new ThreadFactory() {
+
+                private final AtomicInteger threadNumber =
+                        new AtomicInteger(1);
+
+                @Override
+                public Thread newThread(Runnable r) {
+                    Thread thread = new Thread(r);
+                    thread.setName("Rushhour-" + threadNumber.getAndIncrement());
+                    return thread;
+                }
+            });
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
     String react;

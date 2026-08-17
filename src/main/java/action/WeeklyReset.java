@@ -10,7 +10,9 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import action.export.ExportUtils;
 import action.export.model.FranchiseStatType;
@@ -33,8 +35,21 @@ public class WeeklyReset extends Action {
     String rushHourChannel = "1289435874240630825";
 
 
-    ScheduledExecutorService executorService = Executors.newScheduledThreadPool(2);
+//    ScheduledExecutorService executorService = Executors.newScheduledThreadPool(2);
 
+    private final ScheduledExecutorService executorService =
+            Executors.newScheduledThreadPool(2, new ThreadFactory() {
+
+                private final AtomicInteger threadNumber =
+                        new AtomicInteger(1);
+
+                @Override
+                public Thread newThread(Runnable r) {
+                    Thread thread = new Thread(r);
+                    thread.setName("WeeklyReset-" + threadNumber.getAndIncrement());
+                    return thread;
+                }
+            });
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
     public WeeklyReset() {

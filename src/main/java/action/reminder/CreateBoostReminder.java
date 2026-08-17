@@ -49,7 +49,7 @@ public class CreateBoostReminder extends Action implements EmbedAction {
         return locationBoosts;
     }
 
-    ScheduledExecutorService executorService = Executors.newScheduledThreadPool(5);
+
 
     public CreateBoostReminder() {
 
@@ -110,6 +110,13 @@ public class CreateBoostReminder extends Action implements EmbedAction {
         boosts.put("Resort Partnership", new Boost("Resort Partnership", 4, LocationEnum.resort, 3));
         boosts.put("Weekend Rush",new Boost("Weekend Rush", 24, LocationEnum.resort, 4));
         boosts.put("Winter Games",new Boost("Winter Games", 4, LocationEnum.resort, 5));
+
+        //popup
+        boosts.put("Crowd Surf Moment", new Boost("Crowd Surf Moment", 8, LocationEnum.popup, 1));
+        boosts.put("Encore Performance",new Boost("Encore Performance", 6, LocationEnum.popup, 2));
+        boosts.put("Silent Disco", new Boost("Silent Disco", 4, LocationEnum.popup, 3));
+        boosts.put("Headliner Set",new Boost("Headliner Set", 24, LocationEnum.popup, 4));
+        boosts.put("Grand Finale Fireworks",new Boost("Grand Finale Fireworks", 4, LocationEnum.popup, 5));
 
 
         //Event
@@ -279,22 +286,26 @@ public class CreateBoostReminder extends Action implements EmbedAction {
 
                             List<Reminder> reminders = ReminderUtils.loadReminder(profile.getName());
 
+                            LocationEnum location = getLocation(embed);
+
                             for (String line : lines) {
                                 for (Boost boost : boosts.values()) {
-                                    if (line.contains(boost.getName())) {
-                                        boolean found = false;
+                                    if (boost.getLocation() == location) {
+                                        if (line.contains(boost.getName())) {
+                                            boolean found = false;
 
-                                        for (Reminder reminder : reminders) {
-                                            if (reminder.getType().getName().equals(boost.getName())) {
-                                                found = true;
-                                                logger.info("Got reminder already for " + boost.getName());
-                                                break;
+                                            for (Reminder reminder : reminders) {
+                                                if (reminder.getType().getName().equals(boost.getName())) {
+                                                    found = true;
+                                                    logger.info("Got reminder already for " + boost.getName());
+                                                    break;
+                                                }
                                             }
-                                        }
-                                        if (!found) {
+                                            if (!found) {
 
-                                            logger.info("Creating new reminder already for " + boost.getName());
-                                            createReminder(boost, message, profile, getSeconds(line));
+                                                logger.info("Creating new reminder already for " + boost.getName());
+                                                createReminder(boost, message, profile, getSeconds(line));
+                                            }
                                         }
                                     }
                                 }

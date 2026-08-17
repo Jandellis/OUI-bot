@@ -8,6 +8,7 @@ import action.upgrades.model.LocationEnum;
 import bot.Config;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sun.management.HotSpotDiagnosticMXBean;
 import discord4j.common.util.Snowflake;
 import discord4j.core.DiscordClient;
 import discord4j.core.GatewayDiscordClient;
@@ -32,6 +33,7 @@ import reactor.core.publisher.Mono;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.management.ManagementFactory;
 import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
@@ -56,7 +58,7 @@ public abstract class Action {
     protected String defaultReact = "<a:cylon:1014777339114168340>";
 
     protected static final Logger logger = LogManager.getLogger("ouiBot");
-    protected ScheduledExecutorService executorService = Executors.newScheduledThreadPool(5);
+//    private ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
 
 
     public Mono<Void> action(GatewayDiscordClient gateway, DiscordClient client) {
@@ -246,6 +248,10 @@ public abstract class Action {
         try {
             logger.error("Exception", e);
 
+//            if (e instanceof OutOfMemoryError) {
+//                du
+//            }
+
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
             e.printStackTrace(pw);
@@ -266,6 +272,20 @@ public abstract class Action {
 
             logger.error("Exception", e2);
         }
+    }
+
+
+    private static void dumpHeap() throws Exception {
+        String fileName = "heapdump-" +
+                java.time.LocalDateTime.now()
+                        .toString()
+                        .replace(":", "-") +
+                ".hprof";
+        HotSpotDiagnosticMXBean bean =
+                ManagementFactory.getPlatformMXBean(
+                        HotSpotDiagnosticMXBean.class);
+
+        bean.dumpHeap(fileName, true);
     }
 
     protected  void dmMe(String message) {
@@ -306,8 +326,10 @@ public abstract class Action {
             location = location.replace("Shack", "").trim();
             String[] split = location.split(" ");
             location = split[split.length-1];
+            logger.info("Looking for Llcation: " + location);
 
             LocationEnum locationEnum = LocationEnum.getLocation(location);
+            logger.info("Found location: " + locationEnum);
             return locationEnum;
 
         }
@@ -476,22 +498,22 @@ public String getContainerUser(Message message) {
     return null;
 }
 
-
-    protected void checkMessageAgain(Message message) {
-
-        Runnable taskWrapper = new Runnable() {
-
-            @Override
-            public void run() {
-//                logger.info("checking message again");
-                Message msg = gateway.getMessageById(Snowflake.of(message.getChannelId().asString()), Snowflake.of(message.getId().asString())).block();
-                doAction(msg);
-            }
-
-        };
-//        logger.info("checking message again in 1 sec");
-        executorService.schedule(taskWrapper, 500, TimeUnit.MILLISECONDS);
-    }
+//
+//    protected void checkMessageAgain(Message message) {
+//
+//        Runnable taskWrapper = new Runnable() {
+//
+//            @Override
+//            public void run() {
+////                logger.info("checking message again");
+//                Message msg = gateway.getMessageById(Snowflake.of(message.getChannelId().asString()), Snowflake.of(message.getId().asString())).block();
+//                doAction(msg);
+//            }
+//
+//        };
+////        logger.info("checking message again in 1 sec");
+//        executorService.schedule(taskWrapper, 500, TimeUnit.MILLISECONDS);
+//    }
 
     protected boolean checkAge(Message message) {
         LocalDateTime now = LocalDateTime.now().minusSeconds(10);

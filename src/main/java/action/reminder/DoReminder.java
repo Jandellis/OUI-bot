@@ -33,7 +33,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static action.reminder.ReminderType.*;
@@ -54,8 +56,25 @@ public class DoReminder extends Action {
         giveawayChannel = config.get("giveawayChannel");
     }
 
-    ScheduledExecutorService executorService = Executors.newScheduledThreadPool(20);
+//    ScheduledExecutorService executorService = Executors.newScheduledThreadPool(20);
+
+    private static final ScheduledExecutorService executorService =
+            Executors.newScheduledThreadPool(30, new ThreadFactory() {
+
+                private final AtomicInteger threadNumber =
+                        new AtomicInteger(1);
+
+                @Override
+                public Thread newThread(Runnable r) {
+                    Thread thread = new Thread(r);
+                    thread.setName("DoReminders-" + threadNumber.getAndIncrement());
+                    return thread;
+                }
+            });
+
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+
 
 
     /**
@@ -81,8 +100,17 @@ public class DoReminder extends Action {
 
                 @Override
                 public void run() {
-                    logger.info("running reminder");
-                    remind(reminder, combinedBoostReminders);
+                    String originalName = Thread.currentThread().getName();
+                    try {
+                        Thread.currentThread().setName(
+                                "DoReminders-id-" + reminder.getId()
+                        );
+
+                        logger.info("running reminder");
+                        remind(reminder, combinedBoostReminders);
+                    }finally {
+                        Thread.currentThread().setName(originalName);
+                    }
                 }
 
             };
@@ -498,6 +526,10 @@ public class DoReminder extends Action {
 
             @Override
             public void run() {
+
+                Thread.currentThread().setName(
+                        "DoReminder Missed Messages"
+                );
                 logger.info("checking for missed messages");
 
                 try {

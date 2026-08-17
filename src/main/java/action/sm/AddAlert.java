@@ -152,7 +152,7 @@ public class AddAlert extends Action {
             action = getAction(message, paramDelete.toLowerCase());
             if (action != null) {
                 String userId = message.getAuthor().get().getId().asString();
-                Utils.deleteAlert(userId);
+                Utils.deleteAlerts(userId);
                 Utils.deleteTrigger(userId);
                 Utils.deleteWatch(userId);
                 message.getChannel().block().createMessage("All sm data deleted").block();

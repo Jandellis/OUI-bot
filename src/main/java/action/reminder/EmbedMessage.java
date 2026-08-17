@@ -14,6 +14,7 @@ import discord4j.core.DiscordClient;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.emoji.Emoji;
+import discord4j.core.retriever.EntityRetrievalStrategy;
 import discord4j.discordjson.json.EmbedData;
 import discord4j.discordjson.json.MessageData;
 import discord4j.rest.entity.RestChannel;
@@ -28,8 +29,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class EmbedMessage extends Action {
@@ -37,6 +40,21 @@ public class EmbedMessage extends Action {
     String tacoBot = "490707751832649738";
     String customerBot = "526268502932455435";
     List<EmbedAction> embedActions = new ArrayList<>();
+
+
+    private final ScheduledExecutorService executorService =
+            Executors.newScheduledThreadPool(15, new ThreadFactory() {
+
+                private final AtomicInteger threadNumber =
+                        new AtomicInteger(1);
+
+                @Override
+                public Thread newThread(Runnable r) {
+                    Thread thread = new Thread(r);
+                    thread.setName("EmbedMessage-" + threadNumber.getAndIncrement());
+                    return thread;
+                }
+            });
 
     /**
      * This deals with all messages from tacoshack. They need to be dealt with a bit differently as they are embed messages.
@@ -90,12 +108,17 @@ public class EmbedMessage extends Action {
 
             if (message.getData().author().id().asString().equals(tacoBot) || message.getData().author().id().asString().equals(customerBot)) {
                 try {
+
+                    if (message.getChannelId().asLong() == 889662502324039690L){
+                        logger.info("**************************12345 - got message " + message.toString());
+                    }
                     List<EmbedData> embedData;
                     if (message.getEmbeds().isEmpty() || message.getEmbeds().size() == 0){
                         logger.info("empty embeds");
-                        if (message.getData().interaction().toOptional().isPresent() && message.getData().interaction().get().name().equals("saucemarket buy")) {
-                            logger.info("Skipping message");
-                        } else {
+                        // not sure why i had this check in place
+//                        if (message.getData().interaction().toOptional().isPresent() && message.getData().interaction().get().name().equals("saucemarket buy")) {
+//                            logger.info("Skipping message");
+//                        } else {
 
 //                        embedData = checkEmbeds(message);
                             if (message.getContent().isEmpty()) {
@@ -103,7 +126,7 @@ public class EmbedMessage extends Action {
                             } else {
                                 logger.info("Message has content, will not check for embeds");
                             }
-                        }
+//                        }
                         return Mono.empty();
 
                     } else {
@@ -146,39 +169,78 @@ public class EmbedMessage extends Action {
         return Mono.empty();
     }
 
+//    private void lookForEmbeds(Message message, int count) {
+//
+//        Runnable taskWrapper = new Runnable() {
+//
+//            @Override
+//            public void run() {
+////                logger.info("checking message again");
+////                Message msg = gateway.getMessageById(Snowflake.of(message.getChannelId().asString()), Snowflake.of(message.getId().asString())).block();
+////                doAction(msg);
+//
+//                List<EmbedData> embedData;
+//                logger.info("checking for embeds try "+ count);
+//                embedData = checkEmbeds(message);
+//                if (embedData.isEmpty()){
+//                    int newCount = count + 1;
+//                    lookForEmbeds(message, newCount);
+//
+//                } else {
+//                    logger.info("found embeds");
+//                    doEmbed(message, embedData);
+//                }
+//            }
+//
+//        };
+////        logger.info("checking message again in 1 sec");
+//        if (count < 5) {
+//            executorService.schedule(taskWrapper, 500, TimeUnit.MILLISECONDS);
+//        } else {
+//
+//            logger.info("checking for embeds - hit "+ count);
+//        }
+//    }
+
     private void lookForEmbeds(Message message, int count) {
+        if (count >= 5) {
+            logger.info("giving up waiting for embeds after {} attempts", count);
+            return;
+        }
 
-        Runnable taskWrapper = new Runnable() {
+        // exponential backoff: 500ms, 1s, 2s, 4s, 8s, 16s, 32s, 64s
+        long delayMs = (long) (500 * Math.pow(2, count));
 
-            @Override
-            public void run() {
-//                logger.info("checking message again");
-//                Message msg = gateway.getMessageById(Snowflake.of(message.getChannelId().asString()), Snowflake.of(message.getId().asString())).block();
-//                doAction(msg);
+        executorService.schedule(() -> {
+            try {
+                logger.info("checking for embeds attempt {} (delay was {}ms)", count + 1, delayMs);
 
-                List<EmbedData> embedData;
-                logger.info("checking for embeds try "+ count);
-                embedData = checkEmbeds(message);
-                if (embedData.isEmpty()){
-                    int newCount = count + 1;
-                    lookForEmbeds(message, newCount);
+                // force fresh fetch from Discord REST API, bypassing cache
+                Message freshMessage = message.getClient()
+                        .withRetrievalStrategy(EntityRetrievalStrategy.REST)
+                        .getMessageById(message.getChannelId(), message.getId())
+                        .block();
 
+                if (freshMessage != null && !freshMessage.getData().embeds().isEmpty()) {
+                    logger.info("found embeds on attempt {}", count + 1);
+
+                    if (message.getChannelId().asLong() == 889662502324039690L){
+                        logger.info("**************************12345 - got message embed " + freshMessage.getData().embeds().stream().findFirst().get().description().get());
+                    }
+                    //using the old message as fresh message is missing the guild id
+                    doEmbed(message, freshMessage.getData().embeds());
                 } else {
-                    logger.info("found embeds");
-                    doEmbed(message, embedData);
+                    lookForEmbeds(message, count + 1);
+                }
+            } catch (Exception e) {
+                if (e.getMessage().contains("404 Not Found")) {
+                 logger.info("Message has been deleted before i can load it");
+                } else {
+                    printException(e);
                 }
             }
-
-        };
-//        logger.info("checking message again in 1 sec");
-        if (count < 5) {
-            executorService.schedule(taskWrapper, 500, TimeUnit.MILLISECONDS);
-        } else {
-
-            logger.info("checking for embeds - hit "+ count);
-        }
+        }, delayMs, TimeUnit.MILLISECONDS);
     }
-
 
 
 }

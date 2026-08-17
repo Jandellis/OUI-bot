@@ -214,7 +214,6 @@ public class Karen extends Action implements EmbedAction {
     public Mono<Object> handleEmbedAction(Message message, List<EmbedData> embedData) {
 
         try {
-            logger.info("got karen message");
             if (message.getChannelId().asString().equals(customerChannel) ||
                     message.getChannelId().asString().equals(customerChannel2)||
                     message.getChannelId().asString().equals(customerChannel3)||

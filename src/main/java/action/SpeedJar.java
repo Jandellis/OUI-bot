@@ -23,7 +23,9 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class SpeedJar extends Action {
 
@@ -37,8 +39,22 @@ public class SpeedJar extends Action {
     String customerBot = "526268502932455435";
 //    String customerBot = "292839877563908097";
 
-    ScheduledExecutorService executorService = Executors.newScheduledThreadPool(2);
+//    ScheduledExecutorService executorService = Executors.newScheduledThreadPool(2);
 
+
+    private final ScheduledExecutorService executorService =
+            Executors.newScheduledThreadPool(2, new ThreadFactory() {
+
+                private final AtomicInteger threadNumber =
+                        new AtomicInteger(1);
+
+                @Override
+                public Thread newThread(Runnable r) {
+                    Thread thread = new Thread(r);
+                    thread.setName("Speadjar-" + threadNumber.getAndIncrement());
+                    return thread;
+                }
+            });
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
     public SpeedJar() {

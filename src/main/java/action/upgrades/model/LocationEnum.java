@@ -24,6 +24,7 @@ public enum LocationEnum {
     cantina("cantina", 7, "\uD83C\uDF35"),
     resort("resort", 8, "\uD83C\uDFD4\uFE0F"),
     hq("hq", 0, "\uD83C\uDFDB"),
+    popup("popup", 9, "\uD83C\uDFB8"),
     event("event", 0, "\uD83C\uDF9F"),
     franchise("franchise", 0, "\uD83C\uDFE2");
 
@@ -63,6 +64,13 @@ public enum LocationEnum {
         }
         if (name.equalsIgnoreCase("p") || name.equalsIgnoreCase("park") ) {
             return amusement;
+        }
+        if (name.equalsIgnoreCase("pop")
+                || name.toLowerCase().contains("music")
+                || name.toLowerCase().contains("festival")
+                || name.toLowerCase().contains("carnival")
+                || name.toLowerCase().contains("halloween") ) {
+            return popup;
         }
         if (name.equalsIgnoreCase("ca") ) {
             return cantina;

@@ -33,7 +33,6 @@ public class CreateProfile extends Action implements EmbedAction {
         watchChannels = Arrays.asList(config.get("watchChannels").split(","));
     }
 
-    ScheduledExecutorService executorService = Executors.newScheduledThreadPool(5);
 
     String reloadEmote = "\uD83D\uDD03";
 

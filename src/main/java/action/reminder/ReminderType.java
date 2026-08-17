@@ -68,6 +68,13 @@ public enum ReminderType {
     weekend("Weekend Rush"),
     games("Winter Games"),
 
+    //Resort
+    surf("Crowd Surf Moment"),
+    encore("Encore Performance"),
+    silentDisco("Silent Disco"),
+    headliner("Headliner Set"),
+    grandFinaleFireworks("Grand Finale Fireworks"),
+
     //event
     flyers("Flyers", false),
     twirler("Sign Twirler", false),

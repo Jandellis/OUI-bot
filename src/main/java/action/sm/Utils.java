@@ -237,7 +237,24 @@ public class Utils {
 
     }
 
-    public static void deleteAlert(String name) {
+    public static void deleteAlert(String name, Sauce sauce) {
+        try {
+            Connection con = databaseUtils.getConnection();
+
+            Statement st = con.createStatement();
+
+//            con.setAutoCommit(false);
+
+            st.addBatch("DELETE from sm_alerts WHERE name = '" + name + "' AND sm_trigger = '"+sauce.getName()+"'" );
+            st.executeBatch();
+            con.close();
+//            con.commit();
+        } catch (SQLException ex) {
+            databaseUtils.printException(ex);
+        }
+    }
+
+    public static void deleteAlerts(String name) {
         try {
             Connection con = databaseUtils.getConnection();
 
@@ -256,7 +273,7 @@ public class Utils {
 
 
     public static List<Sauce> addAlerts(String name, List<Sauce> sauces, String channel) {
-        deleteAlert(name);
+        deleteAlerts(name);
         //delete all old alerts before adding new ones
         try {
             Connection con = databaseUtils.getConnection();
@@ -334,6 +351,106 @@ public class Utils {
         }
         return sauces;
 
+    }
+
+
+    public static Sauce addAlert(String name, Sauce sauce, String channel) {
+        //delete all old alerts before adding new ones
+        try {
+            Connection con = databaseUtils.getConnection();
+
+            Statement st = con.createStatement();
+            con.setAutoCommit(false);
+
+            List<Watch> watches = Utils.loadWatch(name);
+
+            PreparedStatement pst = con.prepareStatement("SELECT name, alert_type, price FROM sm_triggers  WHERE name = '" + name + "'");
+            ResultSet rs = pst.executeQuery();
+
+            List<Alert> alerts = loadAlerts(name);
+
+            List<Trigger> triggers = new ArrayList<>();
+
+            while (rs.next()) {
+                Trigger trigger = new Trigger(rs.getString(1), AlertType.getAlertType(rs.getString(2)), rs.getInt(3));
+                triggers.add(trigger);
+            }
+            List<Sauce> dropAlerts = new ArrayList<>();
+
+
+                for (Trigger trigger : triggers) {
+                    if (trigger.getType() == AlertType.high || (
+                            trigger.getType() == AlertType.drop && (
+                                    trigger.getDrop() == Drop.both || trigger.getDrop() == Drop.owned
+                            )
+                    )) {
+
+                        if (trigger.getType() == AlertType.drop) {
+                            dropAlerts.add(sauce);
+                        }
+                        if (!alertExists(alerts, name, trigger.getType(), sauce.toString(), trigger.getPrice(), channel)) {
+                            st.addBatch("insert into sm_alerts (name, alert_type, sm_trigger, price, channel) " +
+                                    "VALUES ('" + name + "', '" + trigger.getType() + "', '" + sauce + "', " + trigger.getPrice() + ", '" + channel + "')");
+                        }
+                    }
+                    //simple will not work with secret sauce
+                    if (trigger.getType() == AlertType.simple && sauce != Sauce.secret_sauce) {
+                        if (!alertExists(alerts, name, trigger.getType(), sauce.toString(), Drop.owned.getPrice(), channel)) {
+                            st.addBatch("insert into sm_alerts (name, alert_type, sm_trigger, price, channel) " +
+                                    "VALUES ('" + name + "', '" + trigger.getType() + "', '" + sauce + "', " + Drop.owned.getPrice() + ", '" + channel + "')");
+                        }
+                    }
+                }
+
+            for (Watch watch : watches) {
+                for (Trigger trigger : triggers) {
+                    // alert is low, or drop type
+                    // for drop or simple if its on watch list and both
+                    // but not if they own the sauce
+                    if ((trigger.getType() == AlertType.low ||
+                            trigger.getType() == AlertType.rise ||
+                            (trigger.getType() == AlertType.simple && watch.getSauce() != Sauce.secret_sauce))
+                            && !sauce.equals(watch.getSauce()) || (
+                            trigger.getType() == AlertType.drop && (
+                                    trigger.getDrop() == Drop.both || trigger.getDrop() == Drop.watchlist
+                            )
+                    )) {
+                        if (trigger.getType() == AlertType.drop && dropAlerts.contains(watch.getSauce())) {
+                            logger.info("All ready got this alert");
+                        } else {
+//                            if (!sauces.contains(watch.getSauce())) {
+//                                sauces.add(watch.getSauce());
+//                            }
+                            if (!alertExists(alerts, name, trigger.getType(), watch.getSauce().getName(), trigger.getPrice(), channel)) {
+                                st.addBatch("insert into sm_alerts (name, alert_type, sm_trigger, price, channel) " +
+                                        "VALUES ('" + name + "', '" + trigger.getType() + "', '" + watch.getSauce().getName() + "', " + trigger.getPrice() + ", '" + channel + "')");
+                            }
+                        }
+                    }
+                }
+            }
+
+            st.executeBatch();
+            con.commit();
+            con.close();
+        } catch (SQLException ex) {
+            databaseUtils.printException(ex);
+        }
+        return sauce;
+
+    }
+
+    private static boolean alertExists(List<Alert> alerts, String name, AlertType type, String trigger, int price, String channel) {
+        for (Alert alert : alerts) {
+            if (alert.getName().equals(name)
+                    && alert.getType() == type
+                    && alert.getTrigger().equals(trigger)
+                    && alert.getPrice() == price
+                    && alert.getChannel().equals(channel)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static void addWatchAlerts(String name, String channel) {

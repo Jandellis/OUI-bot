@@ -1151,6 +1151,33 @@ public class ReminderUtils {
         return stats;
     }
 
+
+    public static long loadProfileIncome(String id) {
+        long value = 0;
+        try {
+            Connection con = databaseUtils.getConnection();
+            String sql = "SELECT SUM(max_income) " +
+                    "FROM (" +
+                    "    SELECT MAX(income) as max_income" +
+                    "    FROM profile_stats" +
+                    "    WHERE name = ?" +
+                    "    AND income > 0" +
+                    "    GROUP BY location" +
+                    ") as location_max";
+            PreparedStatement pst = con.prepareStatement(sql);
+            pst.setString(1, id);
+            ResultSet rs = pst.executeQuery();
+            while (rs.next()) {
+                value = rs.getLong(1);
+            }
+            con.close();
+
+        } catch (SQLException ex) {
+            databaseUtils.printException(ex);
+        }
+        return value;
+    }
+
     public static List<LocationEnum> loadLocations(String id) {
         List<LocationEnum> locations = new ArrayList<>();
         try {
